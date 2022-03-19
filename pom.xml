@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.microbean</groupId>
+  <artifactId>microbean-loader-parent</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <parent>
+    <groupId>org.microbean</groupId>
+    <artifactId>microbean-pluginmanagement-pom</artifactId>
+    <version>18</version>
+    <relativePath />
+  </parent>
+
+  <name>microBean™ Loader</name>
+  <description>microBean™ Loader: loaders for Java</description>
+  <inceptionYear>2022</inceptionYear>
+  <url>https://microbean.github.io/microbean-loader</url>
+
+  <scm>
+    <connection>scm:git:git@github.com:microbean/microbean-loader.git</connection>
+    <developerConnection>scm:git:git@github.com:microbean/microbean-loader.git</developerConnection>
+    <url>https://github.com/microbean/microbean-loader/</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <site>
+      <id>microbean-loader</id>
+      <name>microBean™ Loader</name>
+      <url>https://microbean.github.io/microbean-loader</url>
+    </site>
+  </distributionManagement>
+
+  <modules>
+    <module>microbean-loader-api</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+
+
+      <!-- Normal dependencies. -->
+
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-development-annotations</artifactId>
+        <version>0.2.12</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-invoke</artifactId>
+        <version>0.0.5</version>
+        <type>jar</type>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-path</artifactId>
+        <version>0.0.10</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-type</artifactId>
+        <version>0.2.4</version>
+        <type>jar</type>
+      </dependency>
+
+
+      <!-- Modules. -->
+
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-loader-api</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-loader</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+      
+
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+
+
+    <!-- Compile-scoped dependencies. -->
+
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-development-annotations</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-invoke</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-path</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+
+    <!-- Test-scoped dependencies. -->
+
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+
+
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+
+        <plugin>
+          <groupId>com.github.github</groupId>
+          <artifactId>site-maven-plugin</artifactId>
+          <inherited>false</inherited>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <compilerArgs>
+              <arg>-Xlint:all</arg>
+              <arg>-Xlint:-preview</arg>
+              <arg>-Xpkginfo:always</arg>
+            </compilerArgs>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <additionalOptions>
+              <additionalOption>--add-stylesheet</additionalOption>
+              <additionalOption>${project.basedir}/src/main/javadoc/css/fonts.css</additionalOption>
+            </additionalOptions>
+            <docfilessubdirs>true</docfilessubdirs>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>Stage site</id>
+              <goals>
+                <goal>stage</goal>
+              </goals>
+              <phase>post-site</phase>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <!-- See https://junit.org/junit5/docs/snapshot/user-guide/#running-tests-build-maven-config-params -->
+            <!-- See https://github.com/apache/maven-surefire/blob/eb48f1b59ca5ccf6954ef33ecab03dbaf93214cd/surefire-providers/surefire-junit-platform/src/main/java/org/apache/maven/surefire/junitplatform/JUnitPlatformProvider.java#L242-L262 -->
+            <properties>
+              <configurationParameters>
+                junit.jupiter.execution.parallel.enabled=false
+                junit.jupiter.execution.parallel.mode.default=concurrent
+              </configurationParameters>
+            </properties>
+            <systemPropertyVariables>
+              <project.build.directory>${project.build.directory}</project.build.directory>
+              <project.build.testOutputDirectory>${project.build.testOutputDirectory}</project.build.testOutputDirectory>
+            </systemPropertyVariables>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.jboss.jandex</groupId>
+          <artifactId>jandex-maven-plugin</artifactId>
+          <configuration>
+            <indexName>${jandex.indexName}</indexName>
+            <processDefaultFileSet>false</processDefaultFileSet>
+            <verbose>${jandex.verbose}</verbose>
+          </configuration>
+          <executions>
+            <execution>
+              <id>Create Jandex index</id>
+              <phase>process-classes</phase>
+              <configuration>
+                <fileSets>
+                  <fileSet>
+                    <directory>${project.build.outputDirectory}</directory>
+                  </fileSet>
+                </fileSets>
+              </configuration>
+            </execution>
+            <execution>
+              <id>Create Jandex index for test classes</id>
+              <phase>process-test-classes</phase>
+              <configuration>
+                <fileSets>
+                  <fileSet>
+                    <directory>${project.build.testOutputDirectory}</directory>
+                  </fileSet>
+                </fileSets>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+    <plugins>
+
+      <plugin>
+        <groupId>com.github.github</groupId>
+        <artifactId>site-maven-plugin</artifactId>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <properties>
+    
+    <!-- site-maven-plugin properties; see https://github.com/github/maven-plugins/tree/master/github-site-plugin -->
+    <github.site.dryRun>true</github.site.dryRun>
+    <github.site.skip>true</github.site.skip>
+    <siteOutputDirectory>${project.build.directory}/staging</siteOutputDirectory>
+    <topSiteUrl>https://microbean.github.io/microbean-loader/</topSiteUrl>
+
+    <!-- maven-release-plugin properties; see http://maven.apache.org/maven-release/maven-release-plugin/ -->
+    <goals>deploy,post-site</goals>
+
+    <!-- NetBeans-related properties -->
+    <netbeans.hint.jdkPlatform>JDK_17</netbeans.hint.jdkPlatform>
+
+    <jandex.indexName>jandex.idx</jandex.indexName>
+    <jandex.verbose>true</jandex.verbose>
+    
+    <jdkToolchainVendor>openjdk</jdkToolchainVendor>
+
+    <!-- maven-compiler-plugin properties -->
+    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+
+    <!-- maven-javadoc-plugin properties -->
+    <detectJavaApiLink>false</detectJavaApiLink>
+    <links>https://docs.oracle.com/en/java/javase/17/docs/api,https://microbean.github.io/microbean-development-annotations/apidocs/,https://microbean.github.io/microbean-invoke/apidocs/,https://microbean.github.io/microbean-path/apidocs/</links>
+
+  </properties>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <id>aggregate</id>
+            <inherited>false</inherited>
+            <reports>
+              <report>aggregate</report>
+            </reports>
+          </reportSet>
+          <reportSet>
+            <id>default</id>
+            <inherited>true</inherited>
+            <reports>
+              <report>javadoc</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
+
+</project>
