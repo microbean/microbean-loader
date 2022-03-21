@@ -104,6 +104,8 @@ public interface Provider {
    *
    * </ul>
    *
+   * @param <T> the type of value to return
+   *
    * @param requestor the {@link Loader} seeking a {@link Value};
    * must not be {@code null}
    *
@@ -121,7 +123,7 @@ public interface Provider {
    * {@code absolutePath} is {@code null}
    *
    * @exception IllegalArgumentException if {@code absolutePath}
-   * {@linkplain Path#isAbsolute() is not absolute}
+   * {@linkplain Path#absolute() is not absolute}
    *
    * @nullability Implementations of this method may return {@code
    * null}.
@@ -132,20 +134,6 @@ public interface Provider {
    * @idempotency Implementations of this method must be idempotent
    * but are not assumed to be deterministic.
    */
-  public Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath);
+  public <T> Value<T> get(final Loader<?> requestor, final Path<? extends Type> absolutePath);
 
-  public static Class<?> erase(final Type type) {
-    if (type instanceof Class<?> c) {
-      return c;
-    } else if (type instanceof ParameterizedType p) {
-      return erase(p.getRawType());
-    } else if (type instanceof GenericArrayType g) {
-      final Class<?> c = erase(g.getGenericComponentType());
-      return c == null ? null : c.arrayType();
-    } else {
-      return null;
-    }
-  }
-
-  
 }

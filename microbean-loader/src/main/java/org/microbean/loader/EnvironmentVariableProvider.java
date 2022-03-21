@@ -26,6 +26,7 @@ import org.microbean.loader.spi.AbstractProvider;
 import org.microbean.loader.spi.Value;
 
 import org.microbean.path.Path;
+import org.microbean.path.Path.Element;
 
 import org.microbean.qualifier.Qualifiers;
 
@@ -68,7 +69,7 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
    * @param requestor the {@link Loader} requesting a {@link Value};
    * must not be {@code null}
    *
-   * @param absolutePath an {@linkplain Path#isAbsolute() absolute}
+   * @param absolutePath an {@linkplain Path#absolute() absolute}
    * {@link Path}; must not be {@code null}
    *
    * @return a {@linkplain Value#deterministic() deterministic} {@link
@@ -92,10 +93,9 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
    * absolutePath} is {@code null}
    */
   @Override // AbstractProvider<String>
-  @SuppressWarnings("unchecked")
-  public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  public final <T> Value<T> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
-    // assert absolutePath.startsWith(requestor.path());
+    assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
 
     // On Unix systems, there is absolutely no question that the
@@ -116,14 +116,18 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
     // there wasn't.
 
     if (absolutePath.size() == 2) { // 2: root plus a single name
-      final String value = System.getenv(absolutePath.lastElement().name());
-      if (value != null) {
-        return
-          new Value<>(null, // no defaults
-                      Qualifiers.of(),
-                      absolutePath,
-                      () -> value,
-                      true); // deterministic
+      final String name = absolutePath.lastElement().name();
+      if (!name.isEmpty()) {
+        @SuppressWarnings("unchecked")
+        final T value = (T)System.getenv(name);
+        if (value != null) {
+          return
+            new Value<>(null, // no defaults
+                        Qualifiers.of(),
+                        absolutePath,
+                        () -> value,
+                        true); // deterministic
+        }
       }
     }
     return null;

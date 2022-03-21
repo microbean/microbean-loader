@@ -251,13 +251,84 @@ public interface Loader<T> extends OptionalSupplier<T> {
     }
   }
 
+  /**
+   * Returns a {@link Loader}, derived from this {@link Loader}, that
+   * is suitable for a {@linkplain #normalize(Path) normalized
+   * version} of the supplied {@code path}, particularly for cases
+   * where, during the execution of the {@link #load(Path)} method, a
+   * {@link Loader} must be supplied to some other class.
+   *
+   * <p>The returned {@link Loader} must be one whose {@link #path()}
+   * method returns the {@linkplain Path#size() longest} {@link Path}
+   * that is a parent of the ({@linkplain #normalize(Path)
+   * normalized}) supplied {@code path}.  In many cases {@code this}
+   * will be returned.</p>
+   *
+   * <p>Typically only classes implementing this interface will need
+   * to call this method.</p>
+   *
+   * @param path the {@link Path} in question; must not be {@code
+   * null}
+   *
+   * @return a {@link Loader}, derived from this {@link Loader}, that
+   * is suitable for a {@linkplain #normalize(Path) normalized
+   * version} of the supplied {@code path}, particularly for cases
+   * where, during the execution of the {@link #load(Path)} method, a
+   * {@link Loader} must be supplied to some other class; never {@code
+   * null}
+   *
+   * @exception NullPointerException if {@code path} is {@code null}
+   *
+   * @nullability The default implementation of this method does not,
+   * and its (discouraged) overrides must not, return {@code null}.
+   *
+   * @threadsafety The default implementation of this method is, and
+   * its (discouraged) overrides must be, safe for concurrent use by
+   * multiple threads.
+   *
+   * @idempotency The default implementation of this method is, and
+   * its (discouraged) overrides must be, idempotent and
+   * deterministic.
+   *
+   * @see #normalize(Path)
+   *
+   * @see #transliterate(Path)
+   *
+   * @see #root()
+   */
+  @OverridingDiscouraged
+  public default <U extends Type> Loader<?> loaderFor(Path<U> path) {
+    path = this.normalize(path);
+    Loader<?> requestor = this;
+    final Path<? extends Type> requestorPath = requestor.path();
+    assert requestorPath.absolute() : "!requestorPath.absolute(): " + requestorPath;
+    if (!requestorPath.equals(path)) {
+      if (requestorPath.startsWith(path)) {
+        final int requestorPathSize = requestorPath.size();
+        final int pathSize = path.size();
+        assert requestorPathSize != pathSize;
+        if (requestorPathSize > pathSize) {
+          for (int i = 0; i < requestorPathSize - pathSize; i++) {
+            requestor = requestor.parent();
+          }
+          assert requestor.path().equals(path) : "!requestor.path().equals(path); requestor.path(): " + requestor.path() + "; path: " + path;
+        } else {
+          throw new AssertionError("requestorPath.size() < path.size(); requestorPath: " + requestorPath + "; path: " + path);
+        }
+      } else {
+        requestor = requestor.root();
+      }
+    }
+    return requestor;
+  }
+
   @OverridingDiscouraged
   public default <U extends Type> Path<U> transliterate(final Path<U> path) {
     if (path.transliterated()) {
       return path;
     }
-    final Element<?> last = path.lastElement();
-    if (last.name().equals("transliterate")) {
+    final Element<U> last = path.lastElement();
+    if (last.name().equals("transliterated")) {
       final Qualifiers<String, ?> lastQualifiers = last.qualifiers();
       if (lastQualifiers.size() == 1 && lastQualifiers.toMap().containsKey("path")) {
         // Are we in the middle of a transliteration request? Avoid
@@ -265,11 +336,9 @@ public interface Loader<T> extends OptionalSupplier<T> {
         return path;
       }
     }
-    return
-      this.<Path<U>>load(this.path().plus(Path.of(Element.of(Qualifiers.of("path", path.toString()),
-                                                             new Token<>() {}.type(), // type
-                                                             "transliterate"))))
-      .orElse(path);
+    final Element<U> transliterated = Element.of(Qualifiers.of("path", path.toString()), last.qualified(), "transliterated");
+    final Path<U> transliterationRequestPath = this.path().plus(transliterated);
+    return this.<Path<U>>load(transliterationRequestPath).orElse(path.transliterate());
   }
 
   @OverridingDiscouraged
@@ -308,7 +377,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
         } else if (bootstrapLoader.root() != bootstrapLoader) {
           throw new IllegalStateException("bootstrapLoader.root(): " + bootstrapLoader.root());
         }
-        INSTANCE = bootstrapLoader.<Loader<?>>load(Path.of(new Token<>() {}.type())).orElse(bootstrapLoader);
+        INSTANCE = bootstrapLoader.<Loader<?>>load(Path.of(new Token<Loader<?>>() {}.type())).orElse(bootstrapLoader);
         if (!Path.root().equals(INSTANCE.path())) {
           throw new IllegalStateException("INSTANCE.path(): " + INSTANCE.path());
         } else if (INSTANCE.parent() != bootstrapLoader) {

@@ -14,23 +14,23 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
+package org.microbean.loader;
 
-/**
- * Provides packages related to loaders.
- *
- * @author <a href="https://about.me/lairdnelson"
- * target="_parent">Laird Nelson</a>
- */
-module org.microbean.loader.api {
+import org.junit.jupiter.api.Test;
 
-  requires transitive org.microbean.development.annotation;
-  requires transitive org.microbean.invoke;
-  requires transitive org.microbean.path;
-  requires org.microbean.qualifier;
-  requires transitive org.microbean.type;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  exports org.microbean.loader.api;
+import static org.microbean.loader.api.Loader.loader;
 
-  uses org.microbean.loader.api.Loader;
-  
+final class TestBootstrap {
+
+  private TestBootstrap() {
+    super();
+  }
+
+  @Test
+  final void testBootstrap() {
+    assertNotNull(loader());
+  }
+
 }

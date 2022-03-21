@@ -18,6 +18,7 @@ package org.microbean.loader;
 
 import java.lang.reflect.Type;
 
+import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import java.util.function.Supplier;
@@ -32,7 +33,7 @@ import org.microbean.path.Path.Element;
 
 import org.microbean.qualifier.Qualifiers;
 
-import static org.microbean.loader.spi.Provider.erase;
+import org.microbean.type.JavaTypes;
 
 /**
  * An {@link AbstractProvider} that can return {@link Value}s backed
@@ -96,24 +97,24 @@ public final class SystemPropertyProvider extends AbstractProvider<Object> {
    * <p>The {@linkplain Path.Element#name() name} of the {@linkplain
    * Path#lastElement() last element} of the supplied {@link Path} is
    * taken to be the name of the System property value to retrieve.
-   * If the return value of the supplied {@link Path}'s {@link
-   * Path#typeErasure() typeErasure()} method {@linkplain
-   * Class#isAssignableFrom(Class) is assignable from} {@link String
-   * String.class}, then calls will be made by the returned {@link
-   * Value}'s {@link Value#get() get()} method to {@link
-   * System#getProperty(String)} before simple calls to {@link
+   * If the {@linkplain JavaTypes#erase(Type) type erasure} of the
+   * supplied {@link Path}'s {@link Path#qualified() qualified()}
+   * method {@linkplain Class#isAssignableFrom(Class) is assignable
+   * from} {@link String String.class}, then calls will be made by the
+   * returned {@link Value}'s {@link Value#get() get()} method to
+   * {@link System#getProperty(String)} before simple calls to {@link
    * Properties#get(String) System.getProperties().get(String)}.</p>
    *
    * <p>Any {@link Value} returned by this method will have no
    * {@linkplain Value#Value(Supplier, Qualifiers, Path, Supplier,
-   * boolean, boolean) defaults}, a {@link Qualifiers} equal to the
-   * return value of {@link Qualifiers#of()}, a ({@linkplain
-   * Path#absolute() relative}) {@link Path} equal to the supplied
-   * {@code absolutePath}'s {@linkplain Path#lastElement() last
-   * element}, a {@link Supplier} that is backed by System property
-   * access machinery, and a value of {@code false} for its
-   * {@linkplain Value#deterministic() deterministic property}.  If
-   * the supplied {@link Path}'s {@linkplain Path#type() type} is not
+   * boolean) defaults}, a {@link Qualifiers} equal to the return
+   * value of {@link Qualifiers#of()}, a ({@linkplain Path#absolute()
+   * relative}) {@link Path} equal to the supplied {@code
+   * absolutePath}'s {@linkplain Path#lastElement() last element}, a
+   * {@link Supplier} that is backed by System property access
+   * machinery, and a value of {@code false} for its {@linkplain
+   * Value#deterministic() deterministic property}.  If the supplied
+   * {@link Path}'s {@linkplain Path#qualified() type} is not
    * assignable from that borne by a System property value, then the
    * {@link Value} will return {@code null} from its {@link
    * Value#get() get()} method in such a case, indicating that the
@@ -147,17 +148,19 @@ public final class SystemPropertyProvider extends AbstractProvider<Object> {
    * <em>not</em> guaranteed to be idempotent or deterministic.
    */
   @Override // AbstractProvider<Object>
-  public Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  public <T> Value<T> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
-    // assert absolutePath.startsWith(requestor.absolutePath());
+    assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
+
     if (absolutePath.size() == 2) { // root + name
       final Element<? extends Type> last = absolutePath.lastElement();
       final String name = last.name();
       if (!name.isEmpty()) {
-        final Class<?> pathTypeErasure = erase(absolutePath.qualified());
-        final Supplier<?> s;
-        if (pathTypeErasure.isAssignableFrom(String.class)) {
+        @SuppressWarnings("unchecked")
+        final Class<T> pathTypeErasure = (Class<T>)JavaTypes.erase(absolutePath.qualified());
+        final Supplier<T> s;
+        if (CharSequence.class.isAssignableFrom(pathTypeErasure)) {
           s = () -> getCharSequenceAssignableSystemProperty(name, pathTypeErasure);
         } else {
           s = () -> getSystemProperty(name, pathTypeErasure);
@@ -183,13 +186,19 @@ public final class SystemPropertyProvider extends AbstractProvider<Object> {
         value = systemProperties.get(propertyName);
       }
     }
-    return typeErasure.isInstance(value) ? typeErasure.cast(value) : null;
+    if (typeErasure.isInstance(value)) {
+      return typeErasure.cast(value);
+    }
+    throw new NoSuchElementException(propertyName);
   }
 
   private static final <T> T getSystemProperty(final String propertyName, final Class<T> typeErasure) {
     assert !CharSequence.class.isAssignableFrom(typeErasure) : "typeErasure: " + typeErasure.getName();
     final Object value = System.getProperties().get(propertyName);
-    return typeErasure.isInstance(value) ? typeErasure.cast(value) : null;
+    if (typeErasure.isInstance(value)) {
+      return typeErasure.cast(value);
+    }
+    throw new NoSuchElementException(propertyName);
   }
 
 }

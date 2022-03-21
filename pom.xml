@@ -36,6 +36,7 @@
 
   <modules>
     <module>microbean-loader-api</module>
+    <module>microbean-loader</module>
   </modules>
 
   <dependencyManagement>
@@ -62,14 +63,14 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-path</artifactId>
-        <version>0.0.10</version>
+        <version>0.0.13</version>
         <type>jar</type>
       </dependency>
 
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-type</artifactId>
-        <version>0.2.4</version>
+        <version>0.2.5</version>
         <type>jar</type>
       </dependency>
 

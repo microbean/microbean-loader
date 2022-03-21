@@ -14,6 +14,14 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
+import org.microbean.loader.DefaultLoader;
+import org.microbean.loader.EnvironmentVariableProvider;
+import org.microbean.loader.SystemPropertyProvider;
+
+import org.microbean.loader.api.Loader;
+
+import org.microbean.loader.spi.AmbiguityHandler;
+import org.microbean.loader.spi.Provider;
 
 /**
  * Provides packages related to the default implementation of the
@@ -24,9 +32,15 @@
  */
 module org.microbean.loader {
 
-  requires transitive org.microbean.loader.api;
-
   exports org.microbean.loader;
   exports org.microbean.loader.spi;
   
+  provides Loader with DefaultLoader;
+  provides Provider with EnvironmentVariableProvider, SystemPropertyProvider;
+
+  requires transitive org.microbean.loader.api;
+  
+  uses AmbiguityHandler;
+  uses Provider;
+
 }
