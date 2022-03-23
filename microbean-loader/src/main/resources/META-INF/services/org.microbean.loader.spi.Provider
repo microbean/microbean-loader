@@ -1,0 +1,3 @@
+org.microbean.loader.EnvironmentVariableProvider
+org.microbean.loader.SystemPropertyProvider
+org.microbean.loader.ProxyingProvider

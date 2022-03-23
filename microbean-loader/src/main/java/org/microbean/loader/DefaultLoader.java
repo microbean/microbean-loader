@@ -19,7 +19,9 @@ package org.microbean.loader;
 import java.lang.reflect.Type;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +83,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache;
 
   private final boolean deterministic;
-  
+
   private final Path<? extends Type> absolutePath;
 
   private final DefaultLoader<?> parent;
@@ -110,7 +112,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   public DefaultLoader() {
     this(new ConcurrentHashMap<Path<? extends Type>, DefaultLoader<?>>(),
          null, // providers
-         null, // Qualifiers
          true, // deterministic
          null, // parent,
          null, // absolutePath
@@ -118,9 +119,29 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
          null); // AmbiguityHandler
   }
 
+  private DefaultLoader(final DefaultLoader<T> loader) {
+    this(loader.loaderCache,
+         loader.providers(),
+         loader.deterministic(),
+         loader.parent(),
+         loader.path(),
+         loader.supplier,
+         loader.ambiguityHandler());
+  }
+
+  private DefaultLoader(final DefaultLoader<T> loader,
+                        final Provider provider) {
+    this(loader.loaderCache,
+         add(loader.providers(), provider),
+         loader.deterministic(),
+         loader.parent(),
+         loader.path(),
+         loader.supplier,
+         loader.ambiguityHandler());
+  }
+
   private DefaultLoader(final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache,
                         final Collection<? extends Provider> providers,
-                        final Qualifiers<? extends String, ?> qualifiers,
                         final boolean deterministic,
                         final DefaultLoader<?> parent, // if null, will end up being "this" if absolutePath is null or Path.root()
                         final Path<? extends Type> absolutePath,
@@ -143,11 +164,9 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
         final Path<? extends Type> rootPath = (Path<? extends Type>)Path.root();
         this.loaderCache.put(rootPath, this); // NOTE
         // While the following call is in effect, our
-        // final-but-as-yet-uninitialized qualifiers field and our
         // final-but-as-yet-uninitialized ambiguityHandler field will
-        // both be null.  Note that the qualifiers() instance method
-        // accounts for this and will return Qualifiers.of() instead,
-        // and the ambiguityHandler() instance method does as well.
+        // be null.  Note that the ambiguityHandler() instance method
+        // accounts for this.
         try {
           this.ambiguityHandler = this.load(AmbiguityHandler.class).orElseGet(DefaultLoader::loadedAmbiguityHandler);
         } finally {
@@ -156,8 +175,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       } else {
         throw new IllegalArgumentException("!absolutePath.equals(Path.root()): " + absolutePath);
       }
-    } else if (absolutePath.equals(Path.root())) {
-      throw new IllegalArgumentException("absolutePath.equals(Path.root()): " + absolutePath);
     } else if (!absolutePath.absolute()) {
       throw new IllegalArgumentException("!absolutePath.absolute(): " + absolutePath);
     } else if (!parent.path().absolute()) {
@@ -193,6 +210,10 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   @Override // AutoCloseable
   public final void close() {
     this.loaderCache.clear();
+  }
+
+  public final DefaultLoader<T> plus(final Provider provider) {
+    return new DefaultLoader<>(this, provider);
   }
 
   /**
@@ -414,7 +435,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
           }
           if (candidate == null) {
             ambiguityHandler.providerRejected(requestor, absolutePath, candidateProvider);
-          } else if (!isSelectable(qualifiers, absolutePath, candidate.qualifiers(), candidate.path())) {
+          } else if (!isSelectable(absolutePath, candidate.path())) {
             ambiguityHandler.valueRejected(requestor, absolutePath, candidateProvider, candidate);
           }
         }
@@ -458,7 +479,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
           VALUE_EVALUATION_LOOP:
           while (true) {
 
-            if (!isSelectable(qualifiers, absolutePath, value.qualifiers(), value.path())) {
+            if (!isSelectable(absolutePath, value.path())) {
               ambiguityHandler.valueRejected(requestor, absolutePath, provider, value);
               break VALUE_EVALUATION_LOOP;
             }
@@ -545,7 +566,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     return
       new DefaultLoader<>(this.loaderCache,
                           providers,
-                          qualifiers,
                           deterministic,
                           requestor, // parent
                           absolutePath,
@@ -563,17 +583,33 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    * Static methods.
    */
 
+  private static final <T> Collection<T> add(final Collection<? extends T> c, final T e) {
+    if (c == null || c.isEmpty()) {
+      return e == null ? List.of() : List.of(e);
+    } else if (e == null) {
+      return Collections.unmodifiableCollection(c);
+    } else {
+      final Collection<T> newC = new ArrayList<>(c.size() + 1);
+      newC.addAll(c);
+      newC.add(e);
+      return Collections.unmodifiableCollection(newC);
+    }
+  }
 
-  private static final Provider peek(final Map<?, ? extends Deque<Provider>> map, final Path<? extends Type> absolutePath) {
+  private static final Provider peek(final Map<?, ? extends Deque<Provider>> map,
+                                     final Path<? extends Type> absolutePath) {
     final Queue<? extends Provider> q = map.get(absolutePath);
     return q == null ? null : q.peek();
   }
 
-  private static final void push(final Map<Path<? extends Type>, Deque<Provider>> map, final Path<? extends Type> absolutePath, final Provider provider) {
+  private static final void push(final Map<Path<? extends Type>, Deque<Provider>> map,
+                                 final Path<? extends Type> absolutePath,
+                                 final Provider provider) {
     map.computeIfAbsent(absolutePath, ap -> new ArrayDeque<>(5)).push(provider);
   }
 
-  private static final Provider pop(final Map<?, ? extends Deque<Provider>> map, final Path<? extends Type> absolutePath) {
+  private static final Provider pop(final Map<?, ? extends Deque<Provider>> map,
+                                    final Path<? extends Type> absolutePath) {
     final Deque<Provider> dq = map.get(absolutePath);
     return dq == null ? null : dq.pop();
   }
@@ -590,17 +626,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
   private static final AmbiguityHandler loadedAmbiguityHandler() {
     return Loaded.ambiguityHandler;
-  }
-
-  private static final boolean isSelectable(final Qualifiers<? extends String, ?> referenceQualifiers,
-                                            final Path<? extends Type> absoluteReferencePath,
-                                            final Qualifiers<? extends String, ?> valueQualifiers,
-                                            final Path<? extends Type> valuePath) {
-    return isSelectable(referenceQualifiers, valueQualifiers) && isSelectable(absoluteReferencePath, valuePath);
-  }
-
-  private static final boolean isSelectable(final Qualifiers<? extends String, ?> referenceQualifiers, final Qualifiers<? extends String, ?> valueQualifiers) {
-    return referenceQualifiers.isEmpty() || valueQualifiers.isEmpty() || referenceQualifiers.intersectionSize(valueQualifiers) > 0;
   }
 
   /**
@@ -657,7 +682,13 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     if (!absoluteReferencePath.absolute()) {
       throw new IllegalArgumentException("absoluteReferencePath: " + absoluteReferencePath);
     }
-    return absoluteReferencePath.endsWith(valuePath, AmbiguityHandler.ElementsMatchBiPredicate.INSTANCE);
+    // TODO: see isSelectable(Qualifiers, Qualifiers), which, in the
+    // normal course of events, will have already been called.  Now
+    // see ElementsMatchBiPredicate, which currently checks them,
+    // effectively, again, but more stringently? perhaps?  I think
+    // this is an artifact from porting stuff over from
+    // microbean-environment.
+    return absoluteReferencePath.endsWith(valuePath, ElementsAreCompatibleBiPredicate.INSTANCE);
   }
 
   private static final <T> T throwNoSuchElementException() {
@@ -697,52 +728,43 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
   }
 
-  // Matches element names (equality), parameter types
-  // (isAssignableFrom) and Types (AssignableType.isAssignable()).
-  // Argument values themselves are deliberately ignored.
-  @Deprecated(forRemoval = true)
-  private static final class ElementsMatchBiPredicate implements BiPredicate<Element<?>, Element<?>> {
+  private static final class ElementsAreCompatibleBiPredicate implements BiPredicate<Element<?>, Element<?>> {
 
-    private static final ElementsMatchBiPredicate INSTANCE = new ElementsMatchBiPredicate();
+    private static final ElementsAreCompatibleBiPredicate INSTANCE = new ElementsAreCompatibleBiPredicate();
 
-    private ElementsMatchBiPredicate() {
+    private ElementsAreCompatibleBiPredicate() {
       super();
     }
 
     @Override // BiPredicate<Element<?>, Element<?>>
     public final boolean test(final Element<?> e1, final Element<?> e2) {
       final String name1 = e1.name();
-      final String name2 = e2.name();
-      if (!name1.isEmpty() && !name2.isEmpty() && !name1.equals(name2)) {
-        // Empty names have special significance in that they "match"
-        // any other name.
-        return false;
+      if (!name1.isEmpty()) {
+        final String name2 = e2.name();
+        if (!name2.isEmpty() && !name1.equals(name2)) {
+          // Empty names have special significance in that they
+          // "match" any other name.
+          return false;
+        }
       }
 
       final Object o1 = e1.qualified();
-      if (!(o1 instanceof Type)) {
-        return false;
-      }
-      final Type t1 = (Type)o1;
-      final Object o2 = e2.qualified();
-      if (!(o2 instanceof Type)) {
-        return false;
-      }
-      final Type t2 = (Type)o2;
-      
-      if (!CovariantSemantics.INSTANCE.assignable(t1, t2)) {
+      if (o1 == null) {
+        return e2.qualified() == null;
+      } else if (!(o1 instanceof Type) ||
+                 !(e2.qualified() instanceof Type t2) ||
+                 !CovariantSemantics.INSTANCE.assignable((Type)o1, t2)) {
         return false;
       }
 
       final Qualifiers<?, ?> q1 = e1.qualifiers();
-      final Qualifiers<?, ?> q2 = e2.qualifiers();
-      if (q1 != null && q2 != null) {
-        if (q1.size() != q2.size()) {
+      if (q1 != null && !q1.isEmpty()) {
+        final Qualifiers<?, ?> q2 = e2.qualifiers();
+        if (q2 != null && !q2.isEmpty() && q1.intersectionSize(q2) <= 0) {
           return false;
-        } else {
-          return q1.toMap().keySet().equals(q2.toMap().keySet());
         }
       }
+
       return true;
     }
 

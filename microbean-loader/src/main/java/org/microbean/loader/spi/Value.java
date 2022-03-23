@@ -63,6 +63,21 @@ public final class Value<T> implements OptionalSupplier<T> {
 
 
   /*
+   * Static fields.
+   */
+
+
+  /**
+   * An {@link Object} representing the presence of a qualifier key.
+   *
+   * @nullability This field is never {@code null}.
+   */
+  // TODO: yuck
+  public static final Object ANY = new Object[0];
+
+  
+
+  /*
    * Instance fields.
    */
 

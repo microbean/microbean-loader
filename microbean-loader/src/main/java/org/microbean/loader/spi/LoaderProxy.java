@@ -14,34 +14,34 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-import org.microbean.loader.DefaultLoader;
-import org.microbean.loader.EnvironmentVariableProvider;
-import org.microbean.loader.ProxyingProvider;
-import org.microbean.loader.SystemPropertyProvider;
+package org.microbean.loader.spi;
 
-import org.microbean.loader.api.Loader;
-
-import org.microbean.loader.spi.AmbiguityHandler;
-import org.microbean.loader.spi.Provider;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Provides packages related to the default implementation of the
- * microBean™ Loader API.
+ * An annotation that informs any {@link Provider} implementation that
+ * wishes to proxy a class or interface whether the class or interface
+ * in question may be proxied.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-module org.microbean.loader {
+@Documented
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE, ElementType.METHOD })
+public @interface LoaderProxy {
 
-  exports org.microbean.loader;
-  exports org.microbean.loader.spi;
+  /**
+   * Whether the annotated element may be proxied or not.
+   *
+   * @return {@code true} if the annotated element may be proxied
+   */
+  boolean value() default true;
   
-  provides Loader with DefaultLoader;
-  provides Provider with EnvironmentVariableProvider, SystemPropertyProvider, ProxyingProvider;
-
-  requires transitive org.microbean.loader.api;
-  
-  uses AmbiguityHandler;
-  uses Provider;
-
 }

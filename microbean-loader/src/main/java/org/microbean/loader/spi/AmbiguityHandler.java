@@ -41,6 +41,7 @@ import org.microbean.type.Type.CovariantSemantics;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
+@LoaderProxy(false)
 public interface AmbiguityHandler {
 
   /**
@@ -171,8 +172,8 @@ public interface AmbiguityHandler {
    * following:</p>
    *
    * <blockquote><pre>absoluteReferencePath.endsWith(valuePath, {@link
-   * ElementsMatchBiPredicate#INSTANCE
-   * ElementsMatchBiPredicate.INSTANCE});</pre></blockquote>
+   * NamesAndTypesAreCompatibleBiPredicate#INSTANCE
+   * NamesAndTypesAreCompatibleBiPredicate.INSTANCE});</pre></blockquote>
    *
    * <p>Note that such an invocation is <em>not</em> made by the
    * default implementation of this method, but logically precedes it
@@ -222,14 +223,14 @@ public interface AmbiguityHandler {
       throw new IllegalArgumentException("absoluteReferencePath: " + absoluteReferencePath);
     }
 
-    final int lastValuePathIndex = absoluteReferencePath.lastIndexOf(valuePath, ElementsMatchBiPredicate.INSTANCE);
+    final int lastValuePathIndex = absoluteReferencePath.lastIndexOf(valuePath, NamesAndTypesAreCompatibleBiPredicate.INSTANCE);
     assert lastValuePathIndex >= 0 : "absoluteReferencePath: " + absoluteReferencePath + "; valuePath: " + valuePath;
     assert lastValuePathIndex + valuePath.size() == absoluteReferencePath.size() : "absoluteReferencePath: " + absoluteReferencePath + "; valuePath: " + valuePath;
 
     int score = valuePath.size();
     for (int valuePathIndex = 0; valuePathIndex < valuePath.size(); valuePathIndex++) {
       final int referencePathIndex = lastValuePathIndex + valuePathIndex;
-      
+
       final Element<?> referenceElement = absoluteReferencePath.get(referencePathIndex);
       final Element<?> valueElement = valuePath.get(valuePathIndex);
       if (!referenceElement.name().equals(valueElement.name())) {
@@ -284,7 +285,7 @@ public interface AmbiguityHandler {
 
       /*
       // original below:
-      
+
       final List<Class<?>> referenceParameters = referenceElement.parameters().orElse(null);
       final List<Class<?>> valueParameters = valueElement.parameters().orElse(null);
       if (referenceParameters == null) {
@@ -328,7 +329,7 @@ public interface AmbiguityHandler {
         }
       }
       */
-      
+
     }
     return score;
   }
@@ -402,8 +403,7 @@ public interface AmbiguityHandler {
    * @see AmbiguityHandler#score(Path, Path)
    */
   @Experimental
-  // public static final class ElementsMatchBiPredicate implements BiPredicate<Element<? extends Type>, Element<? extends Type>> {
-  public static final class ElementsMatchBiPredicate implements BiPredicate<Element<?>, Element<?>> {
+  public static final class NamesAndTypesAreCompatibleBiPredicate implements BiPredicate<Element<?>, Element<?>> {
 
 
     /*
@@ -421,7 +421,7 @@ public interface AmbiguityHandler {
      * @threadsafety Accessing this field does not require any
      * synchronization.
      */
-    public static final ElementsMatchBiPredicate INSTANCE = new ElementsMatchBiPredicate();
+    public static final NamesAndTypesAreCompatibleBiPredicate INSTANCE = new NamesAndTypesAreCompatibleBiPredicate();
 
 
     /*
@@ -429,7 +429,7 @@ public interface AmbiguityHandler {
      */
 
 
-    private ElementsMatchBiPredicate() {
+    private NamesAndTypesAreCompatibleBiPredicate() {
       super();
     }
 
@@ -439,67 +439,35 @@ public interface AmbiguityHandler {
      */
 
 
-    /*
-    @Override // BiPredicate<Element<?>, Element<?>>
-    public final boolean test(final Element<? extends Type> e1, final Element<? extends Type> e2) {
-      final String name1 = e1.name();
-      final String name2 = e2.name();
-      if (!name1.isEmpty() && !name2.isEmpty() && !name1.equals(name2)) {
-        // Empty names have special significance in that they "match"
-        // any other name.
-        return false;
-      }
-
-      final Type t1 = e1.qualified();
-      final Type t2 = e2.qualified();
-      if (t1 != null && t2 != null && !CovariantSemantics.INSTANCE.assignable(t1, t2)) {
-        return false;
-      }
-
-      final Qualifiers<?, ?> q1 = e1.qualifiers();
-      final Qualifiers<?, ?> q2 = e2.qualifiers();
-      if (q1 != null && q2 != null) {
-        return q1.toMap().keySet().equals(q2.toMap().keySet());
-      }
-
-      return true;
-    }
-    */
-
     @Override // BiPredicate<Element<?>, Element<?>>
     public final boolean test(final Element<?> e1, final Element<?> e2) {
       final String name1 = e1.name();
-      final String name2 = e2.name();
-      if (!name1.isEmpty() && !name2.isEmpty() && !name1.equals(name2)) {
-        // Empty names have special significance in that they "match"
-        // any other name.
-        return false;
+      if (!name1.isEmpty()) {
+        final String name2 = e2.name();
+        if (!name2.isEmpty() && !name1.equals(name2)) {
+          // Empty names have special significance in that they
+          // "match" any other name.
+          return false;
+        }
       }
 
       final Object o1 = e1.qualified();
-      if (!(o1 instanceof Type)) {
-        return false;
-      }
-      final Type t1 = (Type)o1;
-      final Object o2 = e2.qualified();
-      if (!(o2 instanceof Type)) {
-        return false;
-      }
-      final Type t2 = (Type)o2;
-      
-      if (!CovariantSemantics.INSTANCE.assignable(t1, t2)) {
+      if (o1 == null) {
+        return e2.qualified() == null;
+      } else if (!(o1 instanceof Type) ||
+                 !(e2.qualified() instanceof Type t2) ||
+                 !CovariantSemantics.INSTANCE.assignable((Type)o1, t2)) {
         return false;
       }
 
       final Qualifiers<?, ?> q1 = e1.qualifiers();
-      final Qualifiers<?, ?> q2 = e2.qualifiers();
-      if (q1 != null && q2 != null) {
-        if (q1.size() != q2.size()) {
+      if (q1 != null && !q1.isEmpty()) {
+        final Qualifiers<?, ?> q2 = e2.qualifiers();
+        if (q2 != null && !q2.isEmpty() && q1.intersectionSize(q2) <= 0) {
           return false;
-        } else {
-          return q1.toMap().keySet().equals(q2.toMap().keySet());
         }
       }
+      
       return true;
     }
 
