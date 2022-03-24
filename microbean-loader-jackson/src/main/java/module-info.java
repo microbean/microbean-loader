@@ -14,24 +14,24 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-import org.microbean.loader.api.Loader;
 
 /**
- * Provides packages related to loaders.
+ * Provides packages related to implementing {@link
+ * org.microbean.loader.spi.Provider}s using <a
+ * href="https://github.com/FasterXML/jackson"
+ * target="_top">Jackson</a> constructs.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-module org.microbean.loader.api {
+module org.microbean.loader.jackson {
 
-  exports org.microbean.loader.api;
+  exports org.microbean.loader.jackson;
 
-  requires transitive org.microbean.development.annotation;
-  requires transitive org.microbean.invoke;
-  requires transitive org.microbean.path;
-  requires org.microbean.qualifier;
-  requires transitive org.microbean.type;
-
-  uses Loader;
-
+  requires transitive com.fasterxml.jackson.core;
+  requires transitive com.fasterxml.jackson.databind;
+  requires java.logging;
+  requires org.microbean.loader.api;
+  requires transitive org.microbean.loader;
+  
 }

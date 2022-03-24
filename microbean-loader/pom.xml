@@ -11,7 +11,7 @@
   </parent>
 
   <name>microBean™ Loader: Default Implementation</name>
-  <description>microBean™ Loader API: Default implementation</description>
+  <description>microBean™ Loader API: Default Implementation</description>
 
   <dependencies>
 
@@ -66,5 +66,5 @@
       </plugins>
     </pluginManagement>
   </build>
-  
+
 </project>

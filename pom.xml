@@ -14,7 +14,7 @@
     <relativePath />
   </parent>
 
-  <name>microBean™ Loader</name>
+  <name>microBean™ Loader: Parent Project</name>
   <description>microBean™ Loader: loaders for Java</description>
   <inceptionYear>2022</inceptionYear>
   <url>https://microbean.github.io/microbean-loader</url>
@@ -36,12 +36,26 @@
 
   <modules>
     <module>microbean-loader-api</module>
+    <module>microbean-loader-jackson-toml</module>
+    <module>microbean-loader-jackson</module>
     <module>microbean-loader</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
 
+
+      <!-- Imported dependencies. -->
+
+
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>2.13.2</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      
 
       <!-- Normal dependencies. -->
 
@@ -56,14 +70,14 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-invoke</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.7</version>
         <type>jar</type>
       </dependency>
       
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-path</artifactId>
-        <version>0.0.13</version>
+        <version>0.0.14</version>
         <type>jar</type>
       </dependency>
 
@@ -91,58 +105,24 @@
         <version>${project.version}</version>
         <type>jar</type>
       </dependency>
-      
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-loader-jackson</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-loader-jackson-toml</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+
 
     </dependencies>
   </dependencyManagement>
-
-  <dependencies>
-
-
-    <!-- Compile-scoped dependencies. -->
-
-
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-development-annotations</artifactId>
-      <type>jar</type>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-invoke</artifactId>
-      <type>jar</type>
-      <scope>compile</scope>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-path</artifactId>
-      <type>jar</type>
-      <scope>compile</scope>
-    </dependency>
-
-
-    <!-- Test-scoped dependencies. -->
-
-
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <type>jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <type>jar</type>
-      <scope>test</scope>
-    </dependency>
-
-
-  </dependencies>
 
   <build>
     <pluginManagement>
@@ -274,7 +254,7 @@
 
     <!-- maven-javadoc-plugin properties -->
     <detectJavaApiLink>false</detectJavaApiLink>
-    <links>https://docs.oracle.com/en/java/javase/17/docs/api,https://microbean.github.io/microbean-development-annotations/apidocs/,https://microbean.github.io/microbean-invoke/apidocs/,https://microbean.github.io/microbean-path/apidocs/</links>
+    <links>https://docs.oracle.com/en/java/javase/17/docs/api,https://microbean.github.io/microbean-development-annotations/apidocs/,https://microbean.github.io/microbean-invoke/apidocs/,https://microbean.github.io/microbean-path/apidocs/,https://microbean.github.io/microbean-qualifier/apidocs/,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-core/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-databind/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.dataformat/jackson-dataformat-toml/2.13.2</links>
 
   </properties>
 

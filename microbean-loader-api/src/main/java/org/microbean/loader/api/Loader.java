@@ -35,6 +35,34 @@ import org.microbean.qualifier.Qualifiers;
 
 import org.microbean.type.JavaType.Token;
 
+/**
+ * An {@link OptionalSupplier} that {@linkplain #get() supplies} an
+ * environmental object, and can {@linkplain #load(Path) load} others.
+ *
+ * <p><strong>Note:</strong> {@link Loader} implementations are
+ * expected to be immutable with respect to the methods exposed by
+ * this interface.  All methods in this interface that have a {@link
+ * Loader}-typed return type require their implementations to return a
+ * <em>new</em> {@link Loader}.</p>
+ *
+ * <p>The presence of the {@link
+ * OverridingDiscouraged @OverridingDiscouraged} annotation on a
+ * method means that undefined behavior may result if an
+ * implementation of this interface provides an alternate
+ * implementation of the method in question.</p>
+ *
+ * @param <T> the type of environmental objects this {@link Loader}
+ * {@linkplain #get() supplies}
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see #loader()
+ *
+ * @see OptionalSupplier#get()
+ *
+ * @see #load(Path)
+ */
 public interface Loader<T> extends OptionalSupplier<T> {
 
   /**
@@ -130,6 +158,9 @@ public interface Loader<T> extends OptionalSupplier<T> {
    *
    * <p>The default implementations of all other methods in this
    * interface named {@code load} call this method.</p>
+   *
+   * @param <U> the type of the environmental object the returned
+   * {@link Loader} can {@linkplain #get() supply}
    *
    * @param path the {@link Path} (perhaps only partially) identifying
    * the {@link Loader} to load; must not be {@code null}; may be
@@ -259,6 +290,11 @@ public interface Loader<T> extends OptionalSupplier<T> {
    *
    * <p>Overriding of this method is strongly discouraged.</p>
    *
+   * <p>Most users will have no need to call this method directly.</p>
+   *
+   * @param <U> the {@link Type} designated by the supplied {@link
+   * Path}
+   *
    * @param path the {@link Path} to normalize; must not be {@code
    * null}
    *
@@ -309,7 +345,8 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * will be returned.</p>
    *
    * <p>Typically only classes implementing this interface will need
-   * to call this method.</p>
+   * to call this method.  Most users will have no need to call this
+   * method directly.</p>
    *
    * <p>Overriding of this method is <strong>strongly</strong>
    * discouraged.</p>
@@ -344,7 +381,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * @see #root()
    */
   @OverridingDiscouraged
-  public default <U extends Type> Loader<?> loaderFor(Path<U> path) {
+  public default Loader<?> loaderFor(Path<? extends Type> path) {
     path = this.normalize(path);
     Loader<?> requestor = this;
     final Path<? extends Type> requestorPath = requestor.path();
@@ -369,6 +406,92 @@ public interface Loader<T> extends OptionalSupplier<T> {
     return requestor;
   }
 
+  /**
+   * <em>Transliterates</em> the supplied {@linkplain Path#absolute()
+   * absolute <code>Path</code>} into some other {@link Path}, whose
+   * meaning is the same, but whose representation may be different,
+   * that will be used instead.
+   *
+   * <p>The {@link Path} that is returned may be the {@link Path} that
+   * was supplied.  This may happen, for example, if {@linkplain
+   * Path#transliterated() the path has already been transliterated},
+   * or if the path identifies a transliteration request.</p>
+   *
+   * <p>Path transliteration is needed because the {@link
+   * Element#name() name()} components of {@link Element}s may
+   * unintentionally clash when two components are combined into a
+   * single application.</p>
+   *
+   * <p>Path transliteration must occur during the execution of any
+   * implementation of the {@link #load(Path)} method, such that the
+   * {@link Path} supplied to that method, once it has been verified
+   * to be {@linkplain Path#absolute() absolute}, is supplied to an
+   * implementation of this method. The {@link Path} returned by an
+   * implementation of this method must then be used during the rest
+   * of the invocation of the {@link #load(Path)} method, as if it had
+   * been supplied in the first place.</p>
+   *
+   * <p>Behavior resulting from any other usage of an implementation
+   * of this method is undefined.</p>
+   *
+   * <p>The default implementation of this method uses the
+   * configuration system itself to find a transliterated {@link Path}
+   * corresponding to the supplied {@link Path}, returning the
+   * supplied {@code path} itself if no transliteration can take
+   * place.  Infinite loops are avoided except as noted below.</p>
+   *
+   * <p>Overrides of this method <strong>must not call {@link
+   * #normalize(Path)}</strong> or an infinite loop may result.</p>
+   *
+   * <p>Overrides of this method <strong>must not call {@link
+   * #loaderFor(Path)}</strong> or an infinite loop may
+   * result.</p>
+   *
+   * <p>Overrides of this method <strong>must not call {@link
+   * #load(Path)} with the supplied {@code path}</strong> or an infinite
+   * loop may result.</p>
+   *
+   * <p>An implementation of {@link Loader} will find {@link
+   * Path#transliterate(java.util.function.BiFunction)} particularly
+   * useful in implementing this method.</p>
+   *
+   * <p>Most users will have no need to call this method directly.</p>
+   *
+   * @param <U> the type of the supplied and returned {@link Path}s
+   *
+   * @param path an {@linkplain Path#absolute() absolute
+   * <code>Path</code>}; must not be null
+   *
+   * @return the transliterated {@link Path}; never {@code null};
+   * possibly the supplied {@code path} itself
+   *
+   * @exception NullPointerException if {@code path} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code path} returns
+   * {@code false} from its {@link Path#absolute() absolute()}
+   * method
+   *
+   * @nullability The default implementation of this method does not,
+   * and its (discouraged) overrides must not, return {@code null}.
+   *
+   * @threadsafety The default implementation of this method is, and
+   * its (discouraged) overrides must be, safe for concurrent use by
+   * multiple threads.
+   *
+   * @idempotency The default implementation of this method is, and
+   * its (discouraged) overrides must be, idempotent and
+   * deterministic.
+   *
+   * @see Path#absolute()
+   *
+   * @see Path#transliterate(java.util.function.BiFunction)
+   *
+   * @see #normalize(Path)
+   *
+   * @see #loaderFor(Path)
+   *
+   * @see #load(Path)
+   */
   @OverridingDiscouraged
   public default <U extends Type> Path<U> transliterate(final Path<U> path) {
     if (path.transliterated()) {
@@ -399,6 +522,8 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * <p>Overrides of this method are <strong>strongly</strong>
    * discouraged.</p>
    *
+   * <p>Most users will have no need to call this method directly.</p>
+   *
    * @return {@code true} if and only if this {@link Loader} is the
    * root {@link Loader}
    *
@@ -418,6 +543,11 @@ public interface Loader<T> extends OptionalSupplier<T> {
   /**
    * Returns the root {@link Loader}, which is the {@link Loader}
    * whose {@link #parent()} method returns iteself.
+   *
+   * <p>Overrides of this method are <strong>strongly</strong>
+   * discouraged.</p>
+   *
+   * <p>Most users will have no need to call this method directly.</p>
    *
    * @return the root {@link Loader}
    *
@@ -451,29 +581,29 @@ public interface Loader<T> extends OptionalSupplier<T> {
   }
 
   /**
-   * Bootstraps and returns the root {@link Loader}.
+   * Bootstraps and returns a {@link Loader}.
    *
-   * <p>First, a <em>bootstrap {@link Loader}</em> is located using
-   * Java's built-in {@link ServiceLoader}.  The first of the {@link
-   * Loader} instances it discovers is used and all others are
+   * <p>If this method has been called before, its prior result is
+   * returned.</p>
+   *
+   * <p>Otherwise, first, the <em>root {@link Loader}</em> is located
+   * using Java's built-in {@link ServiceLoader}.  The first of the
+   * {@link Loader} instances it discovers is used and all others are
    * ignored.  Note that the {@link ServiceLoader} discovery process
    * is non-deterministic.  Normally there is only one such {@link
    * Loader} provided by an implementation of this API.</p>
    *
-   * <p>The bootstrap {@link Loader} that is loaded via this mechanism
-   * is subject to the following restrictions:</p>
+   * <p>The root {@link Loader} that is loaded via this mechanism is
+   * subject to the following restrictions:</p>
    *
    * <ul>
    *
    * <li>It must return a {@link Path} from its {@link #path()}
-   * implementation that is {@link Path#equals(Object) equal to}
+   * implementation that is {@linkplain Path#equals(Object) equal to}
    * {@link Path#root() Path.root()}.</li>
    *
    * <li>It must return itself ({@code this}) from its {@link
    * #parent()} implementation.</li>
-   *
-   * <li>It must return itself ({@code this}) from its {@link #get()
-   * get()} method.</li>
    *
    * <li>It must return {@code true} from its {@link #isRoot()}
    * implementation.</li>
@@ -481,15 +611,21 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * <li>It must return itself ({@code this}) from its {@link #root()}
    * method.</li>
    *
+   * <li>It must return {@code true} from its {@link #deterministic()
+   * deterministic()} method.</li>
+   *
+   * <li>It must return itself ({@code this}) from its {@link #get()
+   * get()} method.</li>
+   *
    * </ul>
    *
-   * <p>This bootstrap {@link Loader} is then used to {@linkplain
-   * #load(Path) find} the <em>{@link Loader} of record</em>,
-   * which in most cases is simply itself.</p>
+   * <p>Next, this root {@link Loader} is used to {@linkplain
+   * #load(Path) find} the <em>{@link Loader} of record</em>, which in
+   * most cases is simply itself.</p>
    *
    * <p>The {@link Loader} of record is subject to the following
    * restrictions (which are compatible with the overwhelmingly common
-   * case of its also being the bootstrap {@link Loader}):</p>
+   * case of its also being the root {@link Loader}):</p>
    *
    * <ul>
    *
@@ -497,11 +633,15 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * implementation that is equal to {@link Path#root() Path.root()}
    * (same as above).</li>
    *
-   * <li>It must return the bootstrap {@link Loader} from its {@link
-   * #parent()} implementation.</li>
+   * <li>It must return {@code true} from its {@link #deterministic()
+   * deterministic()} method (same as above).</li>
    *
-   * <li>It must return a {@link Loader} implementation, normally
-   * itself ({@code this}), from its {@link #get() get()} method.</li>
+   * <li>It must return the bootstrap {@link Loader} from its {@link
+   * #parent()} implementation (which may be itself ({@code
+   * this}).</li>
+   *
+   * <li>It must return a {@link Loader} implementation, often itself
+   * ({@code this}), from its {@link #get() get()} method.</li>
    *
    * </ul>
    *
@@ -509,46 +649,52 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * {@link Loader} interface does not honor the requirements
    * above.</p>
    *
-   * <p>This is the primary entry point for end users of this
+   * <p>This method is the primary entry point for end users of this
    * framework.</p>
    *
-   * @return a non-{@code null} {@linkplain #isRoot() root} {@link
-   * Loader} that can be used to acquire environmental objects
+   * @return a non-{@code null} {@link Loader} that can be used to
+   * acquire environmental objects that abides by the requirements and
+   * restrictions above
    *
-   * @exception IllegalStateException if any of the restrictions above
-   * is violated
+   * @exception IllegalStateException if any of the requirements and
+   * restrictions above is violated
    *
-   * @exception java.util.ServiceConfigurationError if the bootstrap
-   * {@link Loader} could not be loaded for any reason
+   * @exception java.util.ServiceConfigurationError if the root {@link
+   * Loader} could not be loaded for any reason
    */
+  @EntryPoint
   public static Loader<?> loader() {
-    final class RootLoader {
+    final class LoaderOfRecord {
       private static final Loader<?> INSTANCE;
       static {
-        final Loader<?> bootstrapLoader =
+        final Loader<?> rootLoader =
           ServiceLoader.load(Loader.class, Loader.class.getClassLoader()).findFirst().orElseThrow();
-        if (!Path.root().equals(bootstrapLoader.path())) {
-          throw new IllegalStateException("bootstrapLoader.path(): " + bootstrapLoader.path());
-        } else if (bootstrapLoader.parent() != bootstrapLoader) {
-          throw new IllegalStateException("bootstrapLoader.parent(): " + bootstrapLoader.parent());
-        } else if (bootstrapLoader.get() != bootstrapLoader) {
-          throw new IllegalStateException("bootstrapLoader.get(): " + bootstrapLoader.get());
-        } else if (!bootstrapLoader.isRoot()) {
-          throw new IllegalStateException("!bootstrapLoader.isRoot()");
-        } else if (bootstrapLoader.root() != bootstrapLoader) {
-          throw new IllegalStateException("bootstrapLoader.root(): " + bootstrapLoader.root());
+        if (!rootLoader.deterministic()) {
+          throw new IllegalStateException("!rootLoader.deterministic()");
+        } else if (!Path.root().equals(rootLoader.path())) {
+          throw new IllegalStateException("rootLoader.path(): " + rootLoader.path());
+        } else if (rootLoader.parent() != rootLoader) {
+          throw new IllegalStateException("rootLoader.parent(): " + rootLoader.parent());
+        } else if (rootLoader.get() != rootLoader) {
+          throw new IllegalStateException("rootLoader.get(): " + rootLoader.get());
+        } else if (!rootLoader.isRoot()) {
+          throw new IllegalStateException("!rootLoader.isRoot()");
+        } else if (rootLoader.root() != rootLoader) {
+          throw new IllegalStateException("rootLoader.root(): " + rootLoader.root());
         }
-        INSTANCE = bootstrapLoader.<Loader<?>>load(Path.of(new Token<Loader<?>>() {}.type())).orElse(bootstrapLoader);
-        if (!Path.root().equals(INSTANCE.path())) {
+        INSTANCE = rootLoader.<Loader<?>>load(Path.of(new Token<Loader<?>>() {}.type())).orElse(rootLoader);
+        if (!INSTANCE.deterministic()) {
+          throw new IllegalStateException("!INSTANCE.deterministic()");
+        } else if (!Path.root().equals(INSTANCE.path())) {
           throw new IllegalStateException("INSTANCE.path(): " + INSTANCE.path());
-        } else if (INSTANCE.parent() != bootstrapLoader) {
+        } else if (INSTANCE.parent() != rootLoader) {
           throw new IllegalStateException("INSTANCE.parent(): " + INSTANCE.parent());
         } else if (!(INSTANCE.get() instanceof Loader)) {
           throw new IllegalStateException("INSTANCE.get(): " + INSTANCE.get());
         }
       }
     };
-    return RootLoader.INSTANCE;
+    return LoaderOfRecord.INSTANCE;
   }
 
 }

@@ -212,8 +212,22 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     this.loaderCache.clear();
   }
 
+  /**
+   * Returns a {@link DefaultLoader} that {@linkplain #providers()
+   * uses} the additional {@link Provider}.
+   *
+   * @param provider the additional {@link Provider}; may be {@code
+   * null} in which case {@code this} will be returned
+   *
+   * @return a {@link DefaultLoader} that {@linkplain #providers()
+   * uses} the additional {@link Provider}
+   */
   public final DefaultLoader<T> plus(final Provider provider) {
-    return new DefaultLoader<>(this, provider);
+    if (provider == null) {
+      return this;
+    } else {
+      return new DefaultLoader<>(this, provider);
+    }
   }
 
   /**
@@ -337,7 +351,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   }
 
   @Override // Loader<T>
-  public final <U extends Type> DefaultLoader<?> loaderFor(Path<U> path) {
+  public final DefaultLoader<?> loaderFor(Path<? extends Type> path) {
     return (DefaultLoader<?>)Loader.super.loaderFor(path);
   }
 
@@ -682,13 +696,15 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     if (!absoluteReferencePath.absolute()) {
       throw new IllegalArgumentException("absoluteReferencePath: " + absoluteReferencePath);
     }
-    // TODO: see isSelectable(Qualifiers, Qualifiers), which, in the
-    // normal course of events, will have already been called.  Now
-    // see ElementsMatchBiPredicate, which currently checks them,
-    // effectively, again, but more stringently? perhaps?  I think
-    // this is an artifact from porting stuff over from
-    // microbean-environment.
-    return absoluteReferencePath.endsWith(valuePath, ElementsAreCompatibleBiPredicate.INSTANCE);
+    final Qualifiers<?, ?> q1 = absoluteReferencePath.qualifiers();
+    // Remember that a Path's Qualifiers include the Qualifiers of every Path.Element in the Path.
+    if (q1 != null && !q1.isEmpty()) {
+      final Qualifiers<?, ?> q2 = valuePath.qualifiers();
+      if (q2 != null && !q2.isEmpty() && q1.intersectionSize(q2) <= 0) {
+        return false;
+      }
+    }
+    return absoluteReferencePath.endsWith(valuePath, NamesAndTypesAreCompatibleBiPredicate.INSTANCE);
   }
 
   private static final <T> T throwNoSuchElementException() {
@@ -728,11 +744,11 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
   }
 
-  private static final class ElementsAreCompatibleBiPredicate implements BiPredicate<Element<?>, Element<?>> {
+  private static final class NamesAndTypesAreCompatibleBiPredicate implements BiPredicate<Element<?>, Element<?>> {
 
-    private static final ElementsAreCompatibleBiPredicate INSTANCE = new ElementsAreCompatibleBiPredicate();
+    private static final NamesAndTypesAreCompatibleBiPredicate INSTANCE = new NamesAndTypesAreCompatibleBiPredicate();
 
-    private ElementsAreCompatibleBiPredicate() {
+    private NamesAndTypesAreCompatibleBiPredicate() {
       super();
     }
 
@@ -755,14 +771,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
                  !(e2.qualified() instanceof Type t2) ||
                  !CovariantSemantics.INSTANCE.assignable((Type)o1, t2)) {
         return false;
-      }
-
-      final Qualifiers<?, ?> q1 = e1.qualifiers();
-      if (q1 != null && !q1.isEmpty()) {
-        final Qualifiers<?, ?> q2 = e2.qualifiers();
-        if (q2 != null && !q2.isEmpty() && q1.intersectionSize(q2) <= 0) {
-          return false;
-        }
       }
 
       return true;

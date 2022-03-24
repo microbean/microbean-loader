@@ -18,10 +18,6 @@ package org.microbean.loader.spi;
 
 import java.lang.reflect.Type;
 
-import java.util.List;
-
-import java.util.function.BiPredicate;
-
 import org.microbean.development.annotation.Experimental;
 
 import org.microbean.loader.api.Loader;
@@ -172,8 +168,8 @@ public interface AmbiguityHandler {
    * following:</p>
    *
    * <blockquote><pre>absoluteReferencePath.endsWith(valuePath, {@link
-   * NamesAndTypesAreCompatibleBiPredicate#INSTANCE
-   * NamesAndTypesAreCompatibleBiPredicate.INSTANCE});</pre></blockquote>
+   * #compatible(Element, Element)
+   * AmbiguityHandler::compatible});</pre></blockquote>
    *
    * <p>Note that such an invocation is <em>not</em> made by the
    * default implementation of this method, but logically precedes it
@@ -223,7 +219,7 @@ public interface AmbiguityHandler {
       throw new IllegalArgumentException("absoluteReferencePath: " + absoluteReferencePath);
     }
 
-    final int lastValuePathIndex = absoluteReferencePath.lastIndexOf(valuePath, NamesAndTypesAreCompatibleBiPredicate.INSTANCE);
+    final int lastValuePathIndex = absoluteReferencePath.lastIndexOf(valuePath, AmbiguityHandler::compatible);
     assert lastValuePathIndex >= 0 : "absoluteReferencePath: " + absoluteReferencePath + "; valuePath: " + valuePath;
     assert lastValuePathIndex + valuePath.size() == absoluteReferencePath.size() : "absoluteReferencePath: " + absoluteReferencePath + "; valuePath: " + valuePath;
 
@@ -273,62 +269,16 @@ public interface AmbiguityHandler {
       for (final Object referenceKey : referenceQualifiers.toMap().keySet()) {
         final Object valueValue = valueQualifiers.get(referenceKey);
         if (valueValue == null) {
+          assert !valueQualifiers.containsKey(referenceKey); // qualifiers cannot have null values
           // The value is indifferent with respect to this particular
           // qualifier key.  It *could* be suitable, but not *as*
           // suitable as one that matched.  Don't adjust the score.
-        } else if (valueQualifiers.get(referenceKey).equals(valueValue)) {
+        } else if (referenceQualifiers.get(referenceKey).equals(valueValue)) {
           score++;
         } else {
           return Integer.MIN_VALUE;
         }
       }
-
-      /*
-      // original below:
-
-      final List<Class<?>> referenceParameters = referenceElement.parameters().orElse(null);
-      final List<Class<?>> valueParameters = valueElement.parameters().orElse(null);
-      if (referenceParameters == null) {
-        if (valueParameters != null) {
-          return Integer.MIN_VALUE;
-        }
-      } else if (valueParameters == null || referenceParameters.size() != valueParameters.size()) {
-        return Integer.MIN_VALUE;
-      }
-
-      final List<String> referenceArguments = referenceElement.arguments().orElse(null);
-      final List<String> valueArguments = valueElement.arguments().orElse(null);
-      if (referenceArguments == null) {
-        if (valueArguments != null) {
-          return Integer.MIN_VALUE;
-        }
-      } else if (valueArguments == null) {
-        // The value is indifferent with respect to arguments. It
-        // *could* be suitable but not *as* suitable as one that
-        // matched.  Don't adjust the score.
-      } else {
-        final int referenceArgsSize = referenceArguments.size();
-        final int valueArgsSize = valueArguments.size();
-        if (referenceArgsSize < valueArgsSize) {
-          // The value path is unsuitable because it provided too
-          // many arguments.
-          return Integer.MIN_VALUE;
-        } else if (referenceArguments.equals(valueArguments)) {
-          score += referenceArgsSize;
-        } else if (referenceArgsSize == valueArgsSize) {
-          // Same sizes, but different arguments.  The value is not suitable.
-          return Integer.MIN_VALUE;
-        } else if (valueArgsSize == 0) {
-          // The value is indifferent with respect to arguments. It
-          // *could* be suitable but not *as* suitable as one that
-          // matched.  Don't adjust the score.
-        } else {
-          // The reference element had, say, two arguments, and the
-          // value had, say, one.  We treat this as a mismatch.
-          return Integer.MIN_VALUE;
-        }
-      }
-      */
 
     }
     return score;
@@ -387,90 +337,88 @@ public interface AmbiguityHandler {
     return null;
   }
 
-
-  /*
-   * Inner and nested classes.
-   */
-
-
   /**
-   * A {@link BiPredicate} that compares two {@link Path.Element}s to
-   * see if they match.
+   * Returns {@code true} if and only if the second {@link Element} is
+   * <em>compatible</em> with respect to the first {@link Element}.
    *
-   * @author <a href="https://about.me/lairdnelson"
-   * target="_parent">Laird Nelson</a>
+   * <p>This method returns {@code true} <strong>unless</strong> one
+   * of the following conditions holds:</p>
    *
-   * @see AmbiguityHandler#score(Path, Path)
+   * <ul>
+   *
+   * <li>Both {@linkplain Element element}s' {@linkplain
+   * Element#name() names} are non-{@linkplain String#isEmpty() empty}
+   * and are not {@linkplain String#equals(Object) equal}</li>
+   *
+   * <li>One {@linkplain Element element}'s {@linkplain
+   * Element#qualified() qualified} is {@code null} but the other is
+   * not</li>
+   *
+   * <li>An {@link Element element}'s {@linkplain Element#qualified()
+   * qualified} is non-{@code null} but not a {@link Type}</li>
+   *
+   * <li>Both {@linkplain Element element}'s {@linkplain
+   * Element#qualified() qualified}s are {@link Type}s, but the second
+   * {@linkplain Element element}'s {@link Type} is not {@linkplain
+   * CovariantSemantics#assignable(Type, Type) assignable} to the
+   * first {@linkplain Element element}'s {@link Type}</li>
+   *
+   * <li>If the first {@linkplain Element element}'s {@linkplain
+   * Element#qualifiers() qualifiers} are not {@linkplain
+   * Qualifiers#isEmpty() empty} and the second {@linkplain Element
+   * element}'s {@linkplain Element#qualifiers() qualifiers} are not
+   * {@linkplain Qualifiers#isEmpty() empty} and the first {@linkplain
+   * Element element}'s {@linkplain Element#qualifiers() qualifiers}
+   * {@linkplain Qualifiers#intersectionSize(Qualifiers) do not
+   * intersect} with the second {@linkplain Element element}'s
+   * {@linkplain Element#qualifiers() qualifiers}</li>
+   *
+   * </ul>
+   *
+   * @param e1 the first {@link Element}; must not be {@code null}
+   *
+   * @param e2 the second {@link Element}; must not be {@code null}
+   *
+   * @return {@code true} if and only if the second {@link Element} is
+   * compatible with the first
+   *
+   * @exception NullPointerException if either argument is {@code
+   * null}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
    */
-  @Experimental
-  public static final class NamesAndTypesAreCompatibleBiPredicate implements BiPredicate<Element<?>, Element<?>> {
-
-
-    /*
-     * Static fields.
-     */
-
-
-    /**
-     * The sole instance of this class.
-     *
-     * <p>This field is never {@code null}.</p>
-     *
-     * @nullability This field is never {@code null}.
-     *
-     * @threadsafety Accessing this field does not require any
-     * synchronization.
-     */
-    public static final NamesAndTypesAreCompatibleBiPredicate INSTANCE = new NamesAndTypesAreCompatibleBiPredicate();
-
-
-    /*
-     * Constructors.
-     */
-
-
-    private NamesAndTypesAreCompatibleBiPredicate() {
-      super();
-    }
-
-
-    /*
-     * Instance methods.
-     */
-
-
-    @Override // BiPredicate<Element<?>, Element<?>>
-    public final boolean test(final Element<?> e1, final Element<?> e2) {
-      final String name1 = e1.name();
-      if (!name1.isEmpty()) {
-        final String name2 = e2.name();
-        if (!name2.isEmpty() && !name1.equals(name2)) {
-          // Empty names have special significance in that they
-          // "match" any other name.
-          return false;
-        }
-      }
-
-      final Object o1 = e1.qualified();
-      if (o1 == null) {
-        return e2.qualified() == null;
-      } else if (!(o1 instanceof Type) ||
-                 !(e2.qualified() instanceof Type t2) ||
-                 !CovariantSemantics.INSTANCE.assignable((Type)o1, t2)) {
+  public static boolean compatible(Element<?> e1, Element<?> e2) {
+    final String name1 = e1.name();
+    if (!name1.isEmpty()) {
+      final String name2 = e2.name();
+      if (!name2.isEmpty() && !name1.equals(name2)) {
+        // Empty names have special significance in that they
+        // "match" any other name.
         return false;
       }
-
-      final Qualifiers<?, ?> q1 = e1.qualifiers();
-      if (q1 != null && !q1.isEmpty()) {
-        final Qualifiers<?, ?> q2 = e2.qualifiers();
-        if (q2 != null && !q2.isEmpty() && q1.intersectionSize(q2) <= 0) {
-          return false;
-        }
-      }
-      
-      return true;
     }
 
+    final Object o1 = e1.qualified();
+    if (o1 == null) {
+      return e2.qualified() == null;
+    } else if (!(o1 instanceof Type) ||
+               !(e2.qualified() instanceof Type t2) ||
+               !CovariantSemantics.INSTANCE.assignable((Type)o1, t2)) {
+      return false;
+    }
+
+    final Qualifiers<?, ?> q1 = e1.qualifiers();
+    if (!q1.isEmpty()) {
+      final Qualifiers<?, ?> q2 = e2.qualifiers();
+      if (!q2.isEmpty() && q1.intersectionSize(q2) <= 0) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
 }

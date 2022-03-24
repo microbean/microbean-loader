@@ -35,12 +35,12 @@ module org.microbean.loader {
 
   exports org.microbean.loader;
   exports org.microbean.loader.spi;
-  
+
   provides Loader with DefaultLoader;
-  provides Provider with EnvironmentVariableProvider, SystemPropertyProvider, ProxyingProvider;
+  provides Provider with EnvironmentVariableProvider, ProxyingProvider, SystemPropertyProvider;
 
   requires transitive org.microbean.loader.api;
-  
+
   uses AmbiguityHandler;
   uses Provider;
 

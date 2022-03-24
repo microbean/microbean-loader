@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>microbean-loader-api</artifactId>
+  <artifactId>microbean-loader-jackson</artifactId>
 
   <parent>
     <groupId>org.microbean</groupId>
@@ -10,8 +10,8 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
-  <name>microBean™ Loader: API</name>
-  <description>microBean™ Loader: API</description>
+  <name>microBean™ Loader: Jackson</name>
+  <description>microBean™ Loader: Jackson</description>
 
   <dependencies>
 
@@ -20,29 +20,29 @@
 
 
     <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-development-annotations</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-invoke</artifactId>
-      <type>jar</type>
-      <scope>compile</scope>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-path</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.microbean</groupId>
-      <artifactId>microbean-type</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>microbean-loader-api</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>microbean-loader</artifactId>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>

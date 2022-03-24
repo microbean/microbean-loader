@@ -14,24 +14,13 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-import org.microbean.loader.api.Loader;
 
 /**
- * Provides packages related to loaders.
+ * Provides classes and interfaces related to the <em>service provider
+ * interface</em> of the default implementation of the microBean™
+ * Loader API.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-module org.microbean.loader.api {
-
-  exports org.microbean.loader.api;
-
-  requires transitive org.microbean.development.annotation;
-  requires transitive org.microbean.invoke;
-  requires transitive org.microbean.path;
-  requires org.microbean.qualifier;
-  requires transitive org.microbean.type;
-
-  uses Loader;
-
-}
+package org.microbean.loader.spi;

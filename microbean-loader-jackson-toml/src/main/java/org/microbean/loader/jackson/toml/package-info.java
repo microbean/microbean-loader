@@ -14,24 +14,13 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-import org.microbean.loader.api.Loader;
 
 /**
- * Provides packages related to loaders.
+ * Provides classes and interfaces for implementing a {@linkplain
+ * org.microbean.loader.jackson.JacksonProvider Jackson-based TOML
+ * provider}.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-module org.microbean.loader.api {
-
-  exports org.microbean.loader.api;
-
-  requires transitive org.microbean.development.annotation;
-  requires transitive org.microbean.invoke;
-  requires transitive org.microbean.path;
-  requires org.microbean.qualifier;
-  requires transitive org.microbean.type;
-
-  uses Loader;
-
-}
+package org.microbean.loader.jackson.toml;
