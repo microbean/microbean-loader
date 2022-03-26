@@ -212,33 +212,46 @@ public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
    */
   @Override // JacksonProvider<T>
   protected <T> TreeNode rootNode(final Loader<?> requestingLoader, final Path<? extends Type> absolutePath, final ObjectCodec objectCodec) {
-    TreeNode returnValue = null;
-    if (objectCodec != null) {
-      InputStream is = null;
-      RuntimeException runtimeException = null;
-      JsonParser parser = null;
+    if (objectCodec == null) {
+      return null;
+    }
+    InputStream is = null;
+    RuntimeException runtimeException = null;
+    JsonParser parser = null;
+    try {
+      is = this.inputStreamFunction.apply(requestingLoader, absolutePath);
+      if (is == null) {
+        return null;
+      }
+      parser = objectCodec.getFactory().createParser(is);
+      parser.setCodec(objectCodec);
+      return parser.readValueAsTree();
+    } catch (final IOException ioException) {
+      runtimeException = new UncheckedIOException(ioException.getMessage(), ioException);
+    } catch (final RuntimeException e) {
+      runtimeException = e;
+    } finally {
       try {
-        is = this.inputStreamFunction.apply(requestingLoader, absolutePath);
-        if (is != null) {
-          parser = objectCodec.getFactory().createParser(is);
-          parser.setCodec(objectCodec);
-          returnValue = parser.readValueAsTree();
+        if (parser != null) {
+          parser.setCodec(null);
+          parser.close();
         }
       } catch (final IOException ioException) {
-        runtimeException = new UncheckedIOException(ioException.getMessage(), ioException);
+        if (runtimeException == null) {
+          runtimeException = new UncheckedIOException(ioException.getMessage(), ioException);
+        } else {
+          runtimeException.addSuppressed(ioException);
+        }
       } catch (final RuntimeException e) {
-        runtimeException = e;
+        if (runtimeException == null) {
+          runtimeException = e;
+        } else {
+          runtimeException.addSuppressed(e);
+        }
       } finally {
         try {
-          if (parser != null) {
-            parser.setCodec(null);
-            parser.close();
-          }
-        } catch (final IOException ioException) {
-          if (runtimeException == null) {
-            runtimeException = new UncheckedIOException(ioException.getMessage(), ioException);
-          } else {
-            runtimeException.addSuppressed(ioException);
+          if (is != null) {
+            this.inputStreamReadConsumer.accept(is);
           }
         } catch (final RuntimeException e) {
           if (runtimeException == null) {
@@ -247,25 +260,13 @@ public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
             runtimeException.addSuppressed(e);
           }
         } finally {
-          try {
-            if (is != null) {
-              this.inputStreamReadConsumer.accept(is);
-            }
-          } catch (final RuntimeException e) {
-            if (runtimeException == null) {
-              runtimeException = e;
-            } else {
-              runtimeException.addSuppressed(e);
-            }
-          } finally {
-            if (runtimeException != null) {
-              throw runtimeException;
-            }
+          if (runtimeException != null) {
+            throw runtimeException;
           }
         }
       }
     }
-    return returnValue;
+    return null;
   }
 
 

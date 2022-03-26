@@ -84,10 +84,10 @@ public abstract class JacksonProvider<T> extends AbstractProvider<T> {
 
 
   /**
-   * Returns a {@link Value} suitable for the supplied {@link
-   * Loader} and {@link Path}, or {@code null} if there is no such
-   * {@link Value} now <strong>and if there never will be such a
-   * {@link Value}</strong> for the supplied arguments.
+   * Returns a {@link Value} suitable for the supplied {@link Loader}
+   * and {@link Path}, <strong>or {@code null} if there is no such
+   * {@link Value} now and if there never will be such a {@link
+   * Value}</strong> for the supplied arguments.
    *
    * <p>The following assertions will be true when this method is
    * called in the normal course of events:</p>

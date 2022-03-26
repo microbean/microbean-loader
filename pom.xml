@@ -37,6 +37,7 @@
   <modules>
     <module>microbean-loader-api</module>
     <module>microbean-loader-jackson-toml</module>
+    <module>microbean-loader-jackson-yaml</module>
     <module>microbean-loader-jackson</module>
     <module>microbean-loader</module>
   </modules>
@@ -55,7 +56,7 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      
+
 
       <!-- Normal dependencies. -->
 
@@ -73,7 +74,7 @@
         <version>0.0.7</version>
         <type>jar</type>
       </dependency>
-      
+
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-path</artifactId>
@@ -116,6 +117,13 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>microbean-loader-jackson-toml</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-loader-jackson-yaml</artifactId>
         <version>${project.version}</version>
         <type>jar</type>
       </dependency>
@@ -229,7 +237,7 @@
   </build>
 
   <properties>
-    
+
     <!-- site-maven-plugin properties; see https://github.com/github/maven-plugins/tree/master/github-site-plugin -->
     <github.site.dryRun>true</github.site.dryRun>
     <github.site.skip>true</github.site.skip>
@@ -244,7 +252,7 @@
 
     <jandex.indexName>jandex.idx</jandex.indexName>
     <jandex.verbose>true</jandex.verbose>
-    
+
     <jdkToolchainVendor>openjdk</jdkToolchainVendor>
 
     <!-- maven-compiler-plugin properties -->

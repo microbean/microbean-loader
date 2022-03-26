@@ -154,14 +154,12 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       // Pay attention.
       if (absolutePath == null || absolutePath.equals(Path.root())) {
         @SuppressWarnings("unchecked")
-        final Path<? extends Type> p = (Path<? extends Type>)Path.root();
-        this.absolutePath = p;
+        final Path<? extends Type> rootPath = (Path<? extends Type>)Path.root();
+        this.absolutePath = rootPath;
         this.deterministic = true;
         this.parent = this; // NOTE
         this.supplier = supplier == null ? this::returnThis : supplier; // NOTE
-        this.providers = List.copyOf(providers == null ? loadedProviders() : providers);
-        @SuppressWarnings("unchecked")
-        final Path<? extends Type> rootPath = (Path<? extends Type>)Path.root();
+        this.providers = providers == null ? loadedProviders() : List.copyOf(providers);
         this.loaderCache.put(rootPath, this); // NOTE
         // While the following call is in effect, our
         // final-but-as-yet-uninitialized ambiguityHandler field will

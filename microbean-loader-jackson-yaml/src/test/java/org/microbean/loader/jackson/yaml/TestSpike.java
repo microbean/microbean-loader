@@ -14,7 +14,7 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.microbean.loader.jackson.toml;
+package org.microbean.loader.jackson.yaml;
 
 import java.util.List;
 
@@ -47,14 +47,14 @@ final class TestSpike {
   @Test
   final void testSpike() {
 
-    // This treats the whole application.toml as a Frobnicator,
+    // This treats the whole application.yaml as a Frobnicator,
     // ignoring unknown properties.  I'm not sure this is a great use
     // case but it's at least possible.
     final Frobnicator f = loader().load(Frobnicator.class).orElse(null);
     assertNotNull(f);
     assertEquals(37, f.getFrobnicationInterval());
 
-    // This extracts a Blatz object out of application.toml named
+    // This extracts a Blatz object out of application.yaml named
     // "gorp", also ignoring unknown properties.
     final Blatz b = loader().load(Blatz.class, "gorp").orElse(null);
     assertNotNull(b);
