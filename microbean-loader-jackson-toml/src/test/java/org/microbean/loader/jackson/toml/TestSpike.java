@@ -29,6 +29,8 @@ import org.junit.jupiter.api.Test;
 
 import org.microbean.loader.api.Loader;
 
+import org.microbean.loader.jackson.Configuration;
+
 import org.microbean.path.Path;
 
 import org.microbean.qualifier.Qualifiers;
@@ -69,7 +71,7 @@ final class TestSpike {
                   getterVisibility = Visibility.NONE,
                   isGetterVisibility = Visibility.NONE,
                   setterVisibility = Visibility.NONE)
-  public static final class Blatz {
+  public static final class Blatz extends Configuration {
 
     private final String blatz;
 
@@ -92,7 +94,7 @@ final class TestSpike {
                   isGetterVisibility = Visibility.NONE,
                   setterVisibility = Visibility.NONE)
   // @JsonIgnoreProperties(ignoreUnknown = true)
-  public static final class Frobnicator {
+  public static final class Frobnicator extends Configuration {
 
     private final int frobnicationInterval;
 
@@ -105,11 +107,6 @@ final class TestSpike {
     @JsonProperty(value = "frobnicationInterval")
     public final int getFrobnicationInterval() {
       return this.frobnicationInterval;
-    }
-
-    @JsonAnySetter
-    private final void gorp(final String name, final Object value) {
-      System.out.println("*** setting unknown: " + name + " = " + value + "; value is of type: " + (value == null ? null : value.getClass().getName()));
     }
     
   }

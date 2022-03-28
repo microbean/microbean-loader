@@ -28,6 +28,8 @@ module org.microbean.loader.jackson {
 
   exports org.microbean.loader.jackson;
 
+  opens org.microbean.loader.jackson to com.fasterxml.jackson.databind;
+
   requires transitive com.fasterxml.jackson.core;
   requires transitive com.fasterxml.jackson.databind;
   requires java.logging;
