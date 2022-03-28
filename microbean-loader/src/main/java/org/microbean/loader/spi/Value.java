@@ -82,8 +82,6 @@ public final class Value<T> implements OptionalSupplier<T> {
    */
 
 
-  private final Qualifiers<? extends String, ?> qualifiers;
-
   private final Path<? extends Type> path;
 
   private final Supplier<? extends T> supplier;
@@ -99,13 +97,10 @@ public final class Value<T> implements OptionalSupplier<T> {
   /**
    * Creates a new {@link Value}.
    *
-   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
    * boolean)} constructor with the supplied arguments, {@code null}
    * for the value of the {@code defaults} parameter, and {@code true}
    * for the value of the {@code deterministic} parameter.</p>
-   *
-   * @param qualifiers the {@link Qualifiers} for which this {@link
-   * Value} is suitable; must not be {@code null}
    *
    * @param path the {@link Path}, possibly relative, for which this
    * {@link Value} is suitable; must not be {@code null}
@@ -113,24 +108,20 @@ public final class Value<T> implements OptionalSupplier<T> {
    * @param value the value that will be returned by the {@link
    * #get()} method; may be {@code null}
    *
-   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * @see #Value(Supplier, Path, Supplier, boolean)
    */
-  public Value(final Qualifiers<? extends String, ?> qualifiers,
-               final Path<? extends Type> path,
+  public Value(final Path<? extends Type> path,
                final T value) {
-    this(null, qualifiers, path, () -> value, true);
+    this(null, path, () -> value, true);
   }
 
   /**
    * Creates a new {@link Value}.
    *
-   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
    * boolean)} constructor with the supplied arguments, {@code null}
    * for the value of the {@code defaults} parameter, and {@code
    * false} for the value of the {@code deterministic} parameter.</p>
-   *
-   * @param qualifiers the {@link Qualifiers} for which this {@link
-   * Value} is suitable; must not be {@code null}
    *
    * @param path the {@link Path}, possibly relative, for which this
    * {@link Value} is suitable; must not be {@code null}
@@ -138,23 +129,19 @@ public final class Value<T> implements OptionalSupplier<T> {
    * @param supplier the actual {@link Supplier} that will return
    * values; must not be {@code null}
    *
-   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * @see #Value(Supplier, Path, Supplier, boolean)
    */
-  public Value(final Qualifiers<? extends String, ?> qualifiers,
-               final Path<? extends Type> path,
+  public Value(final Path<? extends Type> path,
                final Supplier<? extends T> supplier) {
-    this(null, qualifiers, path, supplier, supplier instanceof DeterministicSupplier);
+    this(null, path, supplier, supplier instanceof DeterministicSupplier);
   }
 
   /**
    * Creates a new {@link Value}.
    *
-   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
    * boolean)} constructor with the supplied arguments and {@code
    * null} for the value of the {@code defaults} parameter.</p>
-   *
-   * @param qualifiers the {@link Qualifiers} for which this {@link
-   * Value} is suitable; must not be {@code null}
    *
    * @param path the {@link Path}, possibly relative, for which this
    * {@link Value} is suitable; must not be {@code null}
@@ -166,22 +153,21 @@ public final class Value<T> implements OptionalSupplier<T> {
    * supplied {@code supplier} returns a singleton from its {@link
    * Supplier#get()} method
    *
-   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * @see #Value(Supplier, Path, Supplier, boolean)
    */
-  public Value(final Qualifiers<? extends String, ?> qualifiers,
-               final Path<? extends Type> path,
+  public Value(final Path<? extends Type> path,
                final Supplier<? extends T> supplier,
                final boolean deterministic) {
     // Because defaults are null, it actually doesn't matter what the
     // trailing boolean is for anything other than informational
     // purposes.
-    this(null, qualifiers, path, supplier, deterministic);
+    this(null, path, supplier, deterministic);
   }
 
   /**
    * Creates a new {@link Value}.
    *
-   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
    * boolean)} constructor with the supplied arguments and and {@code
    * false} for the value of the {@code deterministic} parameter.</p>
    *
@@ -190,28 +176,24 @@ public final class Value<T> implements OptionalSupplier<T> {
    * NoSuchElementException} or an {@link
    * UnsupportedOperationException}; may be {@code null}
    *
-   * @param qualifiers the {@link Qualifiers} for which this {@link
-   * Value} is suitable; must not be {@code null}
-   *
    * @param path the {@link Path}, possibly relative, for which this
    * {@link Value} is suitable; must not be {@code null}
    *
    * @param supplier the actual {@link Supplier} that will return
    * values; must not be {@code null}
    *
-   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * @see #Value(Supplier, Path, Supplier, boolean)
    */
   public Value(final Supplier<? extends T> defaults,
-               final Qualifiers<? extends String, ?> qualifiers,
                final Path<? extends Type> path,
                final Supplier<? extends T> supplier) {
-    this(defaults, qualifiers, path, supplier, supplier instanceof DeterministicSupplier);
+    this(defaults, path, supplier, supplier instanceof DeterministicSupplier);
   }
 
   /**
    * Creates a new {@link Value}.
    *
-   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
    * boolean)} constructor with the value of the {@code
    * defaults} parameter and arguments derived from the supplied {@code
    * source}.</p>
@@ -226,18 +208,18 @@ public final class Value<T> implements OptionalSupplier<T> {
    *
    * @exception NullPointerException if {@code source} is {@code null}
    *
-   * @see #Value(Supplier, Qualifiers, Path, Supplier,
+   * @see #Value(Supplier, Path, Supplier,
    * boolean)
    */
   public Value(final Supplier<? extends T> defaults,
                final Value<T> source) {
-    this(defaults, source.qualifiers(), source.path(), source, source.deterministic());
+    this(defaults, source.path(), source, source.deterministic());
   }
 
   /**
    * Creates a new {@link Value}.
    *
-   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
    * boolean)} constructor with no defaults and arguments
    * derived from the supplied {@code source}.</p>
    *
@@ -246,14 +228,14 @@ public final class Value<T> implements OptionalSupplier<T> {
    *
    * @exception NullPointerException if {@code source} is {@code null}
    *
-   * @see #Value(Supplier, Qualifiers, Path, Supplier,
+   * @see #Value(Supplier, Path, Supplier,
    * boolean)
    */
   public Value(final Value<T> source) {
     // Because defaults are null, it actually doesn't matter what the
     // trailing two booleans are for anything other than informational
     // purposes.
-    this(null, source.qualifiers(), source.path(), source, source.deterministic());
+    this(null, source.path(), source, source.deterministic());
   }
 
   /**
@@ -263,9 +245,6 @@ public final class Value<T> implements OptionalSupplier<T> {
    * Value}'s {@link #get()} method throws either a {@link
    * NoSuchElementException} or an {@link
    * UnsupportedOperationException}; may be {@code null}
-   *
-   * @param qualifiers the {@link Qualifiers} for which this {@link
-   * Value} is suitable; must not be {@code null}
    *
    * @param path the {@link Path}, possibly relative, for which this
    * {@link Value} is suitable; must not be {@code null}
@@ -280,12 +259,10 @@ public final class Value<T> implements OptionalSupplier<T> {
    * @see #get()
    */
   public Value(final Supplier<? extends T> defaults,
-               final Qualifiers<? extends String, ?> qualifiers,
                final Path<? extends Type> path,
                final Supplier<? extends T> supplier,
                final boolean deterministic) {
     super();
-    this.qualifiers = Objects.requireNonNull(qualifiers, "qualifiers");
     this.path = Objects.requireNonNull(path, "path");
     this.deterministic = deterministic;
     if (supplier == null) {
@@ -358,10 +335,11 @@ public final class Value<T> implements OptionalSupplier<T> {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    *
-   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * @see #Value(Supplier, Path, Supplier, boolean)
    */
+  @Convenience
   public final Qualifiers<? extends String, ?> qualifiers() {
-    return this.qualifiers;
+    return this.path().qualifiers();
   }
 
   /**
@@ -378,7 +356,7 @@ public final class Value<T> implements OptionalSupplier<T> {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    *
-   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * @see #Value(Supplier, Path, Supplier, boolean)
    */
   public final Path<? extends Type> path() {
     return this.path;
@@ -386,13 +364,13 @@ public final class Value<T> implements OptionalSupplier<T> {
 
   /**
    * Invokes the {@link Supplier#get() get()} method of the {@link
-   * Supplier} supplied at {@linkplain #Value(Supplier, Qualifiers,
+   * Supplier} supplied at {@linkplain #Value(Supplier, 
    * Path, Supplier, boolean) construction time} and returns its
    * value, which may be {@code null}.
    *
    * @return tbe return value of an invocation of the {@link
    * Supplier#get() get()} method of the {@link Supplier} supplied at
-   * {@linkplain #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * {@linkplain #Value(Supplier, Path, Supplier, boolean)
    * construction time}, which may be {@code null}
    *
    * @exception NoSuchElementException if this method should no longer
@@ -403,19 +381,19 @@ public final class Value<T> implements OptionalSupplier<T> {
    * be invoked because there is no chance it will ever produce a
    * suitable value again
    *
-   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * @see #Value(Supplier, Path, Supplier, boolean)
    *
    * @nullability This method may return {@code null}.
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads, provided that the {@link Supplier} supplied at
-   * {@linkplain #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * {@linkplain #Value(Supplier, Path, Supplier, boolean)
    * construction time} is also safe for concurrent use by multiple
    * threads.
    *
    * @idempotency This method is as idempotent and deterministic as
    * the {@link Supplier} supplied at {@linkplain #Value(Supplier,
-   * Qualifiers, Path, Supplier, boolean) construction time}.
+   * Path, Supplier, boolean) construction time}.
    */
   @Override // Supplier<T>
   public final T get() {
@@ -424,17 +402,17 @@ public final class Value<T> implements OptionalSupplier<T> {
 
   /**
    * Returns {@code true} if and only if it is known that the {@link
-   * Supplier} supplied at {@linkplain #Value(Supplier, Qualifiers,
+   * Supplier} supplied at {@linkplain #Value(Supplier, 
    * Path, Supplier, boolean) construction time} will return
    * one and only one value from its {@link Supplier#get() get()}
    * method.
    *
    * <p>If there were no defaults supplied at {@linkplain
-   * #Value(Supplier, Qualifiers, Path, Supplier, boolean)
+   * #Value(Supplier, Path, Supplier, boolean)
    * construction time}, then this method is informational only.</p>
    *
    * @return {@code true} if and only if it is known that the {@link
-   * Supplier} supplied at {@linkplain #Value(Supplier, Qualifiers,
+   * Supplier} supplied at {@linkplain #Value(Supplier, 
    * Path, Supplier, boolean) construction time} will return
    * one and only one value from its {@link Supplier#get() get()}
    * method

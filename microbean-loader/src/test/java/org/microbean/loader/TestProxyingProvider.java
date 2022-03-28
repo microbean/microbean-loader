@@ -120,7 +120,6 @@ final class TestProxyingProvider {
           @SuppressWarnings("unchecked")
           final Value<T> returnValue =
             new Value<>(null, // no defaults
-                        Qualifiers.of(),
                         Path.of(Element.of(Qualifiers.of("arg0", "LR"), wheelClass, "wheel")),
                         () -> (T)new Wheel() {
                             @Override

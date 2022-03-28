@@ -286,7 +286,6 @@ public abstract class JacksonProvider<T> extends AbstractProvider<T> {
                                final Path<? extends Type> absolutePath,
                                final T value) {
     return new Value<>(null,
-                       Qualifiers.of(),
                        Path.of(absolutePath.qualified()),
                        () -> value,
                        true);

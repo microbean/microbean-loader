@@ -123,7 +123,6 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
         if (value != null) {
           return
             new Value<>(null, // no defaults
-                        Qualifiers.of(),
                         absolutePath,
                         () -> value,
                         true); // deterministic

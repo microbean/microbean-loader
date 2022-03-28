@@ -112,7 +112,6 @@ public class ProxyingProvider extends AbstractProvider<Object> {
       @SuppressWarnings("unchecked")
       final Value<T> returnValue =
         new Value<>(null, // no defaults
-                    Qualifiers.of(),
                     this.path(requestor, absolutePath),
                     () -> (T)this.proxies.computeIfAbsent(absolutePath,
                                                           p -> this.newProxyInstance(requestor, p, JavaTypes.erase(p.qualified()))),
