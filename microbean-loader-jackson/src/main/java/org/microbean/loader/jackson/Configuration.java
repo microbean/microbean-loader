@@ -17,14 +17,20 @@
 package org.microbean.loader.jackson;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
+import org.microbean.development.annotation.Experimental;
+import org.microbean.development.annotation.Incomplete;
+
 import org.microbean.qualifier.Qualifiers;
 
+@Experimental
+@Incomplete
 @JsonAutoDetect(creatorVisibility = JsonAutoDetect.Visibility.NONE,
                 fieldVisibility = JsonAutoDetect.Visibility.NONE,
                 getterVisibility = JsonAutoDetect.Visibility.NONE,
@@ -32,18 +38,38 @@ import org.microbean.qualifier.Qualifiers;
                 setterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Configuration {
 
-  private Qualifiers<? extends String, ?> qualifiers;
+  private Map<? extends String, ?> qualifiersMap;
 
   private final Map<String, Object> any;
 
   public Configuration() {
     super();
-    this.qualifiers = Qualifiers.of();
+    this.qualifiersMap = Map.of();
     this.any = new LinkedHashMap<>();
   }
 
-  public Qualifiers<? extends String, ?> qualifiers() {
-    return this.qualifiers;
+  public final Qualifiers<? extends String, ?> qualifiers() {
+    return this.qualifiers(List.of());
+  }
+  
+  @SuppressWarnings("unchecked")
+  public final Qualifiers<? extends String, ?> qualifiers(final Iterable<? extends String> names) {
+    Map<? extends String, ?> map = this.qualifiersMap;
+    if (map == null || map.isEmpty()) {
+      return Qualifiers.of();
+    }
+    if (names != null) {
+      for (final String name : names) {
+        Object value = map.get(name);
+        if (value == null) {
+          return Qualifiers.of();
+        } else if (value instanceof Map) {
+          map = (Map<? extends String, ?>)value;
+        }
+      }
+    }
+    map.entrySet().removeIf(e -> e.getValue() instanceof Map);
+    return Qualifiers.of(map); // TODO: check
   }
 
   protected final Object any(final String name) {
@@ -55,11 +81,11 @@ public class Configuration {
   private final void any(final String name, final Object value) {
     if (name.equals("@qualifiers")) {
       if (value == null) {
-        this.qualifiers = Qualifiers.of();
+        this.qualifiersMap = Map.of();
       } else if (value instanceof Qualifiers) {
-        this.qualifiers = (Qualifiers<? extends String, ?>)value;
+        this.qualifiersMap = ((Qualifiers<? extends String, ?>)value).toMap();
       } else if (value instanceof Map) {
-        this.qualifiers = Qualifiers.of((Map<? extends String, ?>)value);
+        this.qualifiersMap = (Map<? extends String, ?>)value;
       } else {
         this.any.put(name, value);
       }
@@ -70,7 +96,7 @@ public class Configuration {
 
   @Override // Object
   public int hashCode() {
-    return Objects.hash(this.qualifiers, this.any);
+    return Objects.hash(this.qualifiersMap, this.any);
   }
 
   @Override // Object
@@ -80,7 +106,7 @@ public class Configuration {
     } else if (other != null && other.getClass() == this.getClass()) {
       final Configuration her = (Configuration)other;
       return
-        Objects.equals(this.qualifiers, her.qualifiers) &&
+        Objects.equals(this.qualifiersMap, her.qualifiersMap) &&
         Objects.equals(this.any, her.any);
     } else {
       return false;
@@ -89,14 +115,7 @@ public class Configuration {
 
   @Override // Object
   public String toString() {
-    final Qualifiers<?, ?> q = this.qualifiers();
-    if (q == null || q.isEmpty()) {
-      return this.any.toString();      
-    } else if (this.any.isEmpty()) {
-      return q.toString();
-    } else {
-      return q.toString() + " " + this.any.toString();
-    }
+    return this.qualifiersMap + " " + this.any;
   }
   
 }

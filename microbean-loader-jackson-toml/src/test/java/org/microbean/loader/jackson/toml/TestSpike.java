@@ -55,6 +55,9 @@ final class TestSpike {
     final Frobnicator f = loader().load(Frobnicator.class).orElse(null);
     assertNotNull(f);
     assertEquals(37, f.getFrobnicationInterval());
+    Qualifiers<?, ?> q = f.qualifiers();
+    assertEquals(1, q.size());
+    assertEquals("b", q.get("a"));
 
     // This extracts a Blatz object out of application.toml named
     // "gorp", also ignoring unknown properties.
