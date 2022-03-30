@@ -421,6 +421,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     return returnValue;
   }
 
+  @SuppressWarnings("unchecked")
   private final <U> DefaultLoader<U> computeLoader(final DefaultLoader<?> requestor, final Path<? extends Type> absolutePath) {
     final Qualifiers<? extends String, ?> qualifiers = absolutePath.qualifiers();
     final AmbiguityHandler ambiguityHandler = requestor.ambiguityHandler();
@@ -441,7 +442,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
         } else {
           push(map, absolutePath, candidateProvider);
           try {
-            candidate = candidateProvider.get(requestor, absolutePath);
+            candidate = (Value<U>)candidateProvider.get(requestor, absolutePath);
           } finally {
             pop(map, absolutePath);
           }
@@ -477,7 +478,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
           push(map, absolutePath, provider);
           try {
-            value = provider.get(requestor, absolutePath);
+            value = (Value<U>)provider.get(requestor, absolutePath);
           } finally {
             pop(map, absolutePath);
           }
@@ -505,7 +506,19 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
             }
 
             // Let's score Qualifiers first, not paths.  This is an
-            // arbitrary decision.
+            // arbitrary decision, but one grounded in reality: most
+            // often qualifiers are both empty and so this is very
+            // quick, and when they are not empty, in real-world
+            // situations they're normally completely disjoint.  Get
+            // all this out of the way early.
+            //
+            // We score qualifiers in a method devoted to them rather
+            // than just folding the qualifier scoring into the path
+            // scoring method because the scoring systems may produce
+            // wildly different numbers, and if the path- and
+            // qualifier-scoring systems use, for example, size() in
+            // their algorithms, you don't want a huge pile of
+            // qualifiers accidentally affecting a path score.
             final int valueQualifiersScore = ambiguityHandler.score(qualifiers, value.qualifiers());
             if (valueQualifiersScore < candidateQualifiersScore) {
               candidate = new Value<>(value, candidate);
@@ -520,7 +533,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
               break VALUE_EVALUATION_LOOP;
             }
 
-            // The Qualifiers scores were equal.  Let's do paths.
+            // The Qualifiers scores were equal (extremely common).
+            // Let's do paths.
             final int valuePathScore = ambiguityHandler.score(absolutePath, value.path());
 
             if (valuePathScore < candidatePathScore) {

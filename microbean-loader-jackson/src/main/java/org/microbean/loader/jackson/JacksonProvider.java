@@ -144,7 +144,7 @@ public abstract class JacksonProvider<T> extends AbstractProvider<T> {
    * but are not assumed to be deterministic.
    */
   @Override // AbstractProvider<Object>
-  public final <T> Value<T> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());

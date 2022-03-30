@@ -46,7 +46,7 @@ import org.microbean.invoke.OptionalSupplier;
 import org.microbean.loader.api.Loader;
 
 import org.microbean.loader.spi.AbstractProvider;
-import org.microbean.loader.spi.LoaderProxy;
+import org.microbean.loader.spi.LoaderFacade;
 import org.microbean.loader.spi.Value;
 
 import org.microbean.path.Path;
@@ -103,18 +103,18 @@ public class ProxyingProvider extends AbstractProvider<Object> {
 
 
   @Override // Provider
-  public final <T> Value<T> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
 
     if (this.isProxiable(requestor, absolutePath)) {
       @SuppressWarnings("unchecked")
-      final Value<T> returnValue =
+      final Value<?> returnValue =
         new Value<>(null, // no defaults
                     this.path(requestor, absolutePath),
-                    () -> (T)this.proxies.computeIfAbsent(absolutePath,
-                                                          p -> this.newProxyInstance(requestor, p, JavaTypes.erase(p.qualified()))),
+                    () -> this.proxies.computeIfAbsent(absolutePath,
+                                                       p -> this.newProxyInstance(requestor, p, JavaTypes.erase(p.qualified()))),
                     true); // deterministic
       return returnValue;
     } else {
@@ -175,9 +175,8 @@ public class ProxyingProvider extends AbstractProvider<Object> {
   protected boolean isProxiable(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     final Class<?> c = JavaTypes.erase(absolutePath.qualified());
     if (c.isInterface() && !c.isHidden() && !c.isSealed()) {
-      final LoaderProxy proxyAnnotation = c.getAnnotation(LoaderProxy.class);
-      if (proxyAnnotation == null || proxyAnnotation.value()) {
-
+      final LoaderFacade facadeAnnotation = c.getAnnotation(LoaderFacade.class);
+      if (facadeAnnotation == null || facadeAnnotation.value()) {
         final Method[] methods = c.getMethods();
         switch (methods.length) {
         case 0:

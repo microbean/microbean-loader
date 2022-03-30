@@ -37,7 +37,7 @@ import org.microbean.type.Type.CovariantSemantics;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-@LoaderProxy(false)
+@LoaderFacade(false)
 public interface AmbiguityHandler {
 
   /**
@@ -182,6 +182,12 @@ public interface AmbiguityHandler {
    * must follow suit or undefined behavior elsewhere in this
    * framework will result.</p>
    *
+   * <p>In the normal course of events, this method will be called
+   * after a call to {@link #score(Qualifiers, Qualifiers)}, and so
+   * there is normally no need for an implementation of this method to
+   * consult a {@link Path}'s {@linkplain Path#qualifiers() affiliated
+   * <code>Qualifiers</code>}.</p>
+   *
    * @param absoluteReferencePath the {@link Path} against which to
    * score the supplied {@code valuePath}; must not be {@code null};
    * must adhere to the preconditions above
@@ -227,9 +233,14 @@ public interface AmbiguityHandler {
     for (int valuePathIndex = 0; valuePathIndex < valuePath.size(); valuePathIndex++) {
       final int referencePathIndex = lastValuePathIndex + valuePathIndex;
 
+      // TODO: wait a minute, we already did all this in
+      // #compatible(Element, Element) below.
+      
       final Element<?> referenceElement = absoluteReferencePath.get(referencePathIndex);
       final Element<?> valueElement = valuePath.get(valuePathIndex);
       if (!referenceElement.name().equals(valueElement.name())) {
+        // TODO: empty names? Do they have special significance here?
+        // See #compatible(Element, Element) below.
         return Integer.MIN_VALUE;
       }
 
@@ -247,37 +258,8 @@ public interface AmbiguityHandler {
 
       if (!(referenceObject instanceof Type) || !(valueObject instanceof Type)) {
         return Integer.MIN_VALUE;
-      }
-
-      final Type referenceType = (Type)referenceObject;
-      final Type valueType = (Type)valueObject;
-
-      if (!CovariantSemantics.INSTANCE.assignable(referenceType, valueType)) {
+      } else if (!CovariantSemantics.INSTANCE.assignable((Type)referenceObject, (Type)valueObject)) {
         return Integer.MIN_VALUE;
-      }
-
-      final Qualifiers<?, ?> referenceQualifiers = referenceElement.qualifiers();
-      final Qualifiers<?, ?> valueQualifiers = valueElement.qualifiers();
-      if (referenceQualifiers == null) {
-        if (valueQualifiers != null) {
-          return Integer.MIN_VALUE;
-        }
-      } else if (valueQualifiers == null || referenceQualifiers.size() != valueQualifiers.size()) {
-        return Integer.MIN_VALUE;
-      }
-
-      for (final Object referenceKey : referenceQualifiers.toMap().keySet()) {
-        final Object valueValue = valueQualifiers.get(referenceKey);
-        if (valueValue == null) {
-          assert !valueQualifiers.containsKey(referenceKey); // qualifiers cannot have null values
-          // The value is indifferent with respect to this particular
-          // qualifier key.  It *could* be suitable, but not *as*
-          // suitable as one that matched.  Don't adjust the score.
-        } else if (referenceQualifiers.get(referenceKey).equals(valueValue)) {
-          score++;
-        } else {
-          return Integer.MIN_VALUE;
-        }
       }
 
     }

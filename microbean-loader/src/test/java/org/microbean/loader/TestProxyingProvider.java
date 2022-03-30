@@ -33,6 +33,7 @@ import org.microbean.path.Path.Element;
 import org.microbean.qualifier.Qualifiers;
 
 import org.microbean.loader.spi.AbstractProvider;
+import org.microbean.loader.spi.LoaderFacade;
 import org.microbean.loader.spi.Value;
 
 import org.microbean.type.JavaTypes;
@@ -71,6 +72,7 @@ final class TestProxyingProvider {
     assertEquals(24, car.getWheel("LR").getDiameterInInches());
   }
 
+  @LoaderFacade
   public static interface Car {
 
     public Powertrain getPowertrain();
@@ -79,12 +81,14 @@ final class TestProxyingProvider {
 
   }
 
+  @LoaderFacade
   public static interface Powertrain {
 
     public Engine getEngine();
 
   }
 
+  @LoaderFacade
   public static interface Engine {
 
     public default void start() {
@@ -93,6 +97,7 @@ final class TestProxyingProvider {
 
   }
 
+  @LoaderFacade
   public static interface Wheel {
 
     public default int getDiameterInInches() {
@@ -108,7 +113,7 @@ final class TestProxyingProvider {
     }
 
     @Override
-    public final <T> Value<T> get(final Loader<?> requestor, final Path<? extends Type> path) {
+    public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> path) {
       final Element<? extends Type> last = path.lastElement();
       if ("wheel".equals(last.name())) {
         final Qualifiers<?, ?> lastQualifiers = last.qualifiers();        
@@ -118,10 +123,10 @@ final class TestProxyingProvider {
           final Class<?> wheelClass = JavaTypes.erase(path.qualified());
           assertSame(Wheel.class, wheelClass);
           @SuppressWarnings("unchecked")
-          final Value<T> returnValue =
+          final Value<?> returnValue =
             new Value<>(null, // no defaults
                         Path.of(Element.of(Qualifiers.of("arg0", "LR"), wheelClass, "wheel")),
-                        () -> (T)new Wheel() {
+                        () -> new Wheel() {
                             @Override
                             public final int getDiameterInInches() {
                               return 24;

@@ -488,8 +488,8 @@ public final class Value<T> implements OptionalSupplier<T> {
 
   /**
    * Returns a hashcode for this {@link Value} calculated from its
-   * {@link #qualifiers() Qualifiers}, its {@link #path() Path}, and
-   * {@linkplain #deterministic() whether it is deterministic}.
+   * {@link #path() Path}, and {@linkplain #deterministic() whether it
+   * is deterministic}.
    *
    * @return a hashcode for this {@link Value}
    *

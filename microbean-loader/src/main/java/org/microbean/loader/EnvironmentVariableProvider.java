@@ -93,7 +93,7 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
    * absolutePath} is {@code null}
    */
   @Override // AbstractProvider<String>
-  public final <T> Value<T> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
@@ -119,7 +119,7 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
       final String name = absolutePath.lastElement().name();
       if (!name.isEmpty()) {
         @SuppressWarnings("unchecked")
-        final T value = (T)System.getenv(name);
+        final String value = System.getenv(name);
         if (value != null) {
           return
             new Value<>(null, // no defaults

@@ -104,8 +104,6 @@ public interface Provider {
    *
    * </ul>
    *
-   * @param <T> the type of value to return
-   *
    * @param requestor the {@link Loader} seeking a {@link Value};
    * must not be {@code null}
    *
@@ -134,6 +132,6 @@ public interface Provider {
    * @idempotency Implementations of this method must be idempotent
    * but are not assumed to be deterministic.
    */
-  public <T> Value<T> get(final Loader<?> requestor, final Path<? extends Type> absolutePath);
+  public Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath);
 
 }

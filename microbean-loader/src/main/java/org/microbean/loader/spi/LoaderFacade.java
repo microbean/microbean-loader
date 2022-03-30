@@ -24,9 +24,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation that informs any {@link Provider} implementation that
- * wishes to proxy a class or interface whether the class or interface
- * in question may be proxied.
+ * An annotation designating an interface as one that is backed by
+ * various {@link
+ * org.microbean.loader.api.Loader#load(org.microbean.path.Path)}
+ * calls, and that informs any {@link Provider} implementation that
+ * wishes to proxy it that the interface in question may be proxied.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
@@ -35,7 +37,7 @@ import java.lang.annotation.Target;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE, ElementType.METHOD })
-public @interface LoaderProxy {
+public @interface LoaderFacade {
 
   /**
    * Whether the annotated element may be proxied or not.

@@ -148,7 +148,7 @@ public final class SystemPropertyProvider extends AbstractProvider<Object> {
    * <em>not</em> guaranteed to be idempotent or deterministic.
    */
   @Override // AbstractProvider<Object>
-  public <T> Value<T> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  public Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
@@ -158,8 +158,8 @@ public final class SystemPropertyProvider extends AbstractProvider<Object> {
       final String name = last.name();
       if (!name.isEmpty()) {
         @SuppressWarnings("unchecked")
-        final Class<T> pathTypeErasure = (Class<T>)JavaTypes.erase(absolutePath.qualified());
-        final Supplier<T> s;
+        final Class<?> pathTypeErasure = JavaTypes.erase(absolutePath.qualified());
+        final Supplier<?> s;
         if (CharSequence.class.isAssignableFrom(pathTypeErasure)) {
           s = () -> getCharSequenceAssignableSystemProperty(name, pathTypeErasure);
         } else {
