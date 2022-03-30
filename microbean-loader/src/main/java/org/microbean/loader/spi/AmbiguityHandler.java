@@ -18,6 +18,8 @@ package org.microbean.loader.spi;
 
 import java.lang.reflect.Type;
 
+import java.util.NoSuchElementException;
+
 import org.microbean.development.annotation.Experimental;
 
 import org.microbean.loader.api.Loader;
@@ -171,11 +173,6 @@ public interface AmbiguityHandler {
    * #compatible(Element, Element)
    * AmbiguityHandler::compatible});</pre></blockquote>
    *
-   * <p>Note that such an invocation is <em>not</em> made by the
-   * default implementation of this method, but logically precedes it
-   * when this method is called in the natural course of events by the
-   * {@link Loader#load(Path)} method.</p>
-   *
    * <p>If, during scoring, {@code valuePath} is found to be wholly
    * unsuitable for further consideration or processing, {@link
    * Integer#MIN_VALUE} will be returned to indicate this.  Overrides
@@ -229,39 +226,15 @@ public interface AmbiguityHandler {
     assert lastValuePathIndex >= 0 : "absoluteReferencePath: " + absoluteReferencePath + "; valuePath: " + valuePath;
     assert lastValuePathIndex + valuePath.size() == absoluteReferencePath.size() : "absoluteReferencePath: " + absoluteReferencePath + "; valuePath: " + valuePath;
 
-    int score = valuePath.size();
+    // Multiplying by 10 (arbitrary) gives us some headroom for score
+    // boosts based on path element name equality; see below.
+    int score = 10 * valuePath.size();
     for (int valuePathIndex = 0; valuePathIndex < valuePath.size(); valuePathIndex++) {
-      final int referencePathIndex = lastValuePathIndex + valuePathIndex;
-
-      // TODO: wait a minute, we already did all this in
-      // #compatible(Element, Element) below.
-      
-      final Element<?> referenceElement = absoluteReferencePath.get(referencePathIndex);
-      final Element<?> valueElement = valuePath.get(valuePathIndex);
-      if (!referenceElement.name().equals(valueElement.name())) {
-        // TODO: empty names? Do they have special significance here?
-        // See #compatible(Element, Element) below.
-        return Integer.MIN_VALUE;
+      // We already know they're *compatible*, but boost the score if
+      // they're *equal*.
+      if (absoluteReferencePath.get(lastValuePathIndex + valuePathIndex).name().equals(valuePath.get(valuePathIndex).name())) {
+        ++score;
       }
-
-      final Object referenceObject = referenceElement.qualified();
-      final Object valueObject = valueElement.qualified();
-      if (referenceObject == null) {
-        if (valueObject == null) {
-          continue;
-        } else {
-          return Integer.MIN_VALUE;
-        }
-      } else if (valueObject == null) {
-        return Integer.MIN_VALUE;
-      }
-
-      if (!(referenceObject instanceof Type) || !(valueObject instanceof Type)) {
-        return Integer.MIN_VALUE;
-      } else if (!CovariantSemantics.INSTANCE.assignable((Type)referenceObject, (Type)valueObject)) {
-        return Integer.MIN_VALUE;
-      }
-
     }
     return score;
   }
@@ -283,12 +256,12 @@ public interface AmbiguityHandler {
    * {@code null}
    *
    * @param p0 the {@link Provider} that supplied the first {@link
-   * Value}; must not be {@code null}
+   * Value}; must not be {@code null}; must not be equal to {@code p1}
    *
    * @param v0 the first {@link Value}; must not be {@code null}
    *
    * @param p1 the {@link Provider} that supplied the second {@link
-   * Value}; must not be {@code null}
+   * Value}; must not be {@code null}; must not be equal to {@code p0}
    *
    * @param v1 the second {@link Value}; must not be {@code null}
    *
