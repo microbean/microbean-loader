@@ -39,6 +39,8 @@ import java.util.function.Supplier;
 
 import org.microbean.development.annotation.Experimental;
 
+import org.microbean.invoke.DeterministicSupplier;
+
 import org.microbean.loader.api.Loader;
 
 import org.microbean.path.Path;
@@ -82,13 +84,11 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   // Package-private for testing only.
   final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache;
 
-  private final boolean deterministic;
-
   private final Path<? extends Type> absolutePath;
 
   private final DefaultLoader<?> parent;
 
-  private final Supplier<? extends T> supplier;
+  private final DeterministicSupplier<? extends T> supplier;
 
   private final Collection<Provider> providers;
 
@@ -112,7 +112,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   public DefaultLoader() {
     this(new ConcurrentHashMap<Path<? extends Type>, DefaultLoader<?>>(),
          null, // providers
-         true, // deterministic
          null, // parent,
          null, // absolutePath
          null, // Supplier
@@ -122,30 +121,36 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   private DefaultLoader(final DefaultLoader<T> loader) {
     this(loader.loaderCache,
          loader.providers(),
-         loader.deterministic(),
          loader.parent(),
          loader.path(),
          loader.supplier,
          loader.ambiguityHandler());
   }
 
-  private DefaultLoader(final DefaultLoader<T> loader,
-                        final Provider provider) {
+  private DefaultLoader(final DefaultLoader<T> loader, final AmbiguityHandler ambiguityHandler) {
+    this(loader.loaderCache,
+         loader.providers(),
+         loader.parent(),
+         loader.path(),
+         loader.supplier,
+         ambiguityHandler);
+  }
+  
+  private DefaultLoader(final DefaultLoader<T> loader, final Provider provider) {
     this(loader.loaderCache,
          add(loader.providers(), provider),
-         loader.deterministic(),
          loader.parent(),
          loader.path(),
          loader.supplier,
          loader.ambiguityHandler());
   }
 
+  @SuppressWarnings("unchecked")
   private DefaultLoader(final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache,
                         final Collection<? extends Provider> providers,
-                        final boolean deterministic,
                         final DefaultLoader<?> parent, // if null, will end up being "this" if absolutePath is null or Path.root()
                         final Path<? extends Type> absolutePath,
-                        final Supplier<? extends T> supplier, // if null, will end up being () -> this if absolutePath is null or Path.root()
+                        final DeterministicSupplier<? extends T> supplier, // if null, will end up being () -> this if absolutePath is null or Path.root()
                         final AmbiguityHandler ambiguityHandler) {
     super();
     this.loaderCache = Objects.requireNonNull(loaderCache, "loaderCache");
@@ -153,12 +158,10 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       // Bootstrap case, i.e. the zero-argument constructor called us.
       // Pay attention.
       if (absolutePath == null || absolutePath.equals(Path.root())) {
-        @SuppressWarnings("unchecked")
         final Path<? extends Type> rootPath = (Path<? extends Type>)Path.root();
         this.absolutePath = rootPath;
-        this.deterministic = true;
         this.parent = this; // NOTE
-        this.supplier = supplier == null ? this::returnThis : supplier; // NOTE
+        this.supplier = supplier == null ? new RootLoaderSupplier<>((T)this) : supplier;
         this.providers = providers == null ? loadedProviders() : List.copyOf(providers);
         this.loaderCache.put(rootPath, this); // NOTE
         // While the following call is in effect, our
@@ -179,7 +182,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       throw new IllegalArgumentException("!parent.path().absolute(): " + parent.path());
     } else {
       this.absolutePath = absolutePath;
-      this.deterministic = deterministic;
       this.parent = parent;
       this.supplier = Objects.requireNonNull(supplier, "supplier");
       this.providers = List.copyOf(providers);
@@ -219,12 +221,47 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    *
    * @return a {@link DefaultLoader} that {@linkplain #providers()
    * uses} the additional {@link Provider}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is not idempotent (it usually creates a
+   * new {@link DefaultLoader} to return) but is deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
    */
   public final DefaultLoader<T> plus(final Provider provider) {
-    if (provider == null) {
+    return provider == null ? this : new DefaultLoader<>(this, provider);
+  }
+
+  /**
+   * Returns a {@link DefaultLoader} that {@linkplain
+   * #ambiguityHandler() uses the supplied
+   * <code>AmbiguityHandler</code>}.
+   *
+   * @param ambiguityHandler the {@link AmbiguityHandler}; must not be
+   * {@code null}
+   *
+   * @return a {@link DefaultLoader} that {@linkplain
+   * #ambiguityHandler() uses the supplied
+   * <code>AmbiguityHandler</code>}
+   *
+   * @exception NullPointerException if {@code ambiguityHandler} is
+   * {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is not idempotent (it usually creates a
+   * new {@link DefaultLoader} to return) but is deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final DefaultLoader<T> with(final AmbiguityHandler ambiguityHandler) {
+    if (ambiguityHandler == this.ambiguityHandler()) {
       return this;
     } else {
-      return new DefaultLoader<>(this, provider);
+      return new DefaultLoader<>(this, ambiguityHandler);
     }
   }
 
@@ -340,7 +377,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    * #get()} method is deterministic; {@code false} otherwise
    */
   public final boolean deterministic() {
-    return this.deterministic;
+    final DeterministicSupplier<?> s = this.supplier;
+    return s == null ? true : s.deterministic();
   }
 
   @Override // Loader<T>
@@ -580,22 +618,12 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
         }
       }
     }
-    final Supplier<U> supplier;
-    final boolean deterministic;
-    if (candidate == null) {
-      supplier = DefaultLoader::throwNoSuchElementException;
-      deterministic = true;
-    } else {
-      supplier = candidate;
-      deterministic = candidate.deterministic();
-    }
     return
       new DefaultLoader<>(this.loaderCache,
                           providers,
-                          deterministic,
                           requestor, // parent
                           absolutePath,
-                          supplier,
+                          candidate == null ? new AbsenceSupplier<>() : candidate,
                           ambiguityHandler);
   }
 
@@ -608,6 +636,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   /*
    * Static methods.
    */
+
 
   private static final <T> Collection<T> add(final Collection<? extends T> c, final T e) {
     if (c == null || c.isEmpty()) {
@@ -641,9 +670,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   }
 
   private static final boolean isSelectable(final Provider provider, final Path<? extends Type> absolutePath) {
-    final Type upperBound = provider.upperBound();
-    final Type pathType = absolutePath.qualified();
-    return CovariantSemantics.INSTANCE.assignable(upperBound, pathType);
+    return CovariantSemantics.INSTANCE.assignable(provider.upperBound(), absolutePath.qualified());
   }
 
   static final Collection<Provider> loadedProviders() {
@@ -709,7 +736,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       throw new IllegalArgumentException("absoluteReferencePath: " + absoluteReferencePath);
     }
     final Qualifiers<?, ?> q1 = absoluteReferencePath.qualifiers();
-    // Remember that a Path's Qualifiers include the Qualifiers of every Path.Element in the Path.
+    // Remember that a Path's Qualifiers include the Qualifiers of
+    // every Path.Element in the Path.
     if (q1 != null && !q1.isEmpty()) {
       final Qualifiers<?, ?> q2 = valuePath.qualifiers();
       if (q2 != null && !q2.isEmpty() && q1.intersectionSize(q2) <= 0) {
@@ -788,6 +816,45 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       return true;
     }
 
+  }
+
+  private static final class RootLoaderSupplier<T> implements DeterministicSupplier<T> {
+
+    private final T object;
+
+    private RootLoaderSupplier(final T object) {
+      super();
+      this.object = object;
+    }
+
+    @Override
+    public final boolean deterministic() {
+      return true;
+    }
+
+    @Override
+    public final T get() {
+      return this.object;
+    }
+
+  }
+
+  private static final class AbsenceSupplier<T> implements DeterministicSupplier<T> {
+
+    private AbsenceSupplier() {
+      super();
+    }
+
+    @Override
+    public final boolean deterministic() {
+      return true;
+    }
+
+    @Override
+    public final T get() {
+      throw new NoSuchElementException();
+    }
+    
   }
 
 }
