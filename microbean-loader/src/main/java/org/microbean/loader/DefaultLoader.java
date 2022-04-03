@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 
 import org.microbean.development.annotation.Experimental;
 
-import org.microbean.invoke.DeterministicSupplier;
+import org.microbean.invoke.OptionalSupplier;
 
 import org.microbean.loader.api.Loader;
 
@@ -88,7 +88,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
   private final DefaultLoader<?> parent;
 
-  private final DeterministicSupplier<? extends T> supplier;
+  private final OptionalSupplier<? extends T> supplier;
 
   private final Collection<Provider> providers;
 
@@ -150,7 +150,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
                         final Collection<? extends Provider> providers,
                         final DefaultLoader<?> parent, // if null, will end up being "this" if absolutePath is null or Path.root()
                         final Path<? extends Type> absolutePath,
-                        final DeterministicSupplier<? extends T> supplier, // if null, will end up being () -> this if absolutePath is null or Path.root()
+                        final OptionalSupplier<? extends T> supplier, // if null, will end up being () -> this if absolutePath is null or Path.root()
                         final AmbiguityHandler ambiguityHandler) {
     super();
     this.loaderCache = Objects.requireNonNull(loaderCache, "loaderCache");
@@ -367,18 +367,22 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   }
 
   /**
-   * Returns {@code true} if this {@link DefaultLoader}'s {@link
-   * #get()} method is deterministic.
+   * Returns a {@link Determinism} suitable for this {@link
+   * DefaultLoader}.
    *
-   * <p>A method is deterministic if it returns the same object
-   * reference for every invocation.</p>
+   * @return a {@link Determinism} suitable for this {@link
+   * DefaultLoader}
    *
-   * @return {@code true} if this {@link DefaultLoader}'s {@link
-   * #get()} method is deterministic; {@code false} otherwise
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
    */
-  public final boolean deterministic() {
-    final DeterministicSupplier<?> s = this.supplier;
-    return s == null ? true : s.deterministic();
+  public final Determinism determinism() {
+    final OptionalSupplier<?> s = this.supplier;
+    return s == null ? Determinism.NON_DETERMINISTIC : s.determinism();
   }
 
   @Override // Loader<T>
@@ -818,7 +822,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
   }
 
-  private static final class RootLoaderSupplier<T> implements DeterministicSupplier<T> {
+  private static final class RootLoaderSupplier<T> implements OptionalSupplier<T> {
 
     private final T object;
 
@@ -828,8 +832,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     }
 
     @Override
-    public final boolean deterministic() {
-      return true;
+    public final Determinism determinism() {
+      return Determinism.PRESENT;
     }
 
     @Override
@@ -839,15 +843,15 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
   }
 
-  private static final class AbsenceSupplier<T> implements DeterministicSupplier<T> {
+  private static final class AbsenceSupplier<T> implements OptionalSupplier<T> {
 
     private AbsenceSupplier() {
       super();
     }
 
     @Override
-    public final boolean deterministic() {
-      return true;
+    public final Determinism determinism() {
+      return Determinism.ABSENT;
     }
 
     @Override

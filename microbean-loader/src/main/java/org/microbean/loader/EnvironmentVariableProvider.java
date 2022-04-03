@@ -61,7 +61,7 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
   /**
    * If the supplied {@code absolutePath} has a {@linkplain
    * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}
-   * plus a single name), returns a {@linkplain Value#deterministic()
+   * plus a single name), returns a {@linkplain Value#determinism()
    * deterministic <code>Value</code>} whose {@link Value#get()}
    * method returns the {@linkplain System#getenv(String) environment
    * variable} with that name, or {@code null} in all other cases.
@@ -72,7 +72,7 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
    * @param absolutePath an {@linkplain Path#absolute() absolute}
    * {@link Path}; must not be {@code null}
    *
-   * @return a {@linkplain Value#deterministic() deterministic} {@link
+   * @return a {@linkplain Value#determinism() deterministic} {@link
    * Value} whose {@link Value#get()} method returns the appropriate
    * {@linkplain System#getenv(String) environment variable} if the
    * supplied {@code absolutePath} has a {@linkplain Path#size() size}
@@ -121,11 +121,7 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
         @SuppressWarnings("unchecked")
         final String value = System.getenv(name);
         if (value != null) {
-          return
-            new Value<>(null, // no defaults
-                        absolutePath,
-                        () -> value,
-                        true); // deterministic
+          return new Value<>(absolutePath, () -> value, true); // deterministic
         }
       }
     }

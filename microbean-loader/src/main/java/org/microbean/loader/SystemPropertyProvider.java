@@ -45,7 +45,7 @@ import org.microbean.type.JavaTypes;
  * arbitrarily-typed keys, and the properties themselves {@linkplain
  * System#setProperties(Properties) may be replaced} at any point.
  * This means that all {@link Value}s supplied by this {@link
- * SystemPropertyProvider} are {@linkplain Value#deterministic()
+ * SystemPropertyProvider} are {@linkplain Value#determinism()
  * non-deterministic} and may change type and presence from one call
  * to another.</p>
  *
@@ -64,7 +64,7 @@ import org.microbean.type.JavaTypes;
  *
  * @see Properties#getProperty(String, String)
  *
- * @see Value#deterministic()
+ * @see Value#determinism()
  */
 public final class SystemPropertyProvider extends AbstractProvider<Object> {
 
@@ -106,17 +106,18 @@ public final class SystemPropertyProvider extends AbstractProvider<Object> {
    * Properties#get(String) System.getProperties().get(String)}.</p>
    *
    * <p>Any {@link Value} returned by this method will have no
-   * {@linkplain Value#Value(Supplier, Path, Supplier, boolean)
+   * {@linkplain Value#Value(Supplier, Path, Supplier)
    * defaults}, a {@link Qualifiers} equal to the return value of
    * {@link Qualifiers#of()}, a ({@linkplain Path#absolute()
    * relative}) {@link Path} equal to the supplied {@code
    * absolutePath}'s {@linkplain Path#lastElement() last element}, a
    * {@link Supplier} that is backed by System property access
-   * machinery, and a value of {@code false} for its {@linkplain
-   * Value#deterministic() deterministic property}.  If the supplied
-   * {@link Path}'s {@linkplain Path#qualified() type} is not
-   * assignable from that borne by a System property value, then the
-   * {@link Value} will return {@code null} from its {@link
+   * machinery, and a value of {@link
+   * org.microbean.invoke.OptionalSupplier.Determinism#NON_DETERMINISTIC}
+   * for its {@linkplain Value#determinism() determinism property}.
+   * If the supplied {@link Path}'s {@linkplain Path#qualified() type}
+   * is not assignable from that borne by a System property value,
+   * then the {@link Value} will return {@code null} from its {@link
    * Value#get() get()} method in such a case, indicating that the
    * value is present but cannot be represented.  Overrides are
    * strongly encouraged to abide by these conditions.</p>
@@ -165,11 +166,7 @@ public final class SystemPropertyProvider extends AbstractProvider<Object> {
         } else {
           s = () -> getSystemProperty(name, pathTypeErasure);
         }
-        return
-          new Value<>(null, // no defaults
-                      Path.of(last),
-                      s,
-                      false); // not deterministic
+        return new Value<>(Path.of(last), s, false); // not deterministic
       }
     }
     return null;

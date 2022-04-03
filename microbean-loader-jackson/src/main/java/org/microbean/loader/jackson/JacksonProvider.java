@@ -36,6 +36,8 @@ import com.fasterxml.jackson.core.TreeNode;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import org.microbean.invoke.OptionalSupplier;
+
 import org.microbean.loader.api.Loader;
 
 import org.microbean.loader.spi.AbstractProvider;
@@ -250,7 +252,7 @@ public abstract class JacksonProvider<T> extends AbstractProvider<T> {
   }
 
   /**
-   * Returns a {@linkplain Value#deterministic() deterministic} {@link
+   * Returns a {@linkplain Value#determinism() deterministic} {@link
    * Value} suitable for the combination of the supplied {@link
    * Loader}, {@link Path} and object.
    *
@@ -287,8 +289,7 @@ public abstract class JacksonProvider<T> extends AbstractProvider<T> {
                                final T value) {
     return new Value<>(null,
                        Path.of(absolutePath.qualified()),
-                       () -> value,
-                       true);
+                       OptionalSupplier.of(value));
   }
 
   /**

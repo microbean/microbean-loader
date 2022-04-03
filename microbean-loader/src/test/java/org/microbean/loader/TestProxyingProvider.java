@@ -25,6 +25,8 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
+import org.microbean.invoke.FixedValueSupplier;
+
 import org.microbean.loader.api.Loader;
 
 import org.microbean.path.Path;
@@ -124,15 +126,13 @@ final class TestProxyingProvider {
           assertSame(Wheel.class, wheelClass);
           @SuppressWarnings("unchecked")
           final Value<?> returnValue =
-            new Value<>(null, // no defaults
-                        Path.of(Element.of(Qualifiers.of("arg0", "LR"), wheelClass, "wheel")),
-                        () -> new Wheel() {
+            new Value<>(Path.of(Element.of(Qualifiers.of("arg0", "LR"), wheelClass, "wheel")),
+                        FixedValueSupplier.of(new Wheel() {
                             @Override
-                            public final int getDiameterInInches() {
+                              public final int getDiameterInInches() {
                               return 24;
                             }
-                          },
-                        true); // deterministic
+                          }));
           return returnValue;
         }
       }

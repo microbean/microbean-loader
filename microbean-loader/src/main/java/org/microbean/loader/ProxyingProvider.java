@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 import org.microbean.development.annotation.Convenience;
 
 import org.microbean.invoke.OptionalSupplier;
+import org.microbean.invoke.OptionalSupplier.Determinism;
 
 import org.microbean.loader.api.Loader;
 
@@ -113,9 +114,9 @@ public class ProxyingProvider extends AbstractProvider<Object> {
       final Value<?> returnValue =
         new Value<>(null, // no defaults
                     this.path(requestor, absolutePath),
-                    () -> this.proxies.computeIfAbsent(absolutePath,
-                                                       p -> this.newProxyInstance(requestor, p, JavaTypes.erase(p.qualified()))),
-                    true); // deterministic
+                    OptionalSupplier.of(Determinism.PRESENT, 
+                                        () -> this.proxies.computeIfAbsent(absolutePath,
+                                                                           p -> this.newProxyInstance(requestor, p, JavaTypes.erase(p.qualified())))));
       return returnValue;
     } else {
       return null;

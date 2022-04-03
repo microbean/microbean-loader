@@ -142,11 +142,8 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * <li>must not be {@code null}</li>
    *
    * <li>may implement its {@link #get()} method and its {@link
-   * #deterministic()} method to indicate the permanent absence of any
+   * #determinism()} method to indicate the permanent absence of any
    * value</li>
-   *
-   * <li>must implement its {@link #deterministic()} method
-   * properly</li>
    *
    * </ul>
    *
@@ -170,7 +167,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
    *
    * @return a {@link Loader} for the supplied {@link Path}; must not
    * be {@code null}, but may implement its {@link #get()} method and
-   * its {@link #deterministic()} method to indicate the permanent
+   * its {@link #determinism()} method to indicate the permanent
    * absence of any value
    *
    * @exception NullPointerException if {@code path} is {@code null}
@@ -180,7 +177,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
    *
    * @see #get()
    *
-   * @see #deterministic()
+   * @see #determinism()
    *
    * @see #normalize(Path)
    */
@@ -611,8 +608,8 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * <li>It must return itself ({@code this}) from its {@link #root()}
    * method.</li>
    *
-   * <li>It must return {@code true} from its {@link #deterministic()
-   * deterministic()} method.</li>
+   * <li>It must return {@link Determinism#PRESENT} from its {@link
+   * #determinism() determinism()} method.</li>
    *
    * <li>It must return itself ({@code this}) from its {@link #get()
    * get()} method.</li>
@@ -633,8 +630,8 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * implementation that is equal to {@link Path#root() Path.root()}
    * (same as above).</li>
    *
-   * <li>It must return {@code true} from its {@link #deterministic()
-   * deterministic()} method (same as above).</li>
+   * <li>It must return {@link Determinism#PRESENT} from its {@link
+   * #determinism() determinism()} method (same as above).</li>
    *
    * <li>It must return the bootstrap {@link Loader} from its {@link
    * #parent()} implementation (which may be itself ({@code
@@ -669,8 +666,8 @@ public interface Loader<T> extends OptionalSupplier<T> {
       static {
         final Loader<?> rootLoader =
           ServiceLoader.load(Loader.class, Loader.class.getClassLoader()).findFirst().orElseThrow();
-        if (!rootLoader.deterministic()) {
-          throw new IllegalStateException("!rootLoader.deterministic()");
+        if (rootLoader.determinism() != Determinism.PRESENT) {
+          throw new IllegalStateException("rootLoader.determinism() != PRESENT: " + rootLoader.determinism());
         } else if (!Path.root().equals(rootLoader.path())) {
           throw new IllegalStateException("rootLoader.path(): " + rootLoader.path());
         } else if (rootLoader.parent() != rootLoader) {
@@ -683,8 +680,8 @@ public interface Loader<T> extends OptionalSupplier<T> {
           throw new IllegalStateException("rootLoader.root(): " + rootLoader.root());
         }
         INSTANCE = rootLoader.<Loader<?>>load(Path.of(new Token<Loader<?>>() {}.type())).orElse(rootLoader);
-        if (!INSTANCE.deterministic()) {
-          throw new IllegalStateException("!INSTANCE.deterministic()");
+        if (INSTANCE.determinism() != Determinism.PRESENT) {
+          throw new IllegalStateException("INSTANCE.determinism() != PRESENT: " + INSTANCE.determinism());
         } else if (!Path.root().equals(INSTANCE.path())) {
           throw new IllegalStateException("INSTANCE.path(): " + INSTANCE.path());
         } else if (INSTANCE.parent() != rootLoader) {
