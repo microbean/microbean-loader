@@ -110,13 +110,11 @@ public class ProxyingProvider extends AbstractProvider<Object> {
     assert !absolutePath.equals(requestor.path());
 
     if (this.isProxiable(requestor, absolutePath)) {
-      @SuppressWarnings("unchecked")
-      final Value<?> returnValue =
-        new Value<>(null, // no defaults
-                    this.path(requestor, absolutePath),
-                    OptionalSupplier.of(Determinism.PRESENT, 
-                                        () -> this.proxies.computeIfAbsent(absolutePath,
-                                                                           p -> this.newProxyInstance(requestor, p, JavaTypes.erase(p.qualified())))));
+      final OptionalSupplier<?> os =
+        OptionalSupplier.of(Determinism.PRESENT,
+                            () -> this.proxies.computeIfAbsent(absolutePath,
+                                                               p -> this.newProxyInstance(requestor, p, JavaTypes.erase(p.qualified()))));
+      final Value<?> returnValue = new Value<>(os, this.path(requestor, absolutePath));
       return returnValue;
     } else {
       return null;

@@ -106,7 +106,7 @@ public final class SystemPropertyProvider extends AbstractProvider<Object> {
    * Properties#get(String) System.getProperties().get(String)}.</p>
    *
    * <p>Any {@link Value} returned by this method will have no
-   * {@linkplain Value#Value(Supplier, Path, Supplier)
+   * {@linkplain Value#Value(Value, Supplier)
    * defaults}, a {@link Qualifiers} equal to the return value of
    * {@link Qualifiers#of()}, a ({@linkplain Path#absolute()
    * relative}) {@link Path} equal to the supplied {@code
@@ -166,7 +166,7 @@ public final class SystemPropertyProvider extends AbstractProvider<Object> {
         } else {
           s = () -> getSystemProperty(name, pathTypeErasure);
         }
-        return new Value<>(Path.of(last), s, false); // not deterministic
+        return new Value<>(s, Path.of(last));
       }
     }
     return null;

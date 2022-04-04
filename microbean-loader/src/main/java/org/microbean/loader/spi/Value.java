@@ -37,9 +37,9 @@ import org.microbean.type.JavaTypes;
 
 /**
  * An {@link OptionalSupplier} of a value that is additionally
- * qualified by a {@link Qualifiers} and a {@link Path} partially
- * identifying the kinds of {@link Qualifiers} and {@link Path}s for
- * which it might be suitable.
+ * qualified by a {@link Path} partially identifying the kinds of
+ * {@link Qualifiers} and {@link Path}s for which it might be
+ * suitable.
  *
  * <p>{@link Value}s are typically returned by {@link Provider}
  * implementations.</p>
@@ -54,27 +54,12 @@ import org.microbean.type.JavaTypes;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  *
- * @see Supplier
+ * @see OptionalSupplier
  *
  * @see Provider
  */
 public final class Value<T> implements OptionalSupplier<T> {
 
-
-  /*
-   * Static fields.
-   */
-
-
-  /**
-   * An {@link Object} representing the presence of a qualifier key.
-   *
-   * @nullability This field is never {@code null}.
-   */
-  // TODO: yuck
-  public static final Object ANY = new Object[0];
-
-  
 
   /*
    * Instance fields.
@@ -94,179 +79,33 @@ public final class Value<T> implements OptionalSupplier<T> {
   /**
    * Creates a new {@link Value}.
    *
-   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
-   * Determinism)} constructor with the supplied arguments, {@code
-   * null} for the value of the {@code defaults} parameter, and {@code
-   * true} for the value of the {@code deterministic} parameter.</p>
+   * @param source the {@link Value} to use as the primary supplier;
+   * must not be {@code null}
    *
-   * @param path the {@link Path}, possibly relative, for which this
-   * {@link Value} is suitable; must not be {@code null}
-   *
-   * @param value the value that will be returned by the {@link
-   * #get()} method; may be {@code null}
-   *
-   * @see #Value(Supplier, Path, Supplier, Determinism)
-   */
-  public Value(final Path<? extends Type> path, final T value) {
-    this(path, OptionalSupplier.of(value));
-  }
-
-  /**
-   * Creates a new {@link Value}.
-   *
-   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
-   * Determinism)} constructor with the supplied arguments, {@code null}
-   * for the value of the {@code defaults} parameter, and {@code
-   * false} for the value of the {@code deterministic} parameter.</p>
-   *
-   * @param path the {@link Path}, possibly relative, for which this
-   * {@link Value} is suitable; must not be {@code null}
-   *
-   * @param supplier the actual {@link Supplier} that will return
-   * values; must not be {@code null}
-   *
-   * @see #Value(Supplier, Path, Supplier, Determinism)
-   */
-  public Value(final Path<? extends Type> path, final Supplier<? extends T> supplier) {
-    this(null, path, supplier, supplier instanceof OptionalSupplier<? extends T> os ? os.determinism() : Determinism.NON_DETERMINISTIC);
-  }
-
-  /**
-   * Creates a new {@link Value}.
-   *
-   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
-   * Determinism)} constructor with the supplied arguments and {@code
-   * null} for the value of the {@code defaults} parameter.</p>
-   *
-   * @param path the {@link Path}, possibly relative, for which this
-   * {@link Value} is suitable; must not be {@code null}
-   *
-   * @param supplier the actual {@link Supplier} that will return
-   * values; must not be {@code null}
-   *
-   * @param deterministic a {@code boolean} indicating whether the
-   * supplied {@code supplier} returns a singleton from its {@link
-   * Supplier#get()} method
-   *
-   * @see #Value(Supplier, Path, Supplier, Determinism)
-   */
-  public Value(final Path<? extends Type> path, final Supplier<? extends T> supplier, final boolean deterministic) {
-    this(null, path, supplier, deterministic ? Determinism.DETERMINISTIC : Determinism.NON_DETERMINISTIC);
-  }
-
-  /**
-   * Creates a new {@link Value}.
-   *
-   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
-   * Determinism)} constructor with the supplied arguments and and {@code
-   * false} for the value of the {@code deterministic} parameter.</p>
-   *
-   * @param defaults a {@link Supplier} to be used in case this {@link
-   * Value}'s {@link #get()} method throws either a {@link
-   * NoSuchElementException} or an {@link
-   * UnsupportedOperationException}; may be {@code null}
-   *
-   * @param path the {@link Path}, possibly relative, for which this
-   * {@link Value} is suitable; must not be {@code null}
-   *
-   * @param supplier the actual {@link Supplier} that will return
-   * values; must not be {@code null}
-   *
-   * @see #Value(Supplier, Path, Supplier, Determinism)
-   */
-  public Value(final Supplier<? extends T> defaults, final Path<? extends Type> path, final Supplier<? extends T> supplier) {
-    this(defaults,
-         path,
-         supplier,
-         defaults == null || defaults == supplier ? supplier instanceof OptionalSupplier<? extends T> os ? os.determinism() : Determinism.NON_DETERMINISTIC : Determinism.NON_DETERMINISTIC);
-  }
-
-  /**
-   * Creates a new {@link Value}.
-   *
-   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
-   * Determinism)} constructor with the value of the {@code
-   * defaults} parameter and arguments derived from the supplied {@code
-   * source}.</p>
-   *
-   * @param defaults a {@link Supplier} to be used in case this {@link
-   * Value}'s {@link #get()} method throws either a {@link
-   * NoSuchElementException} or an {@link
-   * UnsupportedOperationException}; may be {@code null}
-   *
-   * @param source the {@link Value} from which other arguments will
-   * be derived; must not be {@code null}
+   * @param defaults the {@link Supplier} to use as the fallback; may
+   * be {@code null}
    *
    * @exception NullPointerException if {@code source} is {@code null}
-   *
-   * @see #Value(Supplier, Path, Supplier,
-   * Determinism)
    */
-  public Value(final Supplier<? extends T> defaults, final Value<T> source) {
-    this(defaults, source.path(), source, defaults == null || defaults == source ? source.determinism() : Determinism.NON_DETERMINISTIC);
+  public Value(final Value<? extends T> source, final Supplier<? extends T> defaults) {
+    this(OptionalSupplier.of(source, defaults), source.path());
   }
 
   /**
    * Creates a new {@link Value}.
    *
-   * <p>Calls the {@link #Value(Supplier, Path, Supplier,
-   * Determinism)} constructor with no defaults and arguments
-   * derived from the supplied {@code source}.</p>
+   * @param supplier the actual {@link Supplier} that will return
+   * values; may be {@code null}
    *
-   * @param source the {@link Value} from which other arguments will
-   * be derived; must not be {@code null}
+   * @param path the {@link Path}, possibly relative, for which this
+   * {@link Value} is suitable; must not be {@code null}
    *
-   * @exception NullPointerException if {@code source} is {@code null}
-   *
-   * @see #Value(Supplier, Path, Supplier,
-   * Determinism)
+   * @exception NullPointerException if {@code path} is {@code null}
    */
-  public Value(final Value<T> source) {
-    this(null, source.path(), source, source.determinism());
-  }
-
-  private Value(final Supplier<? extends T> defaults,
-                final Path<? extends Type> path,
-                final Supplier<? extends T> supplier,
-                final Determinism determinism) {
+  public Value(final Supplier<? extends T> supplier, final Path<? extends Type> path) {
     super();
-    Objects.requireNonNull(determinism, "determinism");
+    this.supplier = OptionalSupplier.of(supplier);
     this.path = Objects.requireNonNull(path, "path");
-    // this.deterministic = deterministic;
-    if (supplier == null) {
-      if (defaults == null) {
-        if (determinism == Determinism.ABSENT) {
-          this.supplier = OptionalSupplier.of();
-        } else {
-          throw new IllegalArgumentException("determinism: " + determinism + "; supplier: null; defaults: null");
-        }
-      } else if (determinism == Determinism.ABSENT) {
-        throw new IllegalArgumentException("determinism: " + determinism + "; supplier: null; defaults: " + defaults);
-      } else {
-        this.supplier = OptionalSupplier.of(determinism, defaults);
-      }
-    } else if (determinism == Determinism.ABSENT) {
-      throw new IllegalArgumentException("determinism: " + determinism + "; supplier: " + supplier + "; defaults: " + defaults);
-    } else if (defaults == null || supplier == defaults) {
-      this.supplier = OptionalSupplier.of(determinism, supplier);
-    } else if (determinism != Determinism.NON_DETERMINISTIC) {
-      throw new IllegalArgumentException("determinism: " + determinism + "; supplier: " + supplier + "; defaults: " + defaults);
-    } else {
-      this.supplier = new OptionalSupplier<>() {
-          @Override
-          public final Determinism determinism() {
-            return Determinism.NON_DETERMINISTIC;
-          }
-          @Override
-          public final T get() {
-            try {
-              return supplier.get();
-            } catch (final NoSuchElementException | UnsupportedOperationException e) {
-              return defaults.get();
-            }
-          }
-        };
-    }
   }
 
 
@@ -289,7 +128,7 @@ public final class Value<T> implements OptionalSupplier<T> {
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
    *
-   * @see #Value(Supplier, Path, Supplier, Determinism)
+   * @see Path#qualifiers()
    */
   @Convenience
   public final Qualifiers<? extends String, ?> qualifiers() {
@@ -309,8 +148,6 @@ public final class Value<T> implements OptionalSupplier<T> {
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
-   *
-   * @see #Value(Supplier, Path, Supplier, Determinism)
    */
   public final Path<? extends Type> path() {
     return this.path;
@@ -318,42 +155,54 @@ public final class Value<T> implements OptionalSupplier<T> {
 
   /**
    * Invokes the {@link Supplier#get() get()} method of the {@link
-   * Supplier} supplied at {@linkplain #Value(Supplier, 
-   * Path, Supplier, Determinism) construction time} and returns its
-   * value, which may be {@code null}.
+   * Supplier} supplied at {@linkplain #Value(Supplier, Path)
+   * construction time} and returns its value, which may be {@code
+   * null}.
    *
    * @return tbe return value of an invocation of the {@link
-   * Supplier#get() get()} method of the {@link Supplier} supplied at
-   * {@linkplain #Value(Supplier, Path, Supplier, Determinism)
-   * construction time}, which may be {@code null}
+   * OptionalSupplier#get() get()} method of the {@link Supplier}
+   * supplied at {@linkplain #Value(Supplier, Path) construction
+   * time}, which may be {@code null}
    *
    * @exception NoSuchElementException if this method should no longer
    * be invoked because there is no chance it will ever produce a
    * suitable value again
    *
-   * @exception UnsupportedOperationException if this method should no longer
-   * be invoked because there is no chance it will ever produce a
-   * suitable value again
+   * @exception UnsupportedOperationException if this method should no
+   * longer be invoked because there is no chance it will ever produce
+   * a suitable value again
    *
-   * @see #Value(Supplier, Path, Supplier, Determinism)
+   * @see #Value(Supplier, Path)
    *
    * @nullability This method may return {@code null}.
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads, provided that the {@link Supplier} supplied at
-   * {@linkplain #Value(Supplier, Path, Supplier, Determinism)
-   * construction time} is also safe for concurrent use by multiple
-   * threads.
+   * {@linkplain #Value(Supplier, Path) construction time} is also
+   * safe for concurrent use by multiple threads.
    *
    * @idempotency This method is as idempotent and deterministic as
    * the {@link Supplier} supplied at {@linkplain #Value(Supplier,
-   * Path, Supplier, Determinism) construction time}.
+   * Path) construction time}.
    */
   @Override // Supplier<T>
   public final T get() {
     return this.supplier.get();
   }
 
+  /**
+   * Returns an appropriate {@link Determinism} for this {@link
+   * Value}.
+   *
+   * @return an appropriate {@link Determinism} for this {@link Value}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   @Override // OptionalSupplier<T>
   public final Determinism determinism() {
     return this.supplier.determinism();
@@ -391,8 +240,8 @@ public final class Value<T> implements OptionalSupplier<T> {
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * @return the result of invoking {@link JavaTypes#erase(Type)} on the
-   * return value of this {@link Value}'s {@link #type()} method;
+   * @return the result of invoking {@link JavaTypes#erase(Type)} on
+   * the return value of this {@link Value}'s {@link #type()} method;
    * never {@code null}
    *
    * @exception IllegalStateException if somehow the return value of
@@ -409,8 +258,8 @@ public final class Value<T> implements OptionalSupplier<T> {
    *
    * @see JavaTypes#erase(Type)
    */
-  @SuppressWarnings("unchecked")
   public final Class<T> typeErasure() {
+    @SuppressWarnings("unchecked")
     final Class<T> returnValue = (Class<T>)JavaTypes.erase(this.type());
     if (returnValue == null) {
       throw new IllegalStateException();
@@ -470,8 +319,8 @@ public final class Value<T> implements OptionalSupplier<T> {
    * true}</li>
    *
    * <li>{@link Objects#equals(Object, Object)
-   * Objects.equals(this.determinism(), otherValue.determinism())} returns
-   * {@code true}</li>
+   * Objects.equals(this.determinism(), otherValue.determinism())}
+   * returns {@code true}</li>
    *
    * </ul>
    *

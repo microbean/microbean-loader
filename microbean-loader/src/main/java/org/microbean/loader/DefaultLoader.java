@@ -39,6 +39,8 @@ import java.util.function.Supplier;
 
 import org.microbean.development.annotation.Experimental;
 
+import org.microbean.invoke.Absence;
+import org.microbean.invoke.FixedValueSupplier;
 import org.microbean.invoke.OptionalSupplier;
 
 import org.microbean.loader.api.Loader;
@@ -161,7 +163,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
         final Path<? extends Type> rootPath = (Path<? extends Type>)Path.root();
         this.absolutePath = rootPath;
         this.parent = this; // NOTE
-        this.supplier = supplier == null ? new RootLoaderSupplier<>((T)this) : supplier;
+        this.supplier = supplier == null ? FixedValueSupplier.of((T)this) : supplier;
         this.providers = providers == null ? loadedProviders() : List.copyOf(providers);
         this.loaderCache.put(rootPath, this); // NOTE
         // While the following call is in effect, our
@@ -563,12 +565,12 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
             // qualifiers accidentally affecting a path score.
             final int valueQualifiersScore = ambiguityHandler.score(qualifiers, value.qualifiers());
             if (valueQualifiersScore < candidateQualifiersScore) {
-              candidate = new Value<>(value, candidate);
+              candidate = new Value<>(candidate, value);
               break VALUE_EVALUATION_LOOP;
             }
 
             if (valueQualifiersScore > candidateQualifiersScore) {
-              candidate = new Value<>(candidate, value);
+              candidate = new Value<>(value, candidate);
               candidateProvider = provider;
               candidateQualifiersScore = valueQualifiersScore;
               // (No need to update candidatePathScore.)
@@ -580,12 +582,12 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
             final int valuePathScore = ambiguityHandler.score(absolutePath, value.path());
 
             if (valuePathScore < candidatePathScore) {
-              candidate = new Value<>(value, candidate);
+              candidate = new Value<>(candidate, value);
               break VALUE_EVALUATION_LOOP;
             }
 
             if (valuePathScore > candidatePathScore) {
-              candidate = new Value<>(candidate, value);
+              candidate = new Value<>(value, candidate);
               candidateProvider = provider;
               candidateQualifiersScore = valueQualifiersScore;
               candidatePathScore = valuePathScore;
@@ -601,12 +603,12 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
             }
 
             if (disambiguatedValue.equals(candidate)) {
-              candidate = new Value<>(value, candidate);
+              candidate = new Value<>(candidate, value);
               break VALUE_EVALUATION_LOOP;
             }
 
             if (disambiguatedValue.equals(value)) {
-              candidate = new Value<>(candidate, disambiguatedValue);
+              candidate = new Value<>(disambiguatedValue, candidate);
               candidateProvider = provider;
               candidateQualifiersScore = valueQualifiersScore;
               candidatePathScore = valuePathScore;
@@ -627,7 +629,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
                           providers,
                           requestor, // parent
                           absolutePath,
-                          candidate == null ? new AbsenceSupplier<>() : candidate,
+                          candidate == null ? Absence.instance() : candidate,
                           ambiguityHandler);
   }
 
@@ -820,45 +822,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       return true;
     }
 
-  }
-
-  private static final class RootLoaderSupplier<T> implements OptionalSupplier<T> {
-
-    private final T object;
-
-    private RootLoaderSupplier(final T object) {
-      super();
-      this.object = object;
-    }
-
-    @Override
-    public final Determinism determinism() {
-      return Determinism.PRESENT;
-    }
-
-    @Override
-    public final T get() {
-      return this.object;
-    }
-
-  }
-
-  private static final class AbsenceSupplier<T> implements OptionalSupplier<T> {
-
-    private AbsenceSupplier() {
-      super();
-    }
-
-    @Override
-    public final Determinism determinism() {
-      return Determinism.ABSENT;
-    }
-
-    @Override
-    public final T get() {
-      throw new NoSuchElementException();
-    }
-    
   }
 
 }

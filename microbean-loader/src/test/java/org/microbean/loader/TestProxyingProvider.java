@@ -126,13 +126,13 @@ final class TestProxyingProvider {
           assertSame(Wheel.class, wheelClass);
           @SuppressWarnings("unchecked")
           final Value<?> returnValue =
-            new Value<>(Path.of(Element.of(Qualifiers.of("arg0", "LR"), wheelClass, "wheel")),
-                        FixedValueSupplier.of(new Wheel() {
-                            @Override
-                              public final int getDiameterInInches() {
-                              return 24;
-                            }
-                          }));
+            new Value<>(FixedValueSupplier.of(new Wheel() {
+                @Override
+                public final int getDiameterInInches() {
+                  return 24;
+                }
+              }),
+              Path.of(Element.of(Qualifiers.of("arg0", "LR"), wheelClass, "wheel")));
           return returnValue;
         }
       }

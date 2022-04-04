@@ -20,6 +20,8 @@ import java.lang.reflect.Type;
 
 import java.util.function.Supplier;
 
+import org.microbean.invoke.FixedValueSupplier;
+
 import org.microbean.loader.api.Loader;
 
 import org.microbean.loader.spi.AbstractProvider;
@@ -121,7 +123,7 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
         @SuppressWarnings("unchecked")
         final String value = System.getenv(name);
         if (value != null) {
-          return new Value<>(absolutePath, () -> value, true); // deterministic
+          return new Value<>(FixedValueSupplier.of(value), absolutePath); // deterministic
         }
       }
     }

@@ -33,8 +33,8 @@ import org.microbean.type.Type.CovariantSemantics;
 
 /**
  * An interface whose implementations handle various kinds of
- * ambiguity that arise when a {@link Loader} seeks configured
- * objects by way of various {@link Provider}s.
+ * ambiguity that arise when a {@link Loader} seeks configured objects
+ * by way of various {@link Provider}s.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
@@ -62,7 +62,9 @@ public interface AmbiguityHandler {
    * @exception NullPointerException if either {@code rejector} or
    * {@code absolutePath} is {@code null}
    */
-  public default void providerRejected(final Loader<?> rejector, final Path<? extends Type> absolutePath, final Provider provider) {
+  public default void providerRejected(final Loader<?> rejector,
+                                       final Path<? extends Type> absolutePath,
+                                       final Provider provider) {
 
   }
 
@@ -87,7 +89,10 @@ public interface AmbiguityHandler {
    *
    * @exception NullPointerException if any argument is {@code null}
    */
-  public default void valueRejected(final Loader<?> rejector, final Path<? extends Type> absolutePath, final Provider provider, final Value<?> value) {
+  public default void valueRejected(final Loader<?> rejector,
+                                    final Path<? extends Type> absolutePath,
+                                    final Provider provider,
+                                    final Value<?> value) {
 
   }
 
@@ -113,7 +118,7 @@ public interface AmbiguityHandler {
    * supplied {@code valueQualifiers} will be treated as wholly
    * unsuitable for further consideration or processing
    *
-   @exception NullPointerException if either parameter is {@code
+   * @exception NullPointerException if either parameter is {@code
    * null}
    *
    * @see Loader#load(Path)
@@ -127,7 +132,8 @@ public interface AmbiguityHandler {
    * Specifically, the same score is and must be returned whenever
    * this method is invoked with the same arguments.
    */
-  public default int score(final Qualifiers<? extends String, ?> referenceQualifiers, final Qualifiers<? extends String, ?> valueQualifiers) {
+  public default int score(final Qualifiers<? extends String, ?> referenceQualifiers,
+                           final Qualifiers<? extends String, ?> valueQualifiers) {
     final int intersectionSize = referenceQualifiers.intersectionSize(valueQualifiers);
     if (intersectionSize > 0) {
       return
