@@ -36,6 +36,7 @@
 
   <modules>
     <module>microbean-loader-api</module>
+    <module>microbean-loader-jackson-json</module>
     <module>microbean-loader-jackson-properties</module>
     <module>microbean-loader-jackson-toml</module>
     <module>microbean-loader-jackson-yaml</module>

@@ -14,24 +14,24 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.microbean.loader.jackson.toml;
+package org.microbean.loader.jackson.json;
 
-import com.fasterxml.jackson.dataformat.toml.TomlMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.microbean.loader.jackson.InputStreamJacksonProvider;
 
 import org.microbean.invoke.CachingSupplier;
 
 /**
- * An {@link InputStreamJacksonProvider} that reads TOML-formatted
- * {@code application.toml} classpath resources.
+ * An {@link InputStreamJacksonProvider} that reads JSON-formatted
+ * {@code application.json} classpath resources.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  *
  * @see InputStreamJacksonProvider
  */
-public class TomlProvider extends InputStreamJacksonProvider<Object> {
+public class JsonProvider extends InputStreamJacksonProvider<Object> {
 
 
   /*
@@ -40,17 +40,17 @@ public class TomlProvider extends InputStreamJacksonProvider<Object> {
 
 
   /**
-   * Creates a new {@link TomlProvider} that reads TOML-formatted
-   * {@code application.toml} classpath resources.
+   * Creates a new {@link JsonProvider} that reads JSON-formatted
+   * {@code application.json} classpath resources.
    *
-   * @see #TomlProvider(String)
+   * @see #JsonProvider(String)
    */
-  public TomlProvider() {
-    this("application.toml");
+  public JsonProvider() {
+    this("application.json");
   }
 
   /**
-   * Creates a new {@link TomlProvider}.
+   * Creates a new {@link JsonProvider}.
    *
    * @param resourceName the name of the classpath resource to read
    * from; must not be {@code null}
@@ -58,8 +58,8 @@ public class TomlProvider extends InputStreamJacksonProvider<Object> {
    * @exception NullPointerException if {@code resourceName} is {@code
    * null}
    */
-  public TomlProvider(final String resourceName) {
-    super(new CachingSupplier<>(TomlMapper::new), resourceName);
+  public JsonProvider(final String resourceName) {
+    super(new CachingSupplier<>(ObjectMapper::new), resourceName);
   }
 
 }
