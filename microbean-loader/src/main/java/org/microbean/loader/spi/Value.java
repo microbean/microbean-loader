@@ -115,6 +115,32 @@ public final class Value<T> implements OptionalSupplier<T> {
 
 
   /**
+   * Returns a {@link Value} with this {@link Value}'s supplier and
+   * the supplied {@link Path}.
+   *
+   * @param path the new {@link Path}; must not be {@code null}
+   *
+   * @return a {@link Value} with this {@link Value}'s supplier and
+   * the supplied {@link Path}
+   *
+   * @exception NullPointerException if {@code path} is {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final Value<T> with(final Path<? extends Type> path) {
+    if (path.equals(this.path())) {
+      return this;
+    } else {
+      return new Value<>(this.supplier, path);
+    }
+  }
+
+  /**
    * Returns the {@link Qualifiers} with which this {@link Value} is
    * associated.
    *

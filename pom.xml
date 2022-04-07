@@ -36,6 +36,7 @@
 
   <modules>
     <module>microbean-loader-api</module>
+    <module>microbean-loader-jackson-properties</module>
     <module>microbean-loader-jackson-toml</module>
     <module>microbean-loader-jackson-yaml</module>
     <module>microbean-loader-jackson</module>
@@ -262,7 +263,7 @@
 
     <!-- maven-javadoc-plugin properties -->
     <detectJavaApiLink>false</detectJavaApiLink>
-    <links>https://docs.oracle.com/en/java/javase/17/docs/api,https://microbean.github.io/microbean-development-annotations/apidocs/,https://microbean.github.io/microbean-invoke/apidocs/,https://microbean.github.io/microbean-path/apidocs/,https://microbean.github.io/microbean-qualifier/apidocs/,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-core/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-databind/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.dataformat/jackson-dataformat-toml/2.13.2</links>
+    <links>https://docs.oracle.com/en/java/javase/17/docs/api,https://microbean.github.io/microbean-development-annotations/apidocs/,https://microbean.github.io/microbean-invoke/apidocs/,https://microbean.github.io/microbean-path/apidocs/,https://microbean.github.io/microbean-qualifier/apidocs/,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-core/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-databind/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.dataformat/jackson-dataformat-toml/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.dataformat/jackson-dataformat-properties/2.13.2</links>
 
   </properties>
 

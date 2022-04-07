@@ -137,7 +137,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
          loader.supplier,
          ambiguityHandler);
   }
-  
+
   private DefaultLoader(final DefaultLoader<T> loader, final Provider provider) {
     this(loader.loaderCache,
          add(loader.providers(), provider),
@@ -492,8 +492,11 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
           }
           if (candidate == null) {
             ambiguityHandler.providerRejected(requestor, absolutePath, candidateProvider);
-          } else if (!isSelectable(absolutePath, candidate.path())) {
-            ambiguityHandler.valueRejected(requestor, absolutePath, candidateProvider, candidate);
+          } else {
+            candidate = candidate.with(requestor.transliterate(candidate.path()));
+            if (!isSelectable(absolutePath, candidate.path())) {
+              ambiguityHandler.valueRejected(requestor, absolutePath, candidateProvider, candidate);
+            }
           }
         }
       } else {
@@ -535,6 +538,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
           // NOTE: INFINITE LOOP POSSIBILITY; read carefully!
           VALUE_EVALUATION_LOOP:
           while (true) {
+
+            value = value.with(requestor.transliterate(value.path()));
 
             if (!isSelectable(absolutePath, value.path())) {
               ambiguityHandler.valueRejected(requestor, absolutePath, provider, value);
@@ -631,11 +636,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
                           absolutePath,
                           candidate == null ? Absence.instance() : candidate,
                           ambiguityHandler);
-  }
-
-  @SuppressWarnings("unchecked")
-  private final <X> X returnThis() {
-    return (X)this;
   }
 
 

@@ -184,6 +184,38 @@ public interface Loader<T> extends OptionalSupplier<T> {
   @EntryPoint
   public <U> Loader<U> load(final Path<? extends Type> path);
 
+  /**
+   * Builds a {@link Path} from the supplied arguments and calls the
+   * {@link #load(Path)} method and returns its result.
+   *
+   * @param <U> the type of environmental objects the returned {@link Loader}
+   * {@linkplain #get() will supply}
+   *
+   * @param qualifiers the path's {@link Qualifiers}; must not be
+   * {@code null}
+   *
+   * @param type the path's {@link Type}; must not be {@code null}
+   *
+   * @return a {@link Loader}
+   *
+   * @exception NullPointerException if any argument is {@code null}
+   *
+   * @nullability This method does not, and its (discouraged)
+   * overrides must not, return {@code null}.
+   *
+   * @idempotency No guarantees are made about idempotency or
+   * determinism with respect to this method or its (discouraged)
+   * overrides.
+   *
+   * @threadsafety This method is, and its (discouraged) overrides
+   * must be, safe for concurrent use by multiple threads.
+   *
+   * @see Path#of(Qualifiers, Element)
+   *
+   * @see Element#of(Object, String)
+   *
+   * @see #load(Path)
+   */
   @OverridingDiscouraged
   @SuppressWarnings("unchecked")
   public default <U> Loader<U> load(final Qualifiers<? extends String, ?> qualifiers, final Type type) {
@@ -193,6 +225,33 @@ public interface Loader<T> extends OptionalSupplier<T> {
     return this.load(Path.of(qualifiers, Element.of(type, "")));
   }
 
+  /**
+   * Builds a {@link Path} from the supplied arguments and calls the
+   * {@link #load(Path)} method and returns its result.
+   *
+   * @param <U> the type of environmental objects the returned {@link Loader}
+   * {@linkplain #get() will supply}
+   *
+   * @param type the path's {@link Type}; must not be {@code null}
+   *
+   * @return a {@link Loader}
+   *
+   * @exception NullPointerException if any argument is {@code null}
+   *
+   * @nullability This method does not, and its (discouraged)
+   * overrides must not, return {@code null}.
+   *
+   * @idempotency No guarantees are made about idempotency or
+   * determinism with respect to this method or its (discouraged)
+   * overrides.
+   *
+   * @threadsafety This method is, and its (discouraged) overrides
+   * must be, safe for concurrent use by multiple threads.
+   *
+   * @see Path#of(Object)
+   * 
+   * @see #load(Path)
+   */
   @OverridingDiscouraged
   @SuppressWarnings("unchecked")
   public default <U> Loader<U> load(final Type type) {
@@ -202,6 +261,33 @@ public interface Loader<T> extends OptionalSupplier<T> {
     return this.load(Path.of(type));
   }
 
+  /**
+   * Builds a {@link Path} from the supplied arguments and calls the
+   * {@link #load(Path)} method and returns its result.
+   *
+   * @param <U> the type of environmental objects the returned {@link Loader}
+   * {@linkplain #get() will supply}
+   *
+   * @param type the path's {@link Type}; must not be {@code null}
+   *
+   * @param name the 
+   *
+   * @return a {@link Loader}
+   *
+   * @exception NullPointerException if any argument is {@code null}
+   *
+   * @nullability This method does not, and its (discouraged)
+   * overrides must not, return {@code null}.
+   *
+   * @idempotency No guarantees are made about idempotency or
+   * determinism with respect to this method or its (discouraged)
+   * overrides.
+   *
+   * @threadsafety This method is, and its (discouraged) overrides
+   * must be, safe for concurrent use by multiple threads.
+   *
+   * @see #load(Path)
+   */
   @OverridingDiscouraged
   @SuppressWarnings("unchecked")
   public default <U> Loader<U> load(final Type type, final String name) {

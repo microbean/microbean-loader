@@ -14,28 +14,28 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.microbean.loader.jackson.yaml;
+package org.microbean.loader.jackson.properties;
 
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.fasterxml.jackson.dataformat.javaprop.JavaPropsMapper;
 
 import org.microbean.loader.jackson.InputStreamJacksonProvider;
 
 import org.microbean.invoke.CachingSupplier;
 
 /**
- * An {@link InputStreamJacksonProvider} that reads YAML-formatted
- * {@code application.yaml} classpath resources.
+ * An {@link InputStreamJacksonProvider} that reads TOML-formatted
+ * {@code application.toml} classpath resources.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  *
  * @see InputStreamJacksonProvider
  */
-public class YamlProvider extends InputStreamJacksonProvider<Object> {
+public class PropertiesProvider extends InputStreamJacksonProvider<Object> {
 
 
   /*
@@ -44,17 +44,18 @@ public class YamlProvider extends InputStreamJacksonProvider<Object> {
 
 
   /**
-   * Creates a new {@link YamlProvider} that reads YAML-formatted
-   * {@code application.yaml} classpath resources.
+   * Creates a new {@link PropertiesProvider} that reads Java
+   * properties-formatted {@code application.properties} classpath
+   * resources.
    *
-   * @see #YamlProvider(String)
+   * @see #PropertiesProvider(String)
    */
-  public YamlProvider() {
-    this("application.yaml");
+  public PropertiesProvider() {
+    this("application.properties");
   }
 
   /**
-   * Creates a new {@link YamlProvider}.
+   * Creates a new {@link PropertiesProvider}.
    *
    * @param resourceName the name of the classpath resource to read
    * from; must not be {@code null}
@@ -62,8 +63,8 @@ public class YamlProvider extends InputStreamJacksonProvider<Object> {
    * @exception NullPointerException if {@code resourceName} is {@code
    * null}
    */
-  public YamlProvider(final String resourceName) {
-    super(new CachingSupplier<>(YAMLMapper::new), resourceName);
+  public PropertiesProvider(final String resourceName) {
+    super(new CachingSupplier<>(JavaPropsMapper::new), resourceName);
   }
 
 }

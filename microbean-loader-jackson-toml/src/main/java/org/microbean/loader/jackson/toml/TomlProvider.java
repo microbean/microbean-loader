@@ -39,14 +39,6 @@ public class TomlProvider extends InputStreamJacksonProvider<Object> {
 
 
   /*
-   * Static fields.
-   */
-
-
-  private static final Supplier<TomlMapper> supplier = new CachingSupplier<>(TomlMapper::new);
-
-
-  /*
    * Constructors.
    */
 
@@ -71,7 +63,7 @@ public class TomlProvider extends InputStreamJacksonProvider<Object> {
    * null}
    */
   public TomlProvider(final String resourceName) {
-    super(TomlProvider.supplier, resourceName);
+    super(new CachingSupplier<>(TomlMapper::new), resourceName);
   }
 
 }
