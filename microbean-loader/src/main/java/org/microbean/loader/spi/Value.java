@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 
 import org.microbean.development.annotation.Convenience;
 
+import org.microbean.invoke.FixedValueSupplier;
 import org.microbean.invoke.OptionalSupplier;
 
 import org.microbean.path.Path;
@@ -75,6 +76,39 @@ public final class Value<T> implements OptionalSupplier<T> {
    * Constructors.
    */
 
+
+  /**
+   * Creates a new {@link Value}.
+   *
+   * <p>The {@link Value}'s {@link #get()} method will return {@code
+   * null} when it is invoked.</p>
+   *
+   * @param path the {@link Path}, possibly relative, for which this
+   * {@link Value} is suitable; must not be {@code null}
+   *
+   * @exception NullPointerException if {@code path} is {@code null}
+   */
+  public Value(final Path<? extends Type> path) {
+    this(FixedValueSupplier.of(null), path);
+  }
+
+  /**
+   * Creates a new {@link Value}.
+   *
+   * <p>The {@link Value}'s {@link #get()} method will return the
+   * supplied {@code value} when it is invoked.</p>
+   *
+   * @param path the {@link Path}, possibly relative, for which this
+   * {@link Value} is suitable; must not be {@code null}
+   *
+   * @param value a fixed value to be returned by the {@link #get()}
+   * method whenever it is invoked; may be {@code null}
+   *
+   * @exception NullPointerException if {@code path} is {@code null}
+   */
+  public Value(final T value, final Path<? extends Type> path) {
+    this(FixedValueSupplier.of(value), path);
+  }
 
   /**
    * Creates a new {@link Value}.
