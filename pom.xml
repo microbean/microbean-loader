@@ -41,6 +41,7 @@
     <module>microbean-loader-jackson-toml</module>
     <module>microbean-loader-jackson-yaml</module>
     <module>microbean-loader-jackson</module>
+    <module>microbean-loader-typesafe-config</module>
     <module>microbean-loader</module>
   </modules>
 
@@ -132,6 +133,13 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>microbean-loader-jackson-yaml</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-loader-typesafe-config</artifactId>
         <version>${project.version}</version>
         <type>jar</type>
       </dependency>
