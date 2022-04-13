@@ -30,8 +30,6 @@ module org.microbean.loader.jackson.toml {
 
   exports org.microbean.loader.jackson.toml;
 
-  provides Provider with TomlProvider;
-
   requires com.fasterxml.jackson.databind;
   requires com.fasterxml.jackson.dataformat.toml;
   requires transitive org.microbean.loader.jackson;

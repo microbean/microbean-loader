@@ -3,7 +3,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.microbean/microbean-loader/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.microbean/microbean-loader)
 
 The microBean™ Loader project provides classes and interfaces related
-to _loaders_: general-purpose object locators for Java.
+to _loaders_: general-purpose object loaders for Java.
 
 # Status
 

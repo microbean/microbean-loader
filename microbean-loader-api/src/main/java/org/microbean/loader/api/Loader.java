@@ -249,7 +249,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * must be, safe for concurrent use by multiple threads.
    *
    * @see Path#of(Object)
-   * 
+   *
    * @see #load(Path)
    */
   @OverridingDiscouraged
@@ -270,7 +270,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
    *
    * @param type the path's {@link Type}; must not be {@code null}
    *
-   * @param name the 
+   * @param name the
    *
    * @return a {@link Loader}
    *
@@ -661,6 +661,37 @@ public interface Loader<T> extends OptionalSupplier<T> {
     assert root.path().equals(Path.root());
     assert this != root ? !this.path().equals(Path.root()) : true;
     return root;
+  }
+
+  /**
+   * Casts this {@link Loader} appropriately and returns it, usually
+   * so that an implementation's implementation-specific methods can
+   * be accessed.
+   *
+   * @param <L> the {@link Loader} subclass
+   *
+   * @param loaderSubclass a {@link Class} representing a subclass of
+   * {@link Loader}; must not be {@code null}
+   *
+   * @return this {@link Loader}
+   *
+   * @exception NullPointerException if {@code loaderSubclass} is
+   * {@code null}
+   *
+   * @exception ClassCastException if the cast could not be performed
+   *
+   * @nullability This method does not, and its (discouraged)
+   * overrides must not, return {@code null}.
+   *
+   * @idempotency This method is, and its (discouraged) overrides must
+   * be, idempotent and deterministic.
+   *
+   * @threadsafety This method is, and its (discouraged) overrides
+   * must be, safe for concurrent use by multiple threads.
+   */
+  @OverridingDiscouraged
+  public default <L extends Loader<?>> L as(final Class<L> loaderSubclass) {
+    return loaderSubclass.cast(this);
   }
 
   /**

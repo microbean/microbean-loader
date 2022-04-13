@@ -30,8 +30,6 @@ module org.microbean.loader.jackson.properties {
 
   exports org.microbean.loader.jackson.properties;
 
-  provides Provider with PropertiesProvider;
-
   requires com.fasterxml.jackson.databind;
   requires com.fasterxml.jackson.dataformat.javaprop;
   requires transitive org.microbean.loader.jackson;

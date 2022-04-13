@@ -30,8 +30,6 @@ module org.microbean.loader.jackson.json {
 
   exports org.microbean.loader.jackson.json;
 
-  provides Provider with JsonProvider;
-
   requires com.fasterxml.jackson.databind;
   requires transitive org.microbean.loader.jackson;
   

@@ -16,6 +16,7 @@
  */
 package org.microbean.loader;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import java.util.ArrayDeque;
@@ -55,6 +56,7 @@ import org.microbean.loader.spi.AmbiguityHandler;
 import org.microbean.loader.spi.Provider;
 import org.microbean.loader.spi.Value;
 
+import org.microbean.type.JavaType.Token;
 import org.microbean.type.JavaTypes;
 
 /**

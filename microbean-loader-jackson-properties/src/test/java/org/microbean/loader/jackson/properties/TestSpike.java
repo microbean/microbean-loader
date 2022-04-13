@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.junit.jupiter.api.Test;
 
+import org.microbean.loader.DefaultLoader;
+
 import org.microbean.loader.api.Loader;
 
 import org.microbean.loader.jackson.Configuration;
@@ -48,11 +50,12 @@ final class TestSpike {
 
   @Test
   final void testSpike() {
+    final Loader<?> loader = loader().as(DefaultLoader.class).plus(new PropertiesProvider());
 
     // This treats the whole application.properties as a Frobnicator,
     // ignoring unknown properties.  I'm not sure this is a great use
     // case but it's at least possible.
-    final Frobnicator f = loader().load(Frobnicator.class).orElse(null);
+    final Frobnicator f = loader.load(Frobnicator.class).orElse(null);
     assertNotNull(f);
     assertEquals(37, f.getFrobnicationInterval());
     Qualifiers<?, ?> q = f.qualifiers();
@@ -61,12 +64,12 @@ final class TestSpike {
 
     // This extracts a Blatz object out of application.properties named
     // "gorp", also ignoring unknown properties.
-    final Blatz b = loader().load(Blatz.class, "gorp").orElse(null);
+    final Blatz b = loader.load(Blatz.class, "gorp").orElse(null);
     assertNotNull(b);
     assertEquals("foo", b.getBlatz());
 
     // This goes after a single string.
-    final String blatz = loader().load(String.class, List.of("gorp", "blatz")).orElse(null);
+    final String blatz = loader.load(String.class, List.of("gorp", "blatz")).orElse(null);
   }
 
   @JsonAutoDetect(creatorVisibility = Visibility.NONE,
@@ -88,7 +91,7 @@ final class TestSpike {
     public final String getBlatz() {
       return this.blatz;
     }
-    
+
   }
 
   @JsonAutoDetect(creatorVisibility = Visibility.NONE,
@@ -111,7 +114,7 @@ final class TestSpike {
     public final int getFrobnicationInterval() {
       return this.frobnicationInterval;
     }
-    
+
   }
-  
+
 }

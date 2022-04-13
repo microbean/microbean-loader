@@ -30,8 +30,6 @@ module org.microbean.loader.jackson.yaml {
 
   exports org.microbean.loader.jackson.yaml;
 
-  provides Provider with YamlProvider;
-
   requires com.fasterxml.jackson.databind;
   requires com.fasterxml.jackson.dataformat.yaml;
   requires transitive org.microbean.loader.jackson;
