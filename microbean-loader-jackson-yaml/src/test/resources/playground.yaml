@@ -1,0 +1,25 @@
+default:
+  greeting : "Hello!"
+
+slang:
+  greeting: "Yo!"
+
+test:
+  slang:
+    greeting: "Yo, I think?"
+
+fancy:
+  greeting: "Bonjour!"
+
+"@qualifiers":
+  default:
+    kind: "normal"
+    language: "English"
+  fancy:
+    greeting:
+      language: "French" 
+    foo: bar
+  slang:
+    greeting:
+      kind: "slang"
+      language: "English"

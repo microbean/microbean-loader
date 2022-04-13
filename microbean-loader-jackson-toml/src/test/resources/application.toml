@@ -1,0 +1,11 @@
+frobnicationInterval = 37
+hork = "froovus"
+
+["@qualifiers"]
+a = "b"
+
+[gorp]
+blatz = "foo"
+
+["@quaifiers".gorp]
+c = "d"

@@ -1,0 +1,32 @@
+[default]
+greeting = "Hello!"
+
+["@qualifiers".default]
+# qualifiers for general stuff under [default], including greeting
+kind = "normal"
+language = "English"
+
+[slang]
+greeting = "Yo!"
+
+["@qualifiers".slang.greeting]
+# qualifiers for greeting under [slang]
+kind = "slang"
+language = "English"
+
+[test.slang]
+greeting = "Yo, I think?"
+
+# note: no particular qualifiers for this [test.slang] profile so the profile is kind of useless
+
+[fancy]
+greeting = "Bonjour!"
+
+["@qualifiers".fancy]
+# qualifiers for generic stuff under the name "french"
+["@qualifiers".fancy.greeting]
+# qualifiers for greeting with the name "french"
+language = "French"
+
+["@qualifiers"]
+foo = "bar"

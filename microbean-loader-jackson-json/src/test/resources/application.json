@@ -1,0 +1,14 @@
+{
+    "frobnicationInterval" : 37,
+    "gorp" : {
+        "blatz" : "foo"
+    },
+    "hork" : "froovus",
+    "@qualifiers" : {
+        "a" : "b",
+        "gorp" : {
+            "blatz" : "foo",
+            "c" : "d"
+        }
+    }
+}
