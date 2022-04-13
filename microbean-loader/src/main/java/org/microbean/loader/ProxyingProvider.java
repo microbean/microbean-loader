@@ -69,7 +69,7 @@ import org.microbean.type.JavaTypes;
  *
  * @see #isProxiable(Loader, Path)
  */
-public class ProxyingProvider extends AbstractProvider<Object> {
+public class ProxyingProvider extends AbstractProvider {
 
 
   /*

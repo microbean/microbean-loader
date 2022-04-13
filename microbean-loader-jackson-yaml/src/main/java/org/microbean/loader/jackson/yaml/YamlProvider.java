@@ -16,6 +16,8 @@
  */
 package org.microbean.loader.jackson.yaml;
 
+import java.lang.reflect.Type;
+
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,7 +37,7 @@ import org.microbean.invoke.CachingSupplier;
  *
  * @see InputStreamJacksonProvider
  */
-public class YamlProvider extends InputStreamJacksonProvider<Object> {
+public class YamlProvider extends InputStreamJacksonProvider {
 
 
   /*
@@ -47,14 +49,18 @@ public class YamlProvider extends InputStreamJacksonProvider<Object> {
    * Creates a new {@link YamlProvider} that reads YAML-formatted
    * {@code application.yaml} classpath resources.
    *
-   * @see #YamlProvider(String)
+   * @see #YamlProvider(Type, String)
    */
   public YamlProvider() {
-    this("application.yaml");
+    this(null, "application.yaml");
   }
 
   /**
    * Creates a new {@link YamlProvider}.
+   *
+   * @param lowerBound the {@linkplain #lowerBound() lower type bound}
+   * of this {@link InputStreamJacksonProvider} implementation; may be
+   * {@code null}
    *
    * @param resourceName the name of the classpath resource to read
    * from; must not be {@code null}
@@ -62,8 +68,8 @@ public class YamlProvider extends InputStreamJacksonProvider<Object> {
    * @exception NullPointerException if {@code resourceName} is {@code
    * null}
    */
-  public YamlProvider(final String resourceName) {
-    super(new CachingSupplier<>(YAMLMapper::new), resourceName);
+  public YamlProvider(final Type lowerBound, final String resourceName) {
+    super(lowerBound, new CachingSupplier<>(YAMLMapper::new), resourceName);
   }
 
 }

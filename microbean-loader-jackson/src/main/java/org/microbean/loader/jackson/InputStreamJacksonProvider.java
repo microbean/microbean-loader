@@ -55,13 +55,10 @@ import org.microbean.type.JavaTypes;
  * InputStream}-providing {@linkplain BiFunction bifunction} and an
  * {@link ObjectCodec}-providing {@linkplain BiFunction bifunction}.
  *
- * @param <T> the upper bound of types of objects that this {@link
- * InputStreamJacksonProvider} provides
- *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
+public class InputStreamJacksonProvider extends JacksonProvider {
 
 
   /*
@@ -82,12 +79,16 @@ public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
 
 
   private InputStreamJacksonProvider() {
-    super();
+    super(null);
     throw new UnsupportedOperationException();
   }
 
   /**
    * Creates a new {@link InputStreamJacksonProvider}.
+   *
+   * @param lowerBound the {@linkplain #lowerBound() lower type bound}
+   * of this {@link InputStreamJacksonProvider} implementation; may be
+   * {@code null}
    *
    * @param mapperSupplier a {@link Supplier}, deterministic or not,
    * of {@link ObjectMapper} instances; ordinarily callers should
@@ -98,18 +99,26 @@ public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
    * the directory identified by the {@link System#getProperty(String,
    * String) user.dir} system property
    *
-   * @see #InputStreamJacksonProvider(BiFunction, BiFunction, Consumer)
+   * @see #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
+   * Consumer)
    *
    * @see #inputStream(ClassLoader, String)
    */
-  public InputStreamJacksonProvider(final Supplier<? extends ObjectMapper> mapperSupplier, final String resourceName) {
-    this(objectCodecFunction(mapperSupplier),
+  public InputStreamJacksonProvider(final Type lowerBound,
+                                    final Supplier<? extends ObjectMapper> mapperSupplier,
+                                    final String resourceName) {
+    this(lowerBound,
+         objectCodecFunction(mapperSupplier),
          (l, p) -> inputStream(classLoader(p), resourceName),
          InputStreamJacksonProvider::closeInputStream);
   }
 
   /**
    * Creates a new {@link InputStreamJacksonProvider}.
+   *
+   * @param lowerBound the {@linkplain #lowerBound() lower type bound}
+   * of this {@link InputStreamJacksonProvider} implementation; may be
+   * {@code null}
    *
    * @param objectCodecFunction a {@link BiFunction} that returns an
    * {@link ObjectCodec} when supplied with a {@link Loader} and a
@@ -124,10 +133,11 @@ public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
    * been fully read; may be {@code null}; normally should
    * {@linkplain InputStream#close() close} the {@link InputStream}
    */
-  public InputStreamJacksonProvider(final BiFunction<? super Loader<?>, ? super Path<? extends Type>, ? extends ObjectCodec> objectCodecFunction,
+  public InputStreamJacksonProvider(final Type lowerBound,
+                                    final BiFunction<? super Loader<?>, ? super Path<? extends Type>, ? extends ObjectCodec> objectCodecFunction,
                                     final BiFunction<? super Loader<?>, ? super Path<? extends Type>, ? extends InputStream> inputStreamFunction,
                                     final Consumer<? super InputStream> inputStreamReadConsumer) {
-    super();
+    super(lowerBound);
     this.objectCodecFunction = objectCodecFunction == null ? InputStreamJacksonProvider::returnNull : objectCodecFunction;
     this.inputStreamFunction = inputStreamFunction == null ? InputStreamJacksonProvider::returnNull : inputStreamFunction;
     this.inputStreamReadConsumer = inputStreamReadConsumer == null ? InputStreamJacksonProvider::sink : inputStreamReadConsumer;
@@ -142,8 +152,8 @@ public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
   /**
    * Invokes the {@link BiFunction#apply(Object, Object)} method of
    * the {@code objectCodecFunction} {@linkplain
-   * #InputStreamJacksonProvider(BiFunction, BiFunction, Consumer)
-   * supplied at construction time} and returns the result.
+   * #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
+   * Consumer) supplied at construction time} and returns the result.
    *
    * @param <T> the type of the value ultimately being provided
    *
@@ -162,13 +172,13 @@ public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads, but the {@code objectCodecFunction} {@linkplain
-   * #InputStreamJacksonProvider(BiFunction, BiFunction, Consumer)
-   * supplied at construction time} may not be.
+   * #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
+   * Consumer) supplied at construction time} may not be.
    *
    * @idempotency This method is idempotent and deterministic if the
    * {@code objectCodecFunction} {@linkplain
-   * #InputStreamJacksonProvider(BiFunction, BiFunction, Consumer)
-   * supplied at construction time} is.
+   * #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
+   * Consumer) supplied at construction time} is.
    */
   @Override // JacksonProvider<T>
   protected final <T> ObjectCodec objectCodec(final Loader<?> requestingLoader, final Path<? extends Type> absolutePath) {
@@ -179,8 +189,8 @@ public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
    * Overrides {@link JacksonProvider#rootNode(Loader, Path,
    * ObjectCodec)} to produce a {@link TreeNode} using the {@code
    * inputStreamFunction} {@linkplain
-   * #InputStreamJacksonProvider(BiFunction, BiFunction, Consumer)
-   * supplied at construction time}.
+   * #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
+   * Consumer) supplied at construction time}.
    *
    * <p>This method will return {@code null} to indicate that this
    * {@link InputStreamJacksonProvider} will not handle the current
@@ -204,8 +214,9 @@ public class InputStreamJacksonProvider<T> extends JacksonProvider<T> {
    * @threadsafety This method is, and its overrides must be, safe for
    * concurrent use by multiple threads, but the {@code
    * inputStreamFunction} {@linkplain
-   * #InputStreamJacksonProvider(BiFunction, BiFunction, Consumer)
-   * supplied at construction time} used by this method may not be
+   * #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
+   * Consumer) supplied at construction time} used by this method may
+   * not be
    *
    * @idempotency This method is, and its overrides must be,
    * idempotent, but not necessarily deterministic.

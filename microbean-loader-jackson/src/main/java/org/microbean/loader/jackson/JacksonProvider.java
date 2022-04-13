@@ -56,7 +56,7 @@ import org.microbean.qualifier.Qualifiers;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-public abstract class JacksonProvider<T> extends AbstractProvider<T> {
+public abstract class JacksonProvider extends AbstractProvider {
 
 
   /*
@@ -74,8 +74,12 @@ public abstract class JacksonProvider<T> extends AbstractProvider<T> {
 
   /**
    * Creates a new {@link JacksonProvider}.
+   *
+   * @param lowerBound the {@linkplain #lowerBound() lower type bound}
+   * of this {@link JacksonProvider} implementation; may be {@code
+   * null}
    */
-  protected JacksonProvider() {
+  protected JacksonProvider(final Type lowerBound) {
     super();
   }
 

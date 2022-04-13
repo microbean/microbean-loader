@@ -53,25 +53,38 @@ public interface Provider {
 
 
   /**
-   * Returns a {@link Type} representing the upper bound of all
-   * possible {@linkplain Value values} {@linkplain #get(Loader,
-   * Path) supplied} by this {@link Provider}.
+   * Returns a {@link Type} representing the <em>lower type bound</em>
+   * of all possible {@linkplain Value values} {@linkplain
+   * #get(Loader, Path) supplied} by this {@link Provider}.
    *
    * <p>Often the value returned by implementations of this method is
-   * no more specific than simply {@link Object Object.class}.</p>
+   * no more specific than the lowest possible type, which is {@code
+   * null}, meaning that the {@link Provider} has at least a chance of
+   * {@linkplain #get(Loader, Path) producing} a {@link Value} for any
+   * requested type.</p>
    *
-   * <p>Implementations of this method must not return {@code
+   * <p>A return value of (for example) {@link String String.class}
+   * indicates that the {@link Provider} may satisfy requests for
+   * {@link String String.class} or any of its supertypes, but not for
+   * {@link Integer Integer.class}, for example.</p>
+   *
+   * <p>A return value of {@link Object Object.class} indicates a
+   * maximally opaque type, i.e. only requests for {@link Object
+   * Object.class} have the possibility of being satisfied by this
+   * {@link Provider}.  Such a return value is possible, but rarely
+   * used, and {@link Provider} implementations are urged to consider
+   * a different {@link Type}.</p>
+   *
+   * <p>The default implementation of this method returns {@code
    * null}.</p>
    *
-   * <p>The default implementation of this method returns {@link
-   * Object Object.class}.</p>
+   * @return a {@link Type} representing the lower type bound of all
+   * possible {@linkplain Value values} {@linkplain #get(Loader, Path)
+   * supplied} by this {@link Provider}, or {@code null} to indicate
+   * the lowest possible type bound
    *
-   * @return a {@link Type} representing the upper bound of all
-   * possible {@linkplain Value values} {@linkplain #get(Loader,
-   * Path) supplied} by this {@link Provider}; never {@code null}
-   *
-   * @nullability This method does not, and overrides of this method
-   * must not, return {@code null}.
+   * @nullability This method does, and overrides may, return {@code
+   * null}.
    *
    * @idempotency This method is, and overrides of this method must
    * be, idempotent and deterministic.
@@ -79,8 +92,8 @@ public interface Provider {
    * @threadsafety This method is, and overrides of this method must
    * be, safe for concurrent use by multiple threads.
    */
-  public default Type upperBound() {
-    return Object.class;
+  public default Type lowerBound() {
+    return null; // the lowest possible type, assignable to all others
   }
 
   /**
@@ -89,8 +102,9 @@ public interface Provider {
    * {@link Value} now <strong>and if there never will be such a
    * {@link Value}</strong> for the supplied arguments.
    *
-   * <p>The following assertions will be true when this method is
-   * called in the normal course of events:</p>
+   * <p>In addition to the other requirements described here, the
+   * following assertions will be (and must be) true when this method
+   * is called in the normal course of events:</p>
    *
    * <ul>
    *
@@ -103,6 +117,9 @@ public interface Provider {
    * !absolutePath.equals(requestor.absolutePath());}</li>
    *
    * </ul>
+   *
+   * <p>If any caller does not honor these requirements, undefined
+   * behavior may result.</p>
    *
    * @param requestor the {@link Loader} seeking a {@link Value};
    * must not be {@code null}
@@ -121,7 +138,11 @@ public interface Provider {
    * {@code absolutePath} is {@code null}
    *
    * @exception IllegalArgumentException if {@code absolutePath}
-   * {@linkplain Path#absolute() is not absolute}
+   * {@linkplain Path#absolute() is not absolute}, or if {@link
+   * Path#startsWith(Path)
+   * !absolutePath.startsWith(requestor.absolutePath())}, or if {@link
+   * Path#equals(Object)
+   * absolutePath.equals(requestor.absolutePath())}
    *
    * @nullability Implementations of this method may return {@code
    * null}.

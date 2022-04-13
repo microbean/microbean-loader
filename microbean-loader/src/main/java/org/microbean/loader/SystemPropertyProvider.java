@@ -66,7 +66,7 @@ import org.microbean.type.JavaTypes;
  *
  * @see Value#determinism()
  */
-public final class SystemPropertyProvider extends AbstractProvider<Object> {
+public final class SystemPropertyProvider extends AbstractProvider {
 
 
   /*

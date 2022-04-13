@@ -41,6 +41,7 @@
     <module>microbean-loader-jackson-toml</module>
     <module>microbean-loader-jackson-yaml</module>
     <module>microbean-loader-jackson</module>
+    <module>microbean-loader-microprofile-config-configsource</module>
     <module>microbean-loader-typesafe-config</module>
     <module>microbean-loader</module>
   </modules>
@@ -88,7 +89,7 @@
       <dependency>
         <groupId>org.microbean</groupId>
         <artifactId>microbean-type</artifactId>
-        <version>0.2.5</version>
+        <version>0.2.6</version>
         <type>jar</type>
       </dependency>
 
@@ -96,6 +97,12 @@
         <groupId>com.typesafe</groupId>
         <artifactId>config</artifactId>
         <version>1.4.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.microprofile.config</groupId>
+        <artifactId>microprofile-config-api</artifactId>
+        <version>3.0.1</version>
       </dependency>
 
 
@@ -133,6 +140,13 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>microbean-loader-jackson-yaml</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-loader-microprofile-config-configsource</artifactId>
         <version>${project.version}</version>
         <type>jar</type>
       </dependency>
@@ -278,7 +292,7 @@
 
     <!-- maven-javadoc-plugin properties -->
     <detectJavaApiLink>false</detectJavaApiLink>
-    <links>https://docs.oracle.com/en/java/javase/17/docs/api,https://microbean.github.io/microbean-development-annotations/apidocs/,https://microbean.github.io/microbean-invoke/apidocs/,https://microbean.github.io/microbean-path/apidocs/,https://microbean.github.io/microbean-qualifier/apidocs/,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-core/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-databind/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.dataformat/jackson-dataformat-toml/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.dataformat/jackson-dataformat-properties/2.13.2</links>
+    <links>https://docs.oracle.com/en/java/javase/17/docs/api,https://microbean.github.io/microbean-development-annotations/apidocs/,https://microbean.github.io/microbean-invoke/apidocs/,https://microbean.github.io/microbean-path/apidocs/,https://microbean.github.io/microbean-qualifier/apidocs/,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-core/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.core/jackson-databind/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.dataformat/jackson-dataformat-toml/2.13.2,https://javadoc.io/static/com.fasterxml.jackson.dataformat/jackson-dataformat-properties/2.13.2,https://lightbend.github.io/config/latest/api,https://javadoc.io/static/org.eclipse.microprofile.config/microprofile-config-api/3.0.1</links>
 
   </properties>
 

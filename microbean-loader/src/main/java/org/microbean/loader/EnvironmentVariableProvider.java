@@ -39,7 +39,7 @@ import org.microbean.qualifier.Qualifiers;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-public final class EnvironmentVariableProvider extends AbstractProvider<String> {
+public final class EnvironmentVariableProvider extends AbstractProvider {
 
 
   /*
@@ -51,7 +51,7 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
    * Creates a new {@link EnvironmentVariableProvider}.
    */
   public EnvironmentVariableProvider() {
-    super();
+    super(String.class);
   }
 
 

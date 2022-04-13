@@ -16,6 +16,8 @@
  */
 package org.microbean.loader.jackson.toml;
 
+import java.lang.reflect.Type;
+
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 
 import org.microbean.loader.jackson.InputStreamJacksonProvider;
@@ -31,7 +33,7 @@ import org.microbean.invoke.CachingSupplier;
  *
  * @see InputStreamJacksonProvider
  */
-public class TomlProvider extends InputStreamJacksonProvider<Object> {
+public class TomlProvider extends InputStreamJacksonProvider {
 
 
   /*
@@ -43,14 +45,18 @@ public class TomlProvider extends InputStreamJacksonProvider<Object> {
    * Creates a new {@link TomlProvider} that reads TOML-formatted
    * {@code application.toml} classpath resources.
    *
-   * @see #TomlProvider(String)
+   * @see #TomlProvider(Type, String)
    */
   public TomlProvider() {
-    this("application.toml");
+    this(null, "application.toml");
   }
 
   /**
    * Creates a new {@link TomlProvider}.
+   *
+   * @param lowerBound the {@linkplain #lowerBound() lower type bound}
+   * of this {@link InputStreamJacksonProvider} implementation; may be
+   * {@code null}
    *
    * @param resourceName the name of the classpath resource to read
    * from; must not be {@code null}
@@ -58,8 +64,8 @@ public class TomlProvider extends InputStreamJacksonProvider<Object> {
    * @exception NullPointerException if {@code resourceName} is {@code
    * null}
    */
-  public TomlProvider(final String resourceName) {
-    super(new CachingSupplier<>(TomlMapper::new), resourceName);
+  public TomlProvider(final Type lowerBound, final String resourceName) {
+    super(lowerBound, new CachingSupplier<>(TomlMapper::new), resourceName);
   }
 
 }

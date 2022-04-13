@@ -55,7 +55,7 @@ import org.microbean.loader.spi.AmbiguityHandler;
 import org.microbean.loader.spi.Provider;
 import org.microbean.loader.spi.Value;
 
-import org.microbean.type.Type.CovariantSemantics;
+import org.microbean.type.JavaTypes;
 
 /**
  * A subclassable default {@link Loader} implementation that delegates
@@ -138,9 +138,9 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
          ambiguityHandler);
   }
 
-  private DefaultLoader(final DefaultLoader<T> loader, final Provider provider) {
+  private DefaultLoader(final DefaultLoader<T> loader, final Collection<? extends Provider> providers) {
     this(loader.loaderCache,
-         add(loader.providers(), provider),
+         providers,
          loader.parent(),
          loader.path(),
          loader.supplier,
@@ -233,7 +233,76 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    * threads.
    */
   public final DefaultLoader<T> plus(final Provider provider) {
-    return provider == null ? this : new DefaultLoader<>(this, provider);
+    return provider == null ? this : new DefaultLoader<>(this, add(this.providers, provider));
+  }
+
+  /**
+   * Returns a {@link DefaultLoader} that {@linkplain #providers()
+   * uses} the additional {@link Provider}s.
+   *
+   * @param providers the additional {@link Provider}s; may be {@code
+   * null} or {@linkplain Collection#isEmpty() empty} in which case
+   * {@code this} will be returned
+   *
+   * @return a {@link DefaultLoader} that {@linkplain #providers()
+   * uses} the additional {@link Provider}s
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is not idempotent (it usually creates a
+   * new {@link DefaultLoader} to return) but is deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final DefaultLoader<T> plus(final Collection<? extends Provider> providers) {
+    return providers == null || providers.isEmpty() ? this : new DefaultLoader<>(this, add(this.providers, providers));
+  }
+
+  /**
+   * Returns a {@link DefaultLoader} that {@linkplain #providers()
+   * uses} only the supplied {@link Provider}.
+   *
+   * @param provider the {@link Provider}; may be {@code null} in
+   * which case {@link Provider}s will be loaded using the {@link
+   * ServiceLoader} class
+   *
+   * @return a {@link DefaultLoader} that {@linkplain #providers()
+   * uses} only the supplied {@link Provider}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is not idempotent (it usually creates a
+   * new {@link DefaultLoader} to return) but is deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final DefaultLoader<T> with(final Provider provider) {
+    return new DefaultLoader<>(this, provider == null ? List.of() : List.of(provider));
+  }
+
+  /**
+   * Returns a {@link DefaultLoader} that {@linkplain #providers()
+   * uses} only the supplied {@link Provider}s.
+   *
+   * @param providers the {@link Provider}s; may be {@code null} or
+   * {@linkplain Collection#isEmpty() empty} in which case {@link
+   * Provider}s will be loaded using the {@link ServiceLoader} class
+   *
+   * @return a {@link DefaultLoader} that {@linkplain #providers()
+   * uses} only the supplied {@link Provider}s
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is not idempotent (it usually creates a
+   * new {@link DefaultLoader} to return) but is deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  public final DefaultLoader<T> with(final Collection<? extends Provider> providers) {
+    return new DefaultLoader<>(this, providers);
   }
 
   /**
@@ -473,159 +542,131 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     final Collection<? extends Provider> providers = this.providers();
     if (!providers.isEmpty()) {
       final Map<Path<? extends Type>, Deque<Provider>> map = currentProviderStacks.get();
+
       Provider candidateProvider = null;
-      if (providers.size() == 1) {
-        candidateProvider = providers instanceof List<? extends Provider> list ? list.get(0) : providers.iterator().next();
-        if (candidateProvider == null) {
-          ambiguityHandler.providerRejected(requestor, absolutePath, candidateProvider);
-        } else if (candidateProvider == peek(map, absolutePath)) {
+      int candidateQualifiersScore = Integer.MIN_VALUE;
+      int candidatePathScore = Integer.MIN_VALUE;
+
+      for (final Provider provider : providers) {
+
+        if (provider == null) {
+          ambiguityHandler.providerRejected(requestor, absolutePath, provider);
+          continue;
+        }
+
+        if (provider == peek(map, absolutePath)) {
           // Behave the same as the null case immediately prior, but
           // there's no need to notify the ambiguityHandler.
-        } else if (!isSelectable(candidateProvider, absolutePath)) {
-          ambiguityHandler.providerRejected(requestor, absolutePath, candidateProvider);
-        } else {
-          push(map, absolutePath, candidateProvider);
-          try {
-            candidate = (Value<U>)candidateProvider.get(requestor, absolutePath);
-          } finally {
-            pop(map, absolutePath);
-          }
-          if (candidate == null) {
-            ambiguityHandler.providerRejected(requestor, absolutePath, candidateProvider);
-          } else {
-            candidate = candidate.with(requestor.transliterate(candidate.path()));
-            if (!isSelectable(absolutePath, candidate.path())) {
-              ambiguityHandler.valueRejected(requestor, absolutePath, candidateProvider, candidate);
-            }
-          }
+          continue;
         }
-      } else {
-        int candidateQualifiersScore = Integer.MIN_VALUE;
-        int candidatePathScore = Integer.MIN_VALUE;
-        PROVIDER_LOOP:
-        for (final Provider provider : providers) {
 
-          if (provider == null) {
-            ambiguityHandler.providerRejected(requestor, absolutePath, provider);
-            continue PROVIDER_LOOP;
+        if (!isSelectable(provider, absolutePath)) {
+          ambiguityHandler.providerRejected(requestor, absolutePath, provider);
+          continue;
+        }
+
+        Value<U> value;
+
+        push(map, absolutePath, provider);
+        try {
+          value = (Value<U>)provider.get(requestor, absolutePath);
+        } finally {
+          pop(map, absolutePath);
+        }
+
+        if (value == null) {
+          ambiguityHandler.providerRejected(requestor, absolutePath, provider);
+          continue;
+        }
+
+        // NOTE: INFINITE LOOP POSSIBILITY; read carefully!
+        while (true) {
+
+          value = value.with(requestor.transliterate(value.path()));
+
+          if (!isSelectable(absolutePath, value.path())) {
+            ambiguityHandler.valueRejected(requestor, absolutePath, provider, value);
+            break;
           }
 
-          if (provider == peek(map, absolutePath)) {
-            // Behave the same as the null case immediately prior, but
-            // there's no need to notify the ambiguityHandler.
-            continue PROVIDER_LOOP;
+          if (candidate == null) {
+            candidate = value;
+            candidateProvider = provider;
+            candidateQualifiersScore = ambiguityHandler.score(qualifiers, candidate.qualifiers());
+            candidatePathScore = ambiguityHandler.score(absolutePath, candidate.path());
+            break;
           }
 
-          if (!isSelectable(provider, absolutePath)) {
-            ambiguityHandler.providerRejected(requestor, absolutePath, provider);
-            continue PROVIDER_LOOP;
+          // Let's score Qualifiers first, not paths.  This is an
+          // arbitrary decision, but one grounded in reality: most
+          // often qualifiers are both empty and so this is very
+          // quick, and when they are not empty, in real-world
+          // situations they're normally completely disjoint.  Get all
+          // this out of the way early.
+          //
+          // We score qualifiers in a method devoted to them rather
+          // than just folding the qualifier scoring into the path
+          // scoring method because the scoring systems may produce
+          // wildly different numbers, and if the path- and
+          // qualifier-scoring systems use, for example, size() in
+          // their algorithms, you don't want a huge pile of
+          // qualifiers accidentally affecting a path score.
+          final int valueQualifiersScore = ambiguityHandler.score(qualifiers, value.qualifiers());
+          if (valueQualifiersScore < candidateQualifiersScore) {
+            candidate = new Value<>(candidate, value);
+            break;
           }
 
-          Value<U> value;
-
-          push(map, absolutePath, provider);
-          try {
-            value = (Value<U>)provider.get(requestor, absolutePath);
-          } finally {
-            pop(map, absolutePath);
+          if (valueQualifiersScore > candidateQualifiersScore) {
+            candidate = new Value<>(value, candidate);
+            candidateProvider = provider;
+            candidateQualifiersScore = valueQualifiersScore;
+            // (No need to update candidatePathScore.)
+            break;
           }
 
-          if (value == null) {
-            ambiguityHandler.providerRejected(requestor, absolutePath, provider);
-            continue PROVIDER_LOOP;
+          // The Qualifiers scores were equal (extremely common).
+          // Let's do paths.
+          final int valuePathScore = ambiguityHandler.score(absolutePath, value.path());
+
+          if (valuePathScore < candidatePathScore) {
+            candidate = new Value<>(candidate, value);
+            break;
           }
 
-          // NOTE: INFINITE LOOP POSSIBILITY; read carefully!
-          VALUE_EVALUATION_LOOP:
-          while (true) {
-
-            value = value.with(requestor.transliterate(value.path()));
-
-            if (!isSelectable(absolutePath, value.path())) {
-              ambiguityHandler.valueRejected(requestor, absolutePath, provider, value);
-              break VALUE_EVALUATION_LOOP;
-            }
-
-            if (candidate == null) {
-              candidate = value;
-              candidateProvider = provider;
-              candidateQualifiersScore = ambiguityHandler.score(qualifiers, candidate.qualifiers());
-              candidatePathScore = ambiguityHandler.score(absolutePath, candidate.path());
-              break VALUE_EVALUATION_LOOP;
-            }
-
-            // Let's score Qualifiers first, not paths.  This is an
-            // arbitrary decision, but one grounded in reality: most
-            // often qualifiers are both empty and so this is very
-            // quick, and when they are not empty, in real-world
-            // situations they're normally completely disjoint.  Get
-            // all this out of the way early.
-            //
-            // We score qualifiers in a method devoted to them rather
-            // than just folding the qualifier scoring into the path
-            // scoring method because the scoring systems may produce
-            // wildly different numbers, and if the path- and
-            // qualifier-scoring systems use, for example, size() in
-            // their algorithms, you don't want a huge pile of
-            // qualifiers accidentally affecting a path score.
-            final int valueQualifiersScore = ambiguityHandler.score(qualifiers, value.qualifiers());
-            if (valueQualifiersScore < candidateQualifiersScore) {
-              candidate = new Value<>(candidate, value);
-              break VALUE_EVALUATION_LOOP;
-            }
-
-            if (valueQualifiersScore > candidateQualifiersScore) {
-              candidate = new Value<>(value, candidate);
-              candidateProvider = provider;
-              candidateQualifiersScore = valueQualifiersScore;
-              // (No need to update candidatePathScore.)
-              break VALUE_EVALUATION_LOOP;
-            }
-
-            // The Qualifiers scores were equal (extremely common).
-            // Let's do paths.
-            final int valuePathScore = ambiguityHandler.score(absolutePath, value.path());
-
-            if (valuePathScore < candidatePathScore) {
-              candidate = new Value<>(candidate, value);
-              break VALUE_EVALUATION_LOOP;
-            }
-
-            if (valuePathScore > candidatePathScore) {
-              candidate = new Value<>(value, candidate);
-              candidateProvider = provider;
-              candidateQualifiersScore = valueQualifiersScore;
-              candidatePathScore = valuePathScore;
-              break VALUE_EVALUATION_LOOP;
-            }
-
-            final Value<U> disambiguatedValue =
-              ambiguityHandler.disambiguate(requestor, absolutePath, candidateProvider, candidate, provider, value);
-
-            if (disambiguatedValue == null) {
-              // Couldn't disambiguate.  Drop both values.
-              break VALUE_EVALUATION_LOOP;
-            }
-
-            if (disambiguatedValue.equals(candidate)) {
-              candidate = new Value<>(candidate, value);
-              break VALUE_EVALUATION_LOOP;
-            }
-
-            if (disambiguatedValue.equals(value)) {
-              candidate = new Value<>(disambiguatedValue, candidate);
-              candidateProvider = provider;
-              candidateQualifiersScore = valueQualifiersScore;
-              candidatePathScore = valuePathScore;
-              break VALUE_EVALUATION_LOOP;
-            }
-
-            // Disambiguation came up with an entirely different value, so
-            // run it back through the while loop.
-            value = disambiguatedValue;
-            continue VALUE_EVALUATION_LOOP;
-
+          if (valuePathScore > candidatePathScore) {
+            candidate = new Value<>(value, candidate);
+            candidateProvider = provider;
+            candidateQualifiersScore = valueQualifiersScore;
+            candidatePathScore = valuePathScore;
+            break;
           }
+
+          final Value<U> disambiguatedValue =
+            ambiguityHandler.disambiguate(requestor, absolutePath, candidateProvider, candidate, provider, value);
+
+          if (disambiguatedValue == null) {
+            // Couldn't disambiguate.  Drop both values.
+            break;
+          }
+
+          if (disambiguatedValue.equals(candidate)) {
+            candidate = new Value<>(candidate, value);
+            break;
+          }
+
+          if (disambiguatedValue.equals(value)) {
+            candidate = new Value<>(disambiguatedValue, candidate);
+            candidateProvider = provider;
+            candidateQualifiersScore = valueQualifiersScore;
+            candidatePathScore = valuePathScore;
+            break;
+          }
+
+          // Disambiguation came up with an entirely different value,
+          // so run it back through the while loop.
+          value = disambiguatedValue;
+
         }
       }
     }
@@ -657,6 +698,23 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     }
   }
 
+  private static final <T> Collection<T> add(final Collection<? extends T> c, final Collection<? extends T> c2) {
+    if (c == null || c.isEmpty()) {
+      if (c2 == null || c2.isEmpty()) {
+        return List.of();
+      } else {
+        return Collections.unmodifiableCollection(c2);
+      }
+    } else if (c2 == null || c2.isEmpty()) {
+      return Collections.unmodifiableCollection(c);
+    } else {
+      final Collection<T> newC = new ArrayList<>(c.size() + c2.size());
+      newC.addAll(c);
+      newC.addAll(c2);
+      return Collections.unmodifiableCollection(newC);
+    }
+  }
+
   private static final Provider peek(final Map<?, ? extends Deque<Provider>> map,
                                      final Path<? extends Type> absolutePath) {
     final Queue<? extends Provider> q = map.get(absolutePath);
@@ -671,12 +729,13 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
   private static final Provider pop(final Map<?, ? extends Deque<Provider>> map,
                                     final Path<? extends Type> absolutePath) {
-    final Deque<Provider> dq = map.get(absolutePath);
+    final Deque<? extends Provider> dq = map.get(absolutePath);
     return dq == null ? null : dq.pop();
   }
 
   private static final boolean isSelectable(final Provider provider, final Path<? extends Type> absolutePath) {
-    return CovariantSemantics.INSTANCE.assignable(provider.upperBound(), absolutePath.qualified());
+    final Type providerLowerBound = provider.lowerBound();
+    return providerLowerBound == null || JavaTypes.assignable(absolutePath.qualified(), providerLowerBound);
   }
 
   static final Collection<Provider> loadedProviders() {
@@ -815,7 +874,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
         return e2.qualified() == null;
       } else if (!(o1 instanceof Type) ||
                  !(e2.qualified() instanceof Type t2) ||
-                 !CovariantSemantics.INSTANCE.assignable((Type)o1, t2)) {
+                 !JavaTypes.assignable((Type)o1, t2)) {
         return false;
       }
 

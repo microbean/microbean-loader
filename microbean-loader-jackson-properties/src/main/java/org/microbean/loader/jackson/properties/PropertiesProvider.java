@@ -16,6 +16,8 @@
  */
 package org.microbean.loader.jackson.properties;
 
+import java.lang.reflect.Type;
+
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,7 +37,7 @@ import org.microbean.invoke.CachingSupplier;
  *
  * @see InputStreamJacksonProvider
  */
-public class PropertiesProvider extends InputStreamJacksonProvider<Object> {
+public class PropertiesProvider extends InputStreamJacksonProvider {
 
 
   /*
@@ -48,14 +50,18 @@ public class PropertiesProvider extends InputStreamJacksonProvider<Object> {
    * properties-formatted {@code application.properties} classpath
    * resources.
    *
-   * @see #PropertiesProvider(String)
+   * @see #PropertiesProvider(Type, String)
    */
   public PropertiesProvider() {
-    this("application.properties");
+    this(null, "application.properties");
   }
 
   /**
    * Creates a new {@link PropertiesProvider}.
+   *
+   * @param lowerBound the {@linkplain #lowerBound() lower type bound}
+   * of this {@link InputStreamJacksonProvider} implementation; may be
+   * {@code null}
    *
    * @param resourceName the name of the classpath resource to read
    * from; must not be {@code null}
@@ -63,8 +69,8 @@ public class PropertiesProvider extends InputStreamJacksonProvider<Object> {
    * @exception NullPointerException if {@code resourceName} is {@code
    * null}
    */
-  public PropertiesProvider(final String resourceName) {
-    super(new CachingSupplier<>(JavaPropsMapper::new), resourceName);
+  public PropertiesProvider(final Type lowerBound, final String resourceName) {
+    super(lowerBound, new CachingSupplier<>(JavaPropsMapper::new), resourceName);
   }
 
 }

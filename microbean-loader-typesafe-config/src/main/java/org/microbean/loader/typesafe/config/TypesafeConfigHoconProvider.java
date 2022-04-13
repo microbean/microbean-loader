@@ -32,6 +32,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 
 import java.util.List;
+import java.util.Objects;
 
 import java.util.function.Supplier;
 
@@ -67,22 +68,118 @@ import org.microbean.type.JavaTypes;
 
 import org.microbean.type.Type.CovariantSemantics;
 
-public class TypesafeConfigHoconProvider extends AbstractProvider<Object> {
+/**
+ * An {@link AbstractProvider} that uses a {@link Config} to
+ * {@linkplain #get(Loader, Path) produce} {@link Value}s.
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ *
+ * @see #get(Loader, Path)
+ */
+public class TypesafeConfigHoconProvider extends AbstractProvider {
+
+
+  /*
+   * Instance fields.
+   */
+
 
   private final Supplier<? extends Config> configSupplier;
 
+
+  /*
+   * Constructors.
+   */
+
+
+  /**
+   * Creates a new {@link TypesafeConfigHoconProvider} that reads
+   * solely from a classpath resource named {@code application.conf},
+   * using the {@link Thread#getContextClassLoader() context
+   * classloader}.
+   *
+   * <p>No stacking of other configurations is performed.</p>
+   *
+   * @see #TypesafeConfigHoconProvider(ClassLoader, String)
+   */
   public TypesafeConfigHoconProvider() {
-    this(Thread.currentThread().getContextClassLoader(), "application.conf");
+    this(null, Thread.currentThread().getContextClassLoader(), "application.conf");
   }
 
+  /**
+   * Creates a new {@link TypesafeConfigHoconProvider} that reads
+   * solely from a classpath resource bearing the supplied name using
+   * the {@linkplain Thread#getContextClassLoader() context
+   * classloader}.
+   *
+   * <p>No stacking of other configurations is performed.</p>
+   *
+   * @param resourceName the name of the classpath resource; must not
+   * be {@code null}
+   *
+   * @exception NullPointerException if {@code resourceName} is {@code
+   * null}
+   *
+   * @see #TypesafeConfigHoconProvider(ClassLoader, String)
+   */
   public TypesafeConfigHoconProvider(final String resourceName) {
-    this(Thread.currentThread().getContextClassLoader(), resourceName);
+    this(null, Thread.currentThread().getContextClassLoader(), resourceName);
   }
 
+  /**
+   * Creates a new {@link TypesafeConfigHoconProvider} that reads
+   * solely from a classpath resource bearing the supplied name using
+   * the supplied {@link ClassLoader}.
+   *
+   * <p>No stacking of other configurations is performed.</p>
+   *
+   * @param cl the {@link ClassLoader}; may be {@code null} in which
+   * case the system classloader will be used instead, normally via
+   * {@link ClassLoader#getSystemResourceAsStream(String)}
+   *
+   * @param resourceName the name of the classpath resource; must not
+   * be {@code null}
+   *
+   * @exception NullPointerException if {@code resourceName} is {@code
+   * null}
+   */
   public TypesafeConfigHoconProvider(final ClassLoader cl, final String resourceName) {
-    super();
-    this.configSupplier = new CachingSupplier<>(() -> produceConfig(cl, resourceName));
+    this(null, cl, resourceName);
   }
+
+  /**
+   * Creates a new {@link TypesafeConfigHoconProvider} that reads
+   * solely from a classpath resource bearing the supplied name using
+   * the supplied {@link ClassLoader}.
+   *
+   * <p>No stacking of other configurations is performed.</p>
+   *
+   * @param lowerBound the {@linkplain #lowerBound() lower type bound}
+   * of this {@link TypesafeConfigHoconProvider} implementation; may
+   * be {@code null}
+   *
+   * @param cl the {@link ClassLoader}; may be {@code null} in which
+   * case the system classloader will be used instead, normally via
+   * {@link ClassLoader#getSystemResourceAsStream(String)}
+   *
+   * @param resourceName the name of the classpath resource; must not
+   * be {@code null}
+   *
+   * @exception NullPointerException if {@code resourceName} is {@code
+   * null}
+   */
+  public TypesafeConfigHoconProvider(final Type lowerBound, final ClassLoader cl, final String resourceName) {
+    super(lowerBound);
+    Objects.requireNonNull(resourceName, "resourceName");
+    this.configSupplier = new CachingSupplier<>(() -> produceConfig(cl, resourceName));    
+  }
+
+
+  /*
+   * Instance methods.
+   */
+
 
   @Override // AbstractProvider<Object>
   public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
@@ -154,6 +251,12 @@ public class TypesafeConfigHoconProvider extends AbstractProvider<Object> {
     return this.configSupplier.get();
   }
 
+
+  /*
+   * Static methods.
+   */
+
+
   private static final String configPath(final Path<?> path) {
     return path.stream()
       .map(Element::name)
@@ -182,6 +285,12 @@ public class TypesafeConfigHoconProvider extends AbstractProvider<Object> {
                                      ConfigParseOptions.defaults().setSyntaxFromFilename(resourceName))
       .resolve(ConfigResolveOptions.noSystem().appendResolver(new Resolver()));
   }
+
+
+  /*
+   * Inner and nested classes.
+   */
+
 
   private static final class Resolver implements ConfigResolver {
 

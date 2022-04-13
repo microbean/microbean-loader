@@ -108,10 +108,10 @@ final class TestProxyingProvider {
 
   }
 
-  public static final class LRWheelProvider extends AbstractProvider<Wheel> {
+  public static final class LRWheelProvider extends AbstractProvider {
 
     public LRWheelProvider() {
-      super();
+      super(Wheel.class);
     }
 
     @Override

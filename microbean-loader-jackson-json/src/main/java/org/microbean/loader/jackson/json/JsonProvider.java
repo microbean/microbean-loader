@@ -16,6 +16,8 @@
  */
 package org.microbean.loader.jackson.json;
 
+import java.lang.reflect.Type;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.microbean.loader.jackson.InputStreamJacksonProvider;
@@ -31,7 +33,7 @@ import org.microbean.invoke.CachingSupplier;
  *
  * @see InputStreamJacksonProvider
  */
-public class JsonProvider extends InputStreamJacksonProvider<Object> {
+public class JsonProvider extends InputStreamJacksonProvider {
 
 
   /*
@@ -43,10 +45,10 @@ public class JsonProvider extends InputStreamJacksonProvider<Object> {
    * Creates a new {@link JsonProvider} that reads JSON-formatted
    * {@code application.json} classpath resources.
    *
-   * @see #JsonProvider(String)
+   * @see #JsonProvider(Type, String)
    */
   public JsonProvider() {
-    this("application.json");
+    this(null, "application.json");
   }
 
   /**
@@ -57,9 +59,27 @@ public class JsonProvider extends InputStreamJacksonProvider<Object> {
    *
    * @exception NullPointerException if {@code resourceName} is {@code
    * null}
+   *
+   * @see #JsonProvider(Type, String)
    */
   public JsonProvider(final String resourceName) {
-    super(new CachingSupplier<>(ObjectMapper::new), resourceName);
+    this(null, resourceName);
+  }
+
+  /**
+   * Creates a new {@link JsonProvider}.
+   *
+   * @param lowerBound the {@linkplain #lowerBound() lower type bound}
+   * of this {@link JsonProvider}; may be {@code null}
+   *
+   * @param resourceName the name of the classpath resource to read
+   * from; must not be {@code null}
+   *
+   * @exception NullPointerException if {@code resourceName} is {@code
+   * null}
+   */
+  public JsonProvider(final Type lowerBound, final String resourceName) {
+    super(lowerBound, new CachingSupplier<>(ObjectMapper::new), resourceName);
   }
 
 }
