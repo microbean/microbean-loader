@@ -25,11 +25,20 @@ import org.microbean.loader.spi.AmbiguityHandler;
 import org.microbean.loader.spi.Provider;
 
 /**
- * Provides packages related to the default implementation of the
- * microBean™ Loader API.
+ * Provides packages related to the {@linkplain DefaultLoader default
+ * implementation} of the {@linkplain Loader microBean™ Loader API}
+ * and its {@linkplain Provider service provider interface}.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
+ *
+ * @see DefaultLoader
+ *
+ * @see AmbiguityHandler
+ *
+ * @see Provider
+ *
+ * @see org.microbean.loader.spi.Value
  */
 module org.microbean.loader {
 

@@ -26,12 +26,15 @@ import java.lang.annotation.Target;
 /**
  * An annotation designating an interface as one that is backed by
  * various {@link
- * org.microbean.loader.api.Loader#load(org.microbean.path.Path)}
- * calls, and that informs any {@link Provider} implementation that
- * wishes to proxy it that the interface in question may be proxied.
+ * org.microbean.loader.api.Loader#load(org.microbean.path.Path)
+ * Loader.load(Path)} calls, and that informs any {@link Provider}
+ * implementation that wishes to proxy it that the interface in
+ * question may be proxied.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
+ *
+ * @see org.microbean.loader.ProxyingProvider
  */
 @Documented
 @Inherited

@@ -16,7 +16,8 @@
  */
 
 /**
- * Provides classes and interfaces related to loaders.
+ * Provides classes and interfaces related to the {@linkplain
+ * org.microbean.loader.api.Loader microBean™ Loader API}.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>

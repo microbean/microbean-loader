@@ -17,7 +17,8 @@
 import org.microbean.loader.api.Loader;
 
 /**
- * Provides packages related to loaders.
+ * Provides packages related to the {@linkplain Loader microBean™
+ * Loader API}.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>

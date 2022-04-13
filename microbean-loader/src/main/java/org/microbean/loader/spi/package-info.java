@@ -16,11 +16,19 @@
  */
 
 /**
- * Provides classes and interfaces related to the <em>service provider
- * interface</em> of the default implementation of the microBean™
- * Loader API.
+ * Provides classes and interfaces related to the {@linkplain
+ * org.microbean.loader.spi.Provider service provider interface} of
+ * the {@linkplain org.microbean.loader.DefaultLoader default
+ * implementation} of the {@linkplain org.microbean.loader.api.Loader
+ * microBean™ Loader API}.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
+ *
+ * @see org.microbean.loader.spi.AmbiguityHandler
+ *
+ * @see org.microbean.loader.spi.Provider
+ *
+ * @see org.microbean.loader.spi.Value
  */
 package org.microbean.loader.spi;

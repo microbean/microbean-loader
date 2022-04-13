@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.junit.jupiter.api.Test;
@@ -94,7 +93,6 @@ final class TestSpike {
                   getterVisibility = Visibility.NONE,
                   isGetterVisibility = Visibility.NONE,
                   setterVisibility = Visibility.NONE)
-  // @JsonIgnoreProperties(ignoreUnknown = true)
   public static final class Frobnicator {
 
     private final int frobnicationInterval;
@@ -112,7 +110,7 @@ final class TestSpike {
 
     @JsonAnySetter
     private final void gorp(final String name, final Object value) {
-      System.out.println("*** setting unknown: " + name + " = " + value + "; value is of type: " + (value == null ? null : value.getClass().getName()));
+
     }
     
   }

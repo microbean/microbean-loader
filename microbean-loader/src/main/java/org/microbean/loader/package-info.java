@@ -16,10 +16,13 @@
  */
 
 /**
- * Provides classes and interfaces related to the default implementation of the
- * microBean™ Loader API.
+ * Provides classes and interfaces related to the {@linkplain
+ * org.microbean.loader.DefaultLoader default implementation} of the
+ * {@linkplain org.microbean.loader.api.Loader microBean™ Loader API}.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
+ *
+ * @see org.microbean.loader.DefaultLoader
  */
 package org.microbean.loader;

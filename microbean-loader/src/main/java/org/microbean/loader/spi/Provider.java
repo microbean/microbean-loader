@@ -63,10 +63,11 @@ public interface Provider {
    * {@linkplain #get(Loader, Path) producing} a {@link Value} for any
    * requested type.</p>
    *
-   * <p>A return value of (for example) {@link String String.class}
+   * <p>A return value of, for example, {@link String String.class}
    * indicates that the {@link Provider} may satisfy requests for
-   * {@link String String.class} or any of its supertypes, but not for
-   * {@link Integer Integer.class}, for example.</p>
+   * {@link String String.class}, or any of its supertypes (such as
+   * {@link CharSequence}), but cannot satisfy requests for {@link
+   * Integer Integer.class}, for example.</p>
    *
    * <p>A return value of {@link Object Object.class} indicates a
    * maximally opaque type, i.e. only requests for {@link Object
@@ -74,6 +75,13 @@ public interface Provider {
    * {@link Provider}.  Such a return value is possible, but rarely
    * used, and {@link Provider} implementations are urged to consider
    * a different {@link Type}.</p>
+   *
+   * <p>Note that this method is used solely to help eliminate types,
+   * not permit them.  That is, although {@link Provider} may indicate
+   * via an implementation of this method that a given {@link Type} is
+   * suitable, it is not thereby obliged to return a {@link Value}
+   * corresponding to it from its {@link #get(Loader, Path)
+   * get(Loader, Path)} method implementation.</p>
    *
    * <p>The default implementation of this method returns {@code
    * null}.</p>
