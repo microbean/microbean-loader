@@ -36,7 +36,7 @@ Loader: MicroProfile Config `ConfigSource` as a Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-loader-microprofile-config-configsource</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-loader-microprofile-config-configsource for up-to-date available versions. -->
-  <version>0.0.1</version>
+  <version>0.0.2</version>
 </dependency>
 ```
 

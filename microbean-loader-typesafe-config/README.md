@@ -35,7 +35,7 @@ Typesafe Config as a Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-loader-typesafe-config</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-loader-typesafe-config for up-to-date available versions. -->
-  <version>0.0.1</version>
+  <version>0.0.2</version>
 </dependency>
 ```
 

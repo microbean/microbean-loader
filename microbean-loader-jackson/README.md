@@ -34,7 +34,7 @@ Jackson as a Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-loader-jackson</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-loader-jackson for up-to-date available versions. -->
-  <version>0.0.1</version>
+  <version>0.0.2</version>
 </dependency>
 ```
 
