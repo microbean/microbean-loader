@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"org.microbean.loader.jackson","l":"Configuration"},{"p":"org.microbean.loader.jackson","l":"InputStreamJacksonProvider"},{"p":"org.microbean.loader.jackson","l":"JacksonProvider"}];updateSearchResults();
