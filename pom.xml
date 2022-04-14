@@ -194,9 +194,6 @@
         <plugin>
           <artifactId>maven-scm-publish-plugin</artifactId>
           <version>3.1.0</version>
-          <configuration>
-            <scmBranch>gh-pages</scmBranch>
-          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-site-plugin</artifactId>
@@ -282,7 +279,12 @@
     <topSiteUrl>https://microbean.github.io/microbean-loader/</topSiteUrl>
 
     <!-- maven-release-plugin properties; see http://maven.apache.org/maven-release/maven-release-plugin/ -->
-    <goals>deploy,post-site</goals>
+    <goals>deploy,post-site,scm-publish:publish-scm</goals>
+
+    <!-- maven-scm-publish-plugin properties;
+         see https://maven.apache.org/plugins/maven-scm-publish-plugin/publish-scm-mojo.html -->
+    <scmpublish.pubScmUrl>${project.scm.developerConnection}</scmpublish.pubScmUrl>
+    <scmpublish.scm.branch>gh-pages</scmpublish.scm.branch>
 
     <!-- NetBeans-related properties -->
     <netbeans.hint.jdkPlatform>JDK_17</netbeans.hint.jdkPlatform>

@@ -35,7 +35,7 @@ Jackson (TOML) as a Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-loader-jackson-toml</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-loader-jackson-toml for up-to-date available versions. -->
-  <version>0.0.1</version>
+  <version>0.0.2</version>
 </dependency>
 ```
 
