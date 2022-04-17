@@ -22,25 +22,46 @@ import java.net.URL;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.core.TreeNode;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 final class TestJsonPlayground {
 
+  private URL url;
+  
+  private ObjectMapper jsonMapper;
+  
   private TestJsonPlayground() {
     super();
   }
 
+  @BeforeEach
+  final void beforeEach() throws IOException {
+    this.url = Thread.currentThread().getContextClassLoader().getResource("playground.json");
+    assertNotNull(this.url);
+    this.jsonMapper = new ObjectMapper();
+  }
+
   @Test
   final void testJsonPlayground() throws IOException {
-    final URL url = Thread.currentThread().getContextClassLoader().getResource("playground.json");
-    assertNotNull(url);
-    final ObjectMapper jsonMapper = new ObjectMapper();
-    Map<?, ?> map = jsonMapper.readValue(url, Map.class);
+    Map<?, ?> map = this.jsonMapper.readValue(this.url, Map.class);
     System.out.println(map);
+  }
+
+  @Test
+  final void testNodeStuff() throws IOException {
+    TreeNode node = this.jsonMapper.readTree(this.url);
+    assertNotNull(node);
+    // Jackson does not have any built-in handling of an empty field
+    // name.  So get("") will yield null.
+    assertNull(node.get(""));
   }
 
 }

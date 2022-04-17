@@ -18,11 +18,9 @@ package org.microbean.loader.jackson.json;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.junit.jupiter.api.Test;
@@ -33,11 +31,9 @@ import org.microbean.loader.api.Loader;
 
 import org.microbean.loader.jackson.Configuration;
 
-import org.microbean.path.Path;
 
 import org.microbean.qualifier.Qualifiers;
 
-import org.microbean.type.JavaType.Token;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

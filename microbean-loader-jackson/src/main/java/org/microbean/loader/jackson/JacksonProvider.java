@@ -22,21 +22,15 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
 
 import java.util.Iterator;
-import java.util.List;
-
-import java.util.function.Supplier;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.TreeNode;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-
-import org.microbean.invoke.OptionalSupplier;
 
 import org.microbean.loader.api.Loader;
 
@@ -154,105 +148,105 @@ public abstract class JacksonProvider extends AbstractProvider {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
-    if (absolutePath.size() <= 1) {
-      return null;
-    }
+    assert absolutePath.size() > 1; // follows from the above
     final ObjectCodec reader = this.objectCodec(requestor, absolutePath);
-    if (reader == null) {
-      return null;
+    if (reader != null) {
+      TreeNode node = this.rootNode(requestor, absolutePath, reader);
+      if (node != null) {
+        TreeNode qualifiersNode = null;
+        final Iterator<Element<?>> elementIterator = absolutePath.iterator();
+        elementIterator.next(); // skip the root element; we know size() > 1
+        node = node(elementIterator, node);
+        if (node != null) {
+          try {
+            return this.value(requestor, absolutePath, node.traverse(reader).readValueAs(new TypeReference<>() {
+                // This is a slight abuse of the
+                // TypeReference class, but the getType()
+                // method is not final and it is public,
+                // so this seems to be at least possible
+                // using a public API. It also avoids
+                // type loss we'd otherwise incur (if we
+                // used readValueAs(Class), for example).
+                @Override
+                public final Type getType() {
+                  return absolutePath.qualified();
+                }
+              }));
+          } catch (final JsonProcessingException jpe) {
+            if (logger.isLoggable(Level.FINE)) {
+              logger.logp(Level.FINE, this.getClass().getName(), "get", jpe.getMessage(), jpe);
+            }
+          } catch (final IOException ioException) {
+            throw new UncheckedIOException(ioException.getMessage(), ioException);
+          }
+        }
+      }
     }
-    TreeNode node = this.rootNode(requestor, absolutePath, reader);
-    if (node == null) {
-      return null;
-    }
-    final Iterator<Element<?>> elementIterator = absolutePath.iterator();
-    elementIterator.next(); // skip the root element; we know size() > 1
+    return null;
+  }
+
+  private static final TreeNode node(final Iterator<? extends Element<?>> elementIterator, TreeNode node) {
+    boolean containerNode = node.isContainerNode();
     while (elementIterator.hasNext()) {
       final Element<?> element = elementIterator.next();
-      if (elementIterator.hasNext()) {
+      final String name = element.name();
+      if (name.isEmpty()) {
+        // Empty name means "the current node". Do nothing. The
+        // node remains what it was.
+        continue;
+      } else if (!containerNode) {
+        // The name was non-empty, and the prior node was not a
+        // container, so we would be trying to dereference the
+        // name against a value node or a missing node, either
+        // of which is impossible.
+        node = null;
+      } else if (!node.isContainerNode()) {
+        containerNode = false;
+      } else if (elementIterator.hasNext()) {
         if (node.isArray()) {
           node = handleArrayNode(element, node);
         } else if (node.isObject()) {
-          node = node.get(element.name());
+          node = node.get(name);
         } else {
-          assert !node.isContainerNode();
-          node = null;
-        }
-        if (node == null) {
-          return null;
+          throw new AssertionError();
         }
       } else if (node.isArray()) {
         node = handleArrayNode(element, node);
       } else if (node.isObject()) {
-        final TreeNode temp = node.get(element.name());
-        if (temp != null) {
-          node = temp;
-        }
+        node = node.get(name);
       } else {
-        assert !node.isContainerNode();
+        throw new AssertionError();
       }
       if (node == null) {
-        return null;
+        break;
       }
     }
-    try {
-      return
-        this.value(requestor,
-                   absolutePath,
-                   node.traverse(reader).readValueAs(new TypeReference<>() {
-                       // This is a slight abuse of the TypeReference
-                       // class, but the getType() method is not final
-                       // and it is public, so this seems to be at
-                       // least possible using a public API. It also
-                       // avoids type loss we'd otherwise incur (if we
-                       // used readValueAs(Class), for example).
-                       @Override
-                       public final Type getType() {
-                         return absolutePath.qualified();
-                       }
-                     }));
-    } catch (final JsonProcessingException jpe) {
-      if (logger.isLoggable(Level.FINE)) {
-        logger.logp(Level.FINE, this.getClass().getName(), "get", jpe.getMessage(), jpe);
-      }
-      return null;
-    } catch (final IOException ioException) {
-      throw new UncheckedIOException(ioException.getMessage(), ioException);
-    }
+    return node;
   }
 
   private static final TreeNode handleArrayNode(final Element<?> element, TreeNode node) {
-    final Qualifiers<String, Object> q = element.qualifiers();
     final String key;
+    final Qualifiers<String, Object> q = element.qualifiers();
     if (q.containsKey("index")) {
       key = "index";
     } else if (q.containsKey("arg0")) {
       key = "arg0";
     } else {
-      key = null;
-    }
-    if (key == null) {
       return null;
+    }
+    final Object o = q.get(key);
+    assert o != null; // qualifiers can't contain null values
+    int index;
+    if (o instanceof Number n) {
+      index = n.intValue();
     } else {
-      final int index;
-      Object o = q.get("arg0");
-      assert o != null; // qualifiers can't contain null values
-      if (o instanceof Number n) {
-        index = n.intValue();
-      } else {
-        int temp = -1;
-        try {
-          temp = Integer.parseInt(o.toString());
-        } catch (final NumberFormatException numberFormatException) {
-        } finally {
-          index = temp;
-        }
-      }
-      if (index < 0) {
+      try {
+        index = Integer.parseInt(o.toString());
+      } catch (final NumberFormatException numberFormatException) {
         return null;
       }
-      return node.get(index);
     }
+    return index < 0 ? null : node.get(index);
   }
 
   /**
@@ -291,8 +285,7 @@ public abstract class JacksonProvider extends AbstractProvider {
   protected <T> Value<T> value(final Loader<?> requestor,
                                final Path<? extends Type> absolutePath,
                                final T value) {
-    return new Value<>(OptionalSupplier.of(value),
-                       Path.of(absolutePath.qualified()));
+    return new Value<>(value, Path.of(absolutePath.qualified()));
   }
 
   /**
