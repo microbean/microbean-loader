@@ -22,25 +22,44 @@ import java.net.URL;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.core.TreeNode;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.fasterxml.jackson.dataformat.javaprop.JavaPropsMapper;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 final class TestPropertiesPlayground {
 
+  private URL url;
+
+  private ObjectMapper objectMapper;
+  
   private TestPropertiesPlayground() {
     super();
   }
 
+  @BeforeEach
+  final void beforeEach() throws IOException {
+    this.url = Thread.currentThread().getContextClassLoader().getResource("playground.properties");
+    assertNotNull(this.url);
+    this.objectMapper = new JavaPropsMapper();
+  }
+
   @Test
   final void testPropertiesPlayground() throws IOException {
-    final URL url = Thread.currentThread().getContextClassLoader().getResource("playground.properties");
-    assertNotNull(url);
-    final JavaPropsMapper javaPropsMapper = new JavaPropsMapper();
-    Map<?, ?> map = javaPropsMapper.readValue(url, Map.class);
+    Map<?, ?> map = this.objectMapper.readValue(url, Map.class);
     System.out.println(map);
+  }
+
+  @Test
+  final void testNodeStuff() throws IOException {
+    TreeNode node = this.objectMapper.readTree(this.url);
+    
   }
 
 }

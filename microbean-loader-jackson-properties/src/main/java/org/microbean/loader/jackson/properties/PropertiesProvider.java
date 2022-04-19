@@ -59,6 +59,21 @@ public class PropertiesProvider extends InputStreamJacksonProvider {
   /**
    * Creates a new {@link PropertiesProvider}.
    *
+   * @param resourceName the name of the classpath resource to read
+   * from; must not be {@code null}
+   *
+   * @exception NullPointerException if {@code resourceName} is {@code
+   * null}
+   *
+   * @see #PropertiesProvider(Type, String)
+   */
+  public PropertiesProvider(final String resourceName) {
+    this(null, resourceName);
+  }
+
+  /**
+   * Creates a new {@link PropertiesProvider}.
+   *
    * @param lowerBound the {@linkplain #lowerBound() lower type bound}
    * of this {@link InputStreamJacksonProvider} implementation; may be
    * {@code null}
