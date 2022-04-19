@@ -78,25 +78,25 @@ public final class Value<T> implements OptionalSupplier<T> {
 
 
   /**
-   * Creates a new {@link Value}.
-   *
-   * <p>The {@link Value}'s {@link #get()} method will return {@code
-   * null} when it is invoked.</p>
+   * Creates a new {@link Value} <strong>that returns a valid {@code
+   * null} value from its {@link #get() get()} method</strong>.
    *
    * @param path the {@link Path}, possibly relative, for which this
    * {@link Value} is suitable; must not be {@code null}
    *
    * @exception NullPointerException if {@code path} is {@code null}
+   *
+   * @see #get()
+   *
+   * @see FixedValueSupplier#of(Object)
    */
   public Value(final Path<? extends Type> path) {
     this(FixedValueSupplier.of(null), path);
   }
 
   /**
-   * Creates a new {@link Value}.
-   *
-   * <p>The {@link Value}'s {@link #get()} method will return the
-   * supplied {@code value} when it is invoked.</p>
+   * Creates a new {@link Value} that will forever and always return
+   * the supplied {@code value} from its {@link #get() get()} method.
    *
    * @param path the {@link Path}, possibly relative, for which this
    * {@link Value} is suitable; must not be {@code null}
@@ -105,6 +105,10 @@ public final class Value<T> implements OptionalSupplier<T> {
    * method whenever it is invoked; may be {@code null}
    *
    * @exception NullPointerException if {@code path} is {@code null}
+   *
+   * @see #get()
+   *
+   * @see FixedValueSupplier#of(Object)
    */
   public Value(final T value, final Path<? extends Type> path) {
     this(FixedValueSupplier.of(value), path);

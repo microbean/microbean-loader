@@ -83,7 +83,7 @@ public abstract class JacksonProvider extends AbstractProvider {
    * @see #JacksonProvider(Type)
    */
   protected JacksonProvider() {
-    super();
+    this(null);
   }
 
   /**
@@ -94,7 +94,7 @@ public abstract class JacksonProvider extends AbstractProvider {
    * null}
    */
   protected JacksonProvider(final Type lowerBound) {
-    super();
+    super(lowerBound);
   }
 
 

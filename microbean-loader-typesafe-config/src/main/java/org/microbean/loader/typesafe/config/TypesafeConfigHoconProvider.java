@@ -32,6 +32,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import java.util.function.Supplier;
@@ -192,10 +193,9 @@ public class TypesafeConfigHoconProvider extends AbstractProvider {
       try {
         temp = new Value<>(ConfigBeanFactory.create(config, JavaTypes.erase(absolutePath.qualified())), absolutePath);
       } catch (final ConfigException.BadBean | ConfigException.ValidationFailed e) {
-        final Object unwrapped = config.root().unwrapped();
-        final Class<?> unwrappedClass = unwrapped.getClass();
-        if (CovariantSemantics.INSTANCE.assignable(absolutePath.qualified(), unwrappedClass)) {
-          temp = new Value<>(unwrappedClass.cast(unwrapped), absolutePath);
+        final Map<? extends String, ?> unwrapped = config.root().unwrapped();
+        if (CovariantSemantics.INSTANCE.assignable(absolutePath.qualified(), unwrapped.getClass())) {
+          temp = new Value<>(unwrapped, absolutePath);
         }
       } finally {
         returnValue = temp;
@@ -208,7 +208,7 @@ public class TypesafeConfigHoconProvider extends AbstractProvider {
         configValue = config.getValue(configPath);
       }
       final Object unwrapped = configValue.unwrapped();
-      final Class<?> unwrappedClass = unwrapped.getClass();
+      final Class<?> unwrappedClass = unwrapped == null ? null : unwrapped.getClass();
       switch (configValue.valueType()) {
       case BOOLEAN:
       case LIST:
@@ -224,6 +224,9 @@ public class TypesafeConfigHoconProvider extends AbstractProvider {
         returnValue = new Value<>(absolutePath);
         break;
       case OBJECT:
+        // See
+        // https://javadoc.io/static/com.typesafe/config/1.4.2/com/typesafe/config/ConfigValue.html#unwrapped--
+        assert unwrapped instanceof Map;
         Value<?> temp = null;
         try {
           temp =
