@@ -122,7 +122,6 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
    * @threadsafety Overrides of this method must be safe for
    * concurrent use by multiple threads.
    */
-  // returns an empty iterator if !map(node)
   protected abstract Iterator<String> names(final N node);
 
   /**

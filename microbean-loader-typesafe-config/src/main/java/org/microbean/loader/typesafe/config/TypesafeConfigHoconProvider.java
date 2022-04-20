@@ -31,10 +31,14 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import java.util.stream.Collectors;
@@ -51,13 +55,14 @@ import com.typesafe.config.ConfigSyntax;
 import com.typesafe.config.ConfigUtil;
 import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;
+import com.typesafe.config.ConfigValueType;
 
 import org.microbean.invoke.CachingSupplier;
 import org.microbean.invoke.FixedValueSupplier;
 
 import org.microbean.loader.api.Loader;
 
-import org.microbean.loader.spi.AbstractProvider;
+import org.microbean.loader.spi.AbstractTreeBasedProvider;
 import org.microbean.loader.spi.Value;
 
 import org.microbean.path.Path;
@@ -70,7 +75,7 @@ import org.microbean.type.JavaTypes;
 import org.microbean.type.Type.CovariantSemantics;
 
 /**
- * An {@link AbstractProvider} that uses a {@link Config} to
+ * An {@link AbstractTreeBasedProvider} that uses a {@link Config} to
  * {@linkplain #get(Loader, Path) produce} {@link Value}s.
  *
  * @author <a href="https://about.me/lairdnelson"
@@ -78,7 +83,7 @@ import org.microbean.type.Type.CovariantSemantics;
  *
  * @see #get(Loader, Path)
  */
-public class TypesafeConfigHoconProvider extends AbstractProvider {
+public class TypesafeConfigHoconProvider extends AbstractTreeBasedProvider<ConfigValue> {
 
 
   /*
@@ -173,7 +178,7 @@ public class TypesafeConfigHoconProvider extends AbstractProvider {
   public TypesafeConfigHoconProvider(final Type lowerBound, final ClassLoader cl, final String resourceName) {
     super(lowerBound);
     Objects.requireNonNull(resourceName, "resourceName");
-    this.configSupplier = new CachingSupplier<>(() -> produceConfig(cl, resourceName));    
+    this.configSupplier = new CachingSupplier<>(() -> produceConfig(cl, resourceName));
   }
 
 
@@ -182,72 +187,165 @@ public class TypesafeConfigHoconProvider extends AbstractProvider {
    */
 
 
-  @Override // AbstractProvider<Object>
-  public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
-    final Value<?> returnValue;
-    // TODO: doesn't handle qualifiers yet
-    final String configPath = configPath(absolutePath);
-    final Config config = this.config();
-    if (configPath.isEmpty()) {
-      Value<?> temp = null;
-      try {
-        temp = new Value<>(ConfigBeanFactory.create(config, JavaTypes.erase(absolutePath.qualified())), absolutePath);
-      } catch (final ConfigException.BadBean | ConfigException.ValidationFailed e) {
-        final Map<? extends String, ?> unwrapped = config.root().unwrapped();
-        if (CovariantSemantics.INSTANCE.assignable(absolutePath.qualified(), unwrapped.getClass())) {
-          temp = new Value<>(unwrapped, absolutePath);
-        }
-      } finally {
-        returnValue = temp;
-      }
-    } else if (config.hasPathOrNull(configPath)) {
-      final ConfigValue configValue;
-      if (config.getIsNull(configPath)) {
-        configValue = ConfigValueFactory.fromAnyRef(null);
-      } else {
-        configValue = config.getValue(configPath);
-      }
-      final Object unwrapped = configValue.unwrapped();
-      final Class<?> unwrappedClass = unwrapped == null ? null : unwrapped.getClass();
-      switch (configValue.valueType()) {
-      case BOOLEAN:
-      case LIST:
-      case NUMBER:
-      case STRING:
-        if (CovariantSemantics.INSTANCE.assignable(absolutePath.qualified(), unwrappedClass)) {
-          returnValue = new Value<>(unwrappedClass.cast(unwrapped), absolutePath);
-        } else {
-          returnValue = null;
-        }
-        break;
-      case NULL:
-        returnValue = new Value<>(absolutePath);
-        break;
-      case OBJECT:
-        // See
-        // https://javadoc.io/static/com.typesafe/config/1.4.2/com/typesafe/config/ConfigValue.html#unwrapped--
-        assert unwrapped instanceof Map;
-        Value<?> temp = null;
-        try {
-          temp =
-            new Value<>(ConfigBeanFactory.create(((ConfigObject)configValue).toConfig(),
-                                                 JavaTypes.erase(absolutePath.qualified())),
-                        absolutePath);
-        } catch (final ConfigException.BadBean | ConfigException.ValidationFailed e) {
-          if (CovariantSemantics.INSTANCE.assignable(absolutePath.qualified(), unwrappedClass)) {
-            temp = new Value<>(unwrappedClass.cast(unwrapped), absolutePath);
-          }
-        } finally {
-          returnValue = temp;
-        }
-        break;
-      default:
-        throw new AssertionError();
-      }
-    } else {
-      returnValue = null;
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  protected final boolean absent(final ConfigValue node) {
+    return node == null;
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  @SuppressWarnings("unchecked")
+  protected final ConfigValue get(final ConfigValue node, final int index) {
+    if (node == null) {
+      return null;
     }
-    return returnValue;
+    switch (node.valueType()) {
+    case LIST:
+      return ((List<? extends ConfigValue>)node).get(index);
+    case BOOLEAN:
+    case NULL:
+    case NUMBER:
+    case OBJECT:
+    case STRING:
+      return null;
+    default:
+      throw new AssertionError();
+    }
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  @SuppressWarnings("unchecked")
+  protected final ConfigValue get(final ConfigValue node, final String name) {
+    if (node == null) {
+      return null;
+    }
+    switch (node.valueType()) {
+    case OBJECT:
+      return ((Map<?, ? extends ConfigValue>)node).get(name);
+    case BOOLEAN:
+    case LIST:
+    case NULL:
+    case NUMBER:
+    case STRING:
+      return null;
+    default:
+      throw new AssertionError();
+    }
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  protected final boolean list(final ConfigValue node) {
+    return node != null && node.valueType() == ConfigValueType.LIST;
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  protected final boolean map(final ConfigValue node) {
+    return node != null && node.valueType() == ConfigValueType.OBJECT;
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  @SuppressWarnings("unchecked")
+  protected final Iterator<String> names(final ConfigValue node) {
+    if (node == null) {
+      return Collections.emptyIterator();
+    }
+    switch (node.valueType()) {
+    case OBJECT:
+      return ((Map<String, ?>)node).keySet().iterator();
+    case BOOLEAN:
+    case LIST:
+    case NULL:
+    case NUMBER:
+    case STRING:
+      return Collections.emptyIterator();
+    default:
+      throw new AssertionError();
+    }
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  protected final boolean nil(final ConfigValue node) {
+    return node == null || node.valueType() == ConfigValueType.NULL;
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  @SuppressWarnings("unchecked")
+  protected final ConfigValue qualifiers(final ConfigValue node) {
+    if (node == null) {
+      return null;
+    }
+    switch (node.valueType()) {
+    case OBJECT:
+      return ((Map<? extends String, ? extends ConfigValue>)node).get("@qualifiers");
+    case BOOLEAN:
+    case LIST:
+    case NULL:
+    case NUMBER:
+    case STRING:
+      return null;
+    default:
+      throw new AssertionError();
+    }
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  protected final int size(final ConfigValue node) {
+    if (node == null) {
+      return 0;
+    }
+    switch (node.valueType()) {
+    case OBJECT:
+      return ((Map<?, ?>)node).size();
+    case LIST:
+      return ((Collection<?>)node).size();
+    case BOOLEAN:
+    case NULL:
+    case NUMBER:
+    case STRING:
+      return 0;
+    default:
+      throw new AssertionError();
+    }
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  protected BiFunction<? super ConfigValue, ? super Type, ?> reader(final Loader<?> requestor,
+                                                                    final Path<? extends Type> absolutePath) {
+    final Config config = this.config();
+    assert config != null;
+    return (final ConfigValue configValue, final Type type) -> {
+      if (configValue != null) {
+        final Object unwrapped = configValue.unwrapped();
+        switch (configValue.valueType()) {
+        case BOOLEAN:
+        case LIST:
+        case NUMBER:
+        case STRING:
+          if (CovariantSemantics.INSTANCE.assignable(type, unwrapped.getClass())) {
+            return unwrapped;
+          }
+          break;
+        case NULL:
+          return null;
+        case OBJECT:
+          try {
+            return ConfigBeanFactory.create(config, JavaTypes.erase(type));
+          } catch (final ConfigException.BadBean | ConfigException.ValidationFailed e) {
+            if (CovariantSemantics.INSTANCE.assignable(type, unwrapped.getClass())) {
+              return unwrapped;
+            }
+          }
+          break;
+        default:
+          throw new AssertionError();
+        }
+      }
+      return null;
+    };
+  }
+
+  @Override // AbstractTreeBasedProvider<ConfigValue>
+  protected ConfigValue rootNode(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+    return this.config().root();
   }
 
   private final Config config() {
@@ -259,13 +357,6 @@ public class TypesafeConfigHoconProvider extends AbstractProvider {
    * Static methods.
    */
 
-
-  private static final String configPath(final Path<?> path) {
-    return path.stream()
-      .map(Element::name)
-      .reduce(ConfigUtil::joinPath)
-      .orElse(null);
-  }
 
   private static final Config produceConfig(final ClassLoader cl, final String resourceName) {
     final InputStream inputStream =
