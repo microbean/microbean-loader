@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import java.util.function.BiFunction;
 
@@ -394,28 +395,15 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
       final BiFunction<? super N, ? super Type, ?> reader = this.reader(requestor, absolutePath);
       if (reader != null) {
 
-        Element<?> element = absolutePath.get(0);
-        assert element.isRoot();
-
-        String nextName = absolutePath.get(1).name();
-
-        final List<Element<?>> valuePathElements = new ArrayList<>(size);
-        valuePathElements.add(element);
-
-        N qualifiersNode = qualifiers(node); // "@qualifiers"
-        final Qualifiers<? extends String, ?> valuePathQualifiers = qualifiers(reader, qualifiersNode, nextName);
-        qualifiersNode = get(qualifiersNode, nextName);
-
         boolean containerNode = container(node);
 
-        for (int i = 1; i < size; i++) {
-          element = absolutePath.get(i);
+        for (int i = 1; i < size; i++) { // note that i is 1 on purpose; we skip the first root-designating element
+          final Element<?> element = absolutePath.get(i);
           final String name = element.name();
 
           if (name.isEmpty()) {
             // Empty name means "the current node". The node remains
             // what it was.
-            valuePathElements.add(element);
             continue;
           }
 
@@ -433,7 +421,7 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
             // case it will refer to this node, so the fact that it is
             // not a container is still as of this moment OK.  Record
             // this fact so we can make sure on the next pass.
-            valuePathElements.add(element);
+            // valuePathElements.add(element);
             containerNode = false;
             continue;
           }
@@ -449,21 +437,121 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
             break;
           }
 
-          nextName = i + 1 < size ? absolutePath.get(i + 1).name() : null;
-          valuePathElements.add(Element.of(qualifiers(reader, qualifiersNode, nextName),
-                                           element.qualified(),
-                                           name));
-          qualifiersNode = get(qualifiersNode, nextName);
         }
 
         if (node != null) {
-          @SuppressWarnings("unchecked")
-          final Element<? extends Type> last = (Element<? extends Type>)valuePathElements.remove(valuePathElements.size() - 1);
-          return new Value<>(reader.apply(node, absolutePath.qualified()), Path.of(valuePathQualifiers, valuePathElements, last));
+          return
+            new Value<>(reader.apply(node, absolutePath.qualified()),
+                        this.valuePath(requestor, absolutePath, reader));
         }
       }
     }
     return null;
+  }
+
+  /**
+   * Returns a {@link Path} for a new {@link Value} that will be
+   * returned by the {@link #get(Loader, Path)} method.
+   *
+   * <p>The default implementation of this method attempts to build a
+   * {@link Path} with the same {@linkplain Path#size() sizze} as the
+   * supplied {@link Path} and differing, perhaps, only in the {@link
+   * Qualifiers} assigned to each {@link Element}.</p>
+   *
+   * @param <T> the type of the supplied {@link Path} and the returned
+   * {@link Path}
+   *
+   * @param requestor the {@link Loader} currently executing a
+   * request; must not be {@code null}
+   *
+   * @param absolutePath the path being requested; must not be {@code
+   * null} and must be {@linkplain Path#absolute() absolute}
+   *
+   * @param reader a {@link BiFunction} accepting a node and a {@link
+   * Type} and returning the result of reading an object of that type;
+   * may be {@code null}
+   *
+   * @return a {@link Path}; never {@code null}; sometimes simply the
+   * supplied {@code absolutePath}
+   *
+   * @exception NullPointerException if {@code absolutePath} or {@code
+   * reader} is {@code null}
+   *
+   * @nullability This method does not, and its overrides must not,
+   * return {@code null}.
+   *
+   * @idempotency No guarantees about idempotency or determinism are
+   * made of this method or its overrides.
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   */
+  protected <T extends Type> Path<T> valuePath(final Loader<?> requestor,
+                                               final Path<T> absolutePath,
+                                               final BiFunction<? super N, ? super Type, ?> reader) {
+    final int size = absolutePath.size();
+    if (size <= 1) {
+      return absolutePath;
+    }
+
+    N node = this.rootNode(requestor, absolutePath);
+    if (node == null) {
+      return absolutePath;
+    }
+
+    Element<?> element = absolutePath.get(0);
+    assert element.isRoot();
+
+    String nextName = absolutePath.get(1).name();
+
+    final List<Element<?>> valuePathElements = new ArrayList<>(size);
+    valuePathElements.add(element);
+
+    N qualifiersNode = qualifiers(node); // often gets a child of this node named "@qualifiers"
+    final Qualifiers<? extends String, ?> valuePathQualifiers = this.qualifiers(reader, qualifiersNode, nextName);
+    qualifiersNode = this.get(qualifiersNode, nextName);
+    
+    boolean containerNode = this.container(node);
+
+    for (int i = 1; i < size; i++) {
+      element = absolutePath.get(i);
+      final String name = element.name();
+      
+      if (name.isEmpty()) {
+        // Empty name means "the current node". The node remains what
+        // it was.
+        valuePathElements.add(element);
+        continue;
+      }
+      
+      if (!containerNode) {
+        // The name was non-empty, and the prior node was not a
+        // container, so we would be trying to dereference the name
+        // against a value node or a missing node, either of which is
+        // impossible.
+        return absolutePath;
+      }
+      
+      if (!this.container(node)) {
+        // The next path element may have an empty name, in which case
+        // it will refer to this node, so the fact that it is not a
+        // container is still as of this moment OK.  Record this fact
+        // so we can make sure on the next pass.
+        valuePathElements.add(element);
+        containerNode = false;
+        continue;
+      }
+
+      final boolean hasNext = i + 1 < size;
+      nextName = hasNext ? absolutePath.get(i + 1).name() : null;
+      valuePathElements.add(Element.of(qualifiers(reader, qualifiersNode, nextName),
+                                       element.qualified(),
+                                       name));
+      qualifiersNode = this.get(qualifiersNode, nextName);
+    }
+    @SuppressWarnings("unchecked")
+    final Element<T> last = (Element<T>)valuePathElements.remove(valuePathElements.size() - 1);
+    return Path.of(valuePathQualifiers, valuePathElements, last);
   }
 
   /**
