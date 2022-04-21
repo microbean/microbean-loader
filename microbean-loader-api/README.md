@@ -18,7 +18,8 @@ project version and without notice.**
 
 # Requirements
 
-microBean™ Loader requires a Java runtime of version 17 or higher.
+microBean™ Loader: API requires a Java runtime of version 17 or
+higher.
 
 # Installation
 
@@ -31,11 +32,11 @@ Loader: API as a Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-loader-api</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-loader-api for up-to-date available versions. -->
-  <version>0.0.2</version>
+  <version>0.0.3</version>
 </dependency>
 ```
 
 # Documentation
 
 Full documentation is available at
-[microbean.github.io/microbean-loader](https://microbean.github.io/microbean-loader/).
+[microbean.github.io/microbean-loader/microbean-loader-api/](https://microbean.github.io/microbean-loader/microbean-loader-api/)

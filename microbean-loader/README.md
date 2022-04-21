@@ -33,11 +33,11 @@ Loader: Default Implementation as a Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-loader</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-loader for up-to-date available versions. -->
-  <version>0.0.2</version>
+  <version>0.0.3</version>
 </dependency>
 ```
 
 # Documentation
 
 Full documentation is available at
-[microbean.github.io/microbean-loader](https://microbean.github.io/microbean-loader/).
+[microbean.github.io/microbean-loader/microbean-loader/](https://microbean.github.io/microbean-loader/microbean-loader/).
