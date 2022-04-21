@@ -63,8 +63,8 @@ public final class EnvironmentVariableProvider extends AbstractProvider {
   /**
    * If the supplied {@code absolutePath} has a {@linkplain
    * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}
-   * plus a single name), returns a {@linkplain Value#determinism()
-   * deterministic <code>Value</code>} whose {@link Value#get()}
+   * plus a single name), returns a {@linkplain FixedValueSupplier
+   * deterministic <code>Supplier</code>} whose {@link Supplier#get()}
    * method returns the {@linkplain System#getenv(String) environment
    * variable} with that name, or {@code null} in all other cases.
    *
@@ -74,14 +74,14 @@ public final class EnvironmentVariableProvider extends AbstractProvider {
    * @param absolutePath an {@linkplain Path#absolute() absolute}
    * {@link Path}; must not be {@code null}
    *
-   * @return a {@linkplain Value#determinism() deterministic} {@link
-   * Value} whose {@link Value#get()} method returns the appropriate
-   * {@linkplain System#getenv(String) environment variable} if the
-   * supplied {@code absolutePath} has a {@linkplain Path#size() size}
-   * of {@code 2} (the {@linkplain Path#root() root} plus a single
-   * name) and there actually is a {@linkplain System#getenv(String)
-   * corresponding environment variable}; {@code null} in all other
-   * cases
+   * @return a {@linkplain FixedValueSupplier deterministic} {@link
+   * Supplier} whose {@link Supplier#get()} method returns the
+   * appropriate {@linkplain System#getenv(String) environment
+   * variable} if the supplied {@code absolutePath} has a {@linkplain
+   * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}
+   * plus a single name) and there actually is a {@linkplain
+   * System#getenv(String) corresponding environment variable}; {@code
+   * null} in all other cases
    *
    * @nullability This method may return {@code null}.
    *
@@ -93,9 +93,13 @@ public final class EnvironmentVariableProvider extends AbstractProvider {
    *
    * @exception NullPointerException if {@code requestor} or {@code
    * absolutePath} is {@code null}
+   *
+   * @see AbstractProvider#find(Loader, Path)
+   *
+   * @see System#getenv(String)
    */
-  @Override // AbstractProvider<String>
-  public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  @Override // AbstractProvider
+  protected Supplier<?> find(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
@@ -120,10 +124,9 @@ public final class EnvironmentVariableProvider extends AbstractProvider {
     if (absolutePath.size() == 2) { // 2: root plus a single name
       final String name = absolutePath.lastElement().name();
       if (!name.isEmpty()) {
-        @SuppressWarnings("unchecked")
         final String value = System.getenv(name);
         if (value != null) {
-          return new Value<>(FixedValueSupplier.of(value), absolutePath); // deterministic
+          return FixedValueSupplier.of(value); // deterministic
         }
       }
     }

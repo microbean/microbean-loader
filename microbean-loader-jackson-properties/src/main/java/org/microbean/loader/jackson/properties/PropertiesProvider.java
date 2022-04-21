@@ -29,8 +29,8 @@ import org.microbean.loader.jackson.InputStreamJacksonProvider;
 import org.microbean.invoke.CachingSupplier;
 
 /**
- * An {@link InputStreamJacksonProvider} that reads TOML-formatted
- * {@code application.toml} classpath resources.
+ * An {@link InputStreamJacksonProvider} that reads Java
+ * properties-formatted files and classpath resources.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>

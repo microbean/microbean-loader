@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
+
+import org.microbean.invoke.FixedValueSupplier;
 
 import org.microbean.qualifier.Qualifiers;
 
@@ -142,7 +145,7 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
    * {@linkplain #map(Object) map node}
    *
    * @exception NullPointerException if {@code name} is {@code null}
-   * 
+   *
    * @nullability Overrides of this method may (and often do) return
    * {@code null}.
    *
@@ -173,7 +176,7 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
    * @exception NullPointerException if {@code name} is {@code null}
    *
    * @exception IndexOutOfBoundsException if {@code index} is invalid
-   * 
+   *
    * @nullability Overrides of this method may (and often do) return
    * {@code null}.
    *
@@ -357,10 +360,11 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
   protected abstract N qualifiers(final N node);
 
   /**
-   * Returns a {@link Value} suitable for the current request,
-   * represented by the supplied {@code absolutePath}, as being
-   * executed by the supplied {@link Loader}, or {@code null} if no
-   * such {@link Value} is or ever will be suitable.
+   * Returns a {@linkplain FixedValueSupplier#of(Supplier)
+   * deterministic <code>Supplier</code>} suitable for the current
+   * request, represented by the supplied {@code absolutePath}, as
+   * being executed by the supplied {@link Loader}, or {@code null} if
+   * no such {@link Supplier} is or ever will be suitable.
    *
    * @param requestor the {@link Loader} currently executing a
    * request; must not be {@code null}
@@ -368,7 +372,7 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
    * @param absolutePath the path being requested; must not be {@code
    * null} and must be {@linkplain Path#absolute() absolute}
    *
-   * @return a {@link Value}, or {@code null}
+   * @return a {@link Supplier}, or {@code null}
    *
    * @exception NullPointerException if any argument is {@code null}
    *
@@ -381,7 +385,7 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
    * @see Provider#get(Loader, Path)
    */
   @Override // Provider
-  public Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  protected Supplier<?> find(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
@@ -440,13 +444,42 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
         }
 
         if (node != null) {
-          return
-            new Value<>(reader.apply(node, absolutePath.qualified()),
-                        this.valuePath(requestor, absolutePath, reader));
+          return FixedValueSupplier.of(reader.apply(node, absolutePath.qualified()));
         }
       }
     }
     return null;
+  }
+
+  /**
+   * Calls the {@link #path(Loader, Path, BiFunction)} method with the
+   * supplied arguments and the return value of an invocation of the
+   * {@link #reader(Loader, Path)} method and returns its result.
+   *
+   * @param requestor the {@link Loader} currently executing a
+   * request; must not be {@code null}
+   *
+   * @param absolutePath the path being requested; must not be {@code
+   * null} and must be {@linkplain Path#absolute() absolute}
+   *
+   * @exception NullPointerException if {@code absolutePath} or {@code
+   * reader} is {@code null}
+   *
+   * @nullability This method does not return {@code null}.
+   *
+   * @idempotency No guarantees about idempotency or determinism are
+   * made of this method.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #path(Loader, Path, BiFunction)
+   *
+   * @see #reader(Loader, Path)
+   */
+  @Override
+  protected final <T extends Type> Path<T> path(final Loader<?> requestor, final Path<T> absolutePath) {
+    return this.path(requestor, absolutePath, this.reader(requestor, absolutePath));
   }
 
   /**
@@ -457,6 +490,10 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
    * {@link Path} with the same {@linkplain Path#size() sizze} as the
    * supplied {@link Path} and differing, perhaps, only in the {@link
    * Qualifiers} assigned to each {@link Element}.</p>
+   *
+   * <p>Overrides of this method must not call the {@link
+   * #path(Loader, Path)} or the {@link #get(Loader, Path)} methods or
+   * undefined behavior, such as an infinite loop, may result.</p>
    *
    * @param <T> the type of the supplied {@link Path} and the returned
    * {@link Path}
@@ -486,9 +523,9 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
    * @threadsafety This method is, and its overrides must be, safe for
    * concurrent use by multiple threads.
    */
-  protected <T extends Type> Path<T> valuePath(final Loader<?> requestor,
-                                               final Path<T> absolutePath,
-                                               final BiFunction<? super N, ? super Type, ?> reader) {
+  protected <T extends Type> Path<T> path(final Loader<?> requestor,
+                                          final Path<T> absolutePath,
+                                          final BiFunction<? super N, ? super Type, ?> reader) {
     final int size = absolutePath.size();
     if (size <= 1) {
       return absolutePath;
@@ -510,20 +547,20 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
     N qualifiersNode = qualifiers(node); // often gets a child of this node named "@qualifiers"
     final Qualifiers<? extends String, ?> valuePathQualifiers = this.qualifiers(reader, qualifiersNode, nextName);
     qualifiersNode = this.get(qualifiersNode, nextName);
-    
+
     boolean containerNode = this.container(node);
 
     for (int i = 1; i < size; i++) {
       element = absolutePath.get(i);
       final String name = element.name();
-      
+
       if (name.isEmpty()) {
         // Empty name means "the current node". The node remains what
         // it was.
         valuePathElements.add(element);
         continue;
       }
-      
+
       if (!containerNode) {
         // The name was non-empty, and the prior node was not a
         // container, so we would be trying to dereference the name
@@ -531,7 +568,7 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
         // impossible.
         return absolutePath;
       }
-      
+
       if (!this.container(node)) {
         // The next path element may have an empty name, in which case
         // it will refer to this node, so the fact that it is not a

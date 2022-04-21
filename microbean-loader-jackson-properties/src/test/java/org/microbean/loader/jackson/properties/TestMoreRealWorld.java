@@ -18,6 +18,10 @@ package org.microbean.loader.jackson.properties;
 
 import java.lang.reflect.Type;
 
+import java.util.function.BiFunction;
+
+import com.fasterxml.jackson.core.TreeNode;
+
 import org.junit.jupiter.api.Test;
 
 import org.microbean.loader.DefaultLoader;
@@ -46,16 +50,15 @@ final class TestMoreRealWorld {
   final void testMoreRealWorld() {
     final PropertiesProvider pp = new PropertiesProvider("realworld.properties") {
         @Override
-        public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
-          final Value<?> v = super.get(requestor, absolutePath);
-          if (v != null) {
-            final Path<?> p = v.path();
-            if ("hostname".equals(p.lastElement().name())) {
-              assertEquals("test", p.qualifiers().get("env"));
-              assertEquals("bar", p.qualifiers().get("foo"));
-            }
+        protected final <T extends Type> Path<T> path(final Loader<?> requestor,
+                                                      final Path<T> path,
+                                                      final BiFunction<? super TreeNode, ? super Type, ?> reader) {
+          final Path<T> p = super.path(requestor, path, reader);
+          if (p != null && "hostname".equals(p.lastElement().name())) {
+            assertEquals("test", p.qualifiers().get("env"));
+            assertEquals("bar", p.qualifiers().get("foo"));
           }
-          return v;
+          return p;
         }
       };
     final Loader<?> loader = loader().as(DefaultLoader.class).plus(pp);

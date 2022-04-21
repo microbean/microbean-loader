@@ -115,7 +115,7 @@ final class TestProxyingProvider {
     }
 
     @Override
-    public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> path) {
+    protected final Supplier<?> find(final Loader<?> requestor, final Path<? extends Type> path) {
       final Element<? extends Type> last = path.lastElement();
       if ("wheel".equals(last.name())) {
         final Qualifiers<?, ?> lastQualifiers = last.qualifiers();        
@@ -124,6 +124,14 @@ final class TestProxyingProvider {
         if ("LR".equals(lastQualifiers.get("arg0"))) {
           final Class<?> wheelClass = JavaTypes.erase(path.qualified());
           assertSame(Wheel.class, wheelClass);
+          return
+            FixedValueSupplier.of(new Wheel() {
+                @Override
+                public final int getDiameterInInches() {
+                  return 24;
+                }
+              });
+          /*
           @SuppressWarnings("unchecked")
           final Value<?> returnValue =
             new Value<>(FixedValueSupplier.of(new Wheel() {
@@ -134,9 +142,15 @@ final class TestProxyingProvider {
               }),
               Path.of(Element.of(Qualifiers.of("arg0", "LR"), wheelClass, "wheel")));
           return returnValue;
+          */
         }
       }
       return null;
+    }
+
+    @Override
+    protected final <T extends Type> Path<T> path(final Loader<?> requestor, final Path<T> path) {
+      return Path.of(Element.of(Qualifiers.of("arg0", "LR"), path.qualified(), "wheel"));
     }
 
   }
