@@ -11,7 +11,7 @@
   </parent>
 
   <name>microBean™ Loader: Default Implementation</name>
-  <description>microBean™ Loader API: Default Implementation</description>
+  <description>microBean™ Loader: Default Implementation</description>
 
   <dependencies>
 

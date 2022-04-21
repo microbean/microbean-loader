@@ -2,9 +2,9 @@
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.microbean/microbean-loader-jackson-json/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.microbean/microbean-loader-jackson-json)
 
-The microBean™ Loader: Jackson (JSON) project provides classes and interfaces
-related to helping implement service providers for the microBean™
-Loader: Default Implementation project in terms of
+The microBean™ Loader: Jackson (JSON) project provides classes and
+interfaces related to helping implement service providers for the
+microBean™ Loader: Default Implementation project in terms of
 [Jackson](https://github.com/FasterXML/jackson-databind) constructs.
 
 # Status
@@ -34,11 +34,11 @@ Loader: Jackson (JSON) as a Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-loader-jackson-json</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-loader-jackson-json for up-to-date available versions. -->
-  <version>0.0.2</version>
+  <version>0.0.3</version>
 </dependency>
 ```
 
 # Documentation
 
 Full documentation is available at
-[microbean.github.io/microbean-loader](https://microbean.github.io/microbean-loader/).
+[microbean.github.io/microbean-loader/microbean-loader-jackson-json](https://microbean.github.io/microbean-loader/microbean-loader-jackson-json).
