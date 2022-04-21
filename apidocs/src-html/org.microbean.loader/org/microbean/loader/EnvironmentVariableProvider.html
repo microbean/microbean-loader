@@ -77,8 +77,8 @@
 <span class="source-line-no">063</span><span id="line-63">  /**</span>
 <span class="source-line-no">064</span><span id="line-64">   * If the supplied {@code absolutePath} has a {@linkplain</span>
 <span class="source-line-no">065</span><span id="line-65">   * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}</span>
-<span class="source-line-no">066</span><span id="line-66">   * plus a single name), returns a {@linkplain Value#determinism()</span>
-<span class="source-line-no">067</span><span id="line-67">   * deterministic &lt;code&gt;Value&lt;/code&gt;} whose {@link Value#get()}</span>
+<span class="source-line-no">066</span><span id="line-66">   * plus a single name), returns a {@linkplain FixedValueSupplier</span>
+<span class="source-line-no">067</span><span id="line-67">   * deterministic &lt;code&gt;Supplier&lt;/code&gt;} whose {@link Supplier#get()}</span>
 <span class="source-line-no">068</span><span id="line-68">   * method returns the {@linkplain System#getenv(String) environment</span>
 <span class="source-line-no">069</span><span id="line-69">   * variable} with that name, or {@code null} in all other cases.</span>
 <span class="source-line-no">070</span><span id="line-70">   *</span>
@@ -88,14 +88,14 @@
 <span class="source-line-no">074</span><span id="line-74">   * @param absolutePath an {@linkplain Path#absolute() absolute}</span>
 <span class="source-line-no">075</span><span id="line-75">   * {@link Path}; must not be {@code null}</span>
 <span class="source-line-no">076</span><span id="line-76">   *</span>
-<span class="source-line-no">077</span><span id="line-77">   * @return a {@linkplain Value#determinism() deterministic} {@link</span>
-<span class="source-line-no">078</span><span id="line-78">   * Value} whose {@link Value#get()} method returns the appropriate</span>
-<span class="source-line-no">079</span><span id="line-79">   * {@linkplain System#getenv(String) environment variable} if the</span>
-<span class="source-line-no">080</span><span id="line-80">   * supplied {@code absolutePath} has a {@linkplain Path#size() size}</span>
-<span class="source-line-no">081</span><span id="line-81">   * of {@code 2} (the {@linkplain Path#root() root} plus a single</span>
-<span class="source-line-no">082</span><span id="line-82">   * name) and there actually is a {@linkplain System#getenv(String)</span>
-<span class="source-line-no">083</span><span id="line-83">   * corresponding environment variable}; {@code null} in all other</span>
-<span class="source-line-no">084</span><span id="line-84">   * cases</span>
+<span class="source-line-no">077</span><span id="line-77">   * @return a {@linkplain FixedValueSupplier deterministic} {@link</span>
+<span class="source-line-no">078</span><span id="line-78">   * Supplier} whose {@link Supplier#get()} method returns the</span>
+<span class="source-line-no">079</span><span id="line-79">   * appropriate {@linkplain System#getenv(String) environment</span>
+<span class="source-line-no">080</span><span id="line-80">   * variable} if the supplied {@code absolutePath} has a {@linkplain</span>
+<span class="source-line-no">081</span><span id="line-81">   * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}</span>
+<span class="source-line-no">082</span><span id="line-82">   * plus a single name) and there actually is a {@linkplain</span>
+<span class="source-line-no">083</span><span id="line-83">   * System#getenv(String) corresponding environment variable}; {@code</span>
+<span class="source-line-no">084</span><span id="line-84">   * null} in all other cases</span>
 <span class="source-line-no">085</span><span id="line-85">   *</span>
 <span class="source-line-no">086</span><span id="line-86">   * @nullability This method may return {@code null}.</span>
 <span class="source-line-no">087</span><span id="line-87">   *</span>
@@ -107,44 +107,47 @@
 <span class="source-line-no">093</span><span id="line-93">   *</span>
 <span class="source-line-no">094</span><span id="line-94">   * @exception NullPointerException if {@code requestor} or {@code</span>
 <span class="source-line-no">095</span><span id="line-95">   * absolutePath} is {@code null}</span>
-<span class="source-line-no">096</span><span id="line-96">   */</span>
-<span class="source-line-no">097</span><span id="line-97">  @Override // AbstractProvider&lt;String&gt;</span>
-<span class="source-line-no">098</span><span id="line-98">  public final Value&lt;?&gt; get(final Loader&lt;?&gt; requestor, final Path&lt;? extends Type&gt; absolutePath) {</span>
-<span class="source-line-no">099</span><span id="line-99">    assert absolutePath.absolute();</span>
-<span class="source-line-no">100</span><span id="line-100">    assert absolutePath.startsWith(requestor.path());</span>
-<span class="source-line-no">101</span><span id="line-101">    assert !absolutePath.equals(requestor.path());</span>
-<span class="source-line-no">102</span><span id="line-102"></span>
-<span class="source-line-no">103</span><span id="line-103">    // On Unix systems, there is absolutely no question that the</span>
-<span class="source-line-no">104</span><span id="line-104">    // environment is entirely immutable, even when probed via</span>
-<span class="source-line-no">105</span><span id="line-105">    // System#getenv(String).  See</span>
-<span class="source-line-no">106</span><span id="line-106">    // https://github.com/openjdk/jdk/blob/dfacda488bfbe2e11e8d607a6d08527710286982/src/java.base/unix/classes/java/lang/ProcessEnvironment.java#L67-L91.</span>
-<span class="source-line-no">107</span><span id="line-107">    //</span>
-<span class="source-line-no">108</span><span id="line-108">    // Things are ever so slightly more murky in Windows land.  As of</span>
-<span class="source-line-no">109</span><span id="line-109">    // JDK 17, the environment there is also entirely immutable:</span>
-<span class="source-line-no">110</span><span id="line-110">    // https://github.com/openjdk/jdk/blob/dfacda488bfbe2e11e8d607a6d08527710286982/src/java.base/windows/classes/java/lang/ProcessEnvironment.java#L257-L258</span>
-<span class="source-line-no">111</span><span id="line-111">    // but the class is not as "immutable looking" as the Unix one and</span>
-<span class="source-line-no">112</span><span id="line-112">    // it seems to be designed for updating in some cases.</span>
-<span class="source-line-no">113</span><span id="line-113">    // Nevertheless, for the System#getenv(String) case, the</span>
-<span class="source-line-no">114</span><span id="line-114">    // environment is immutable.</span>
-<span class="source-line-no">115</span><span id="line-115">    //</span>
-<span class="source-line-no">116</span><span id="line-116">    // TL;DR: System.getenv("foo") will always return a value for</span>
-<span class="source-line-no">117</span><span id="line-117">    // "foo" if ever there was one, and will always return null if</span>
-<span class="source-line-no">118</span><span id="line-118">    // there wasn't.</span>
-<span class="source-line-no">119</span><span id="line-119"></span>
-<span class="source-line-no">120</span><span id="line-120">    if (absolutePath.size() == 2) { // 2: root plus a single name</span>
-<span class="source-line-no">121</span><span id="line-121">      final String name = absolutePath.lastElement().name();</span>
-<span class="source-line-no">122</span><span id="line-122">      if (!name.isEmpty()) {</span>
-<span class="source-line-no">123</span><span id="line-123">        @SuppressWarnings("unchecked")</span>
-<span class="source-line-no">124</span><span id="line-124">        final String value = System.getenv(name);</span>
-<span class="source-line-no">125</span><span id="line-125">        if (value != null) {</span>
-<span class="source-line-no">126</span><span id="line-126">          return new Value&lt;&gt;(FixedValueSupplier.of(value), absolutePath); // deterministic</span>
-<span class="source-line-no">127</span><span id="line-127">        }</span>
-<span class="source-line-no">128</span><span id="line-128">      }</span>
-<span class="source-line-no">129</span><span id="line-129">    }</span>
-<span class="source-line-no">130</span><span id="line-130">    return null;</span>
-<span class="source-line-no">131</span><span id="line-131">  }</span>
-<span class="source-line-no">132</span><span id="line-132"></span>
-<span class="source-line-no">133</span><span id="line-133">}</span>
+<span class="source-line-no">096</span><span id="line-96">   *</span>
+<span class="source-line-no">097</span><span id="line-97">   * @see AbstractProvider#find(Loader, Path)</span>
+<span class="source-line-no">098</span><span id="line-98">   *</span>
+<span class="source-line-no">099</span><span id="line-99">   * @see System#getenv(String)</span>
+<span class="source-line-no">100</span><span id="line-100">   */</span>
+<span class="source-line-no">101</span><span id="line-101">  @Override // AbstractProvider</span>
+<span class="source-line-no">102</span><span id="line-102">  protected Supplier&lt;?&gt; find(final Loader&lt;?&gt; requestor, final Path&lt;? extends Type&gt; absolutePath) {</span>
+<span class="source-line-no">103</span><span id="line-103">    assert absolutePath.absolute();</span>
+<span class="source-line-no">104</span><span id="line-104">    assert absolutePath.startsWith(requestor.path());</span>
+<span class="source-line-no">105</span><span id="line-105">    assert !absolutePath.equals(requestor.path());</span>
+<span class="source-line-no">106</span><span id="line-106"></span>
+<span class="source-line-no">107</span><span id="line-107">    // On Unix systems, there is absolutely no question that the</span>
+<span class="source-line-no">108</span><span id="line-108">    // environment is entirely immutable, even when probed via</span>
+<span class="source-line-no">109</span><span id="line-109">    // System#getenv(String).  See</span>
+<span class="source-line-no">110</span><span id="line-110">    // https://github.com/openjdk/jdk/blob/dfacda488bfbe2e11e8d607a6d08527710286982/src/java.base/unix/classes/java/lang/ProcessEnvironment.java#L67-L91.</span>
+<span class="source-line-no">111</span><span id="line-111">    //</span>
+<span class="source-line-no">112</span><span id="line-112">    // Things are ever so slightly more murky in Windows land.  As of</span>
+<span class="source-line-no">113</span><span id="line-113">    // JDK 17, the environment there is also entirely immutable:</span>
+<span class="source-line-no">114</span><span id="line-114">    // https://github.com/openjdk/jdk/blob/dfacda488bfbe2e11e8d607a6d08527710286982/src/java.base/windows/classes/java/lang/ProcessEnvironment.java#L257-L258</span>
+<span class="source-line-no">115</span><span id="line-115">    // but the class is not as "immutable looking" as the Unix one and</span>
+<span class="source-line-no">116</span><span id="line-116">    // it seems to be designed for updating in some cases.</span>
+<span class="source-line-no">117</span><span id="line-117">    // Nevertheless, for the System#getenv(String) case, the</span>
+<span class="source-line-no">118</span><span id="line-118">    // environment is immutable.</span>
+<span class="source-line-no">119</span><span id="line-119">    //</span>
+<span class="source-line-no">120</span><span id="line-120">    // TL;DR: System.getenv("foo") will always return a value for</span>
+<span class="source-line-no">121</span><span id="line-121">    // "foo" if ever there was one, and will always return null if</span>
+<span class="source-line-no">122</span><span id="line-122">    // there wasn't.</span>
+<span class="source-line-no">123</span><span id="line-123"></span>
+<span class="source-line-no">124</span><span id="line-124">    if (absolutePath.size() == 2) { // 2: root plus a single name</span>
+<span class="source-line-no">125</span><span id="line-125">      final String name = absolutePath.lastElement().name();</span>
+<span class="source-line-no">126</span><span id="line-126">      if (!name.isEmpty()) {</span>
+<span class="source-line-no">127</span><span id="line-127">        final String value = System.getenv(name);</span>
+<span class="source-line-no">128</span><span id="line-128">        if (value != null) {</span>
+<span class="source-line-no">129</span><span id="line-129">          return FixedValueSupplier.of(value); // deterministic</span>
+<span class="source-line-no">130</span><span id="line-130">        }</span>
+<span class="source-line-no">131</span><span id="line-131">      }</span>
+<span class="source-line-no">132</span><span id="line-132">    }</span>
+<span class="source-line-no">133</span><span id="line-133">    return null;</span>
+<span class="source-line-no">134</span><span id="line-134">  }</span>
+<span class="source-line-no">135</span><span id="line-135"></span>
+<span class="source-line-no">136</span><span id="line-136">}</span>
 
 
 
