@@ -70,6 +70,7 @@ final class TestSpike {
 
     // This goes after a single string.
     final String blatz = loader.load(String.class, List.of("gorp", "blatz")).orElse(null);
+    assertEquals("foo", blatz);
   }
 
   @JsonAutoDetect(creatorVisibility = Visibility.NONE,
@@ -77,7 +78,7 @@ final class TestSpike {
                   getterVisibility = Visibility.NONE,
                   isGetterVisibility = Visibility.NONE,
                   setterVisibility = Visibility.NONE)
-  public static final class Blatz extends Configuration {
+  public static final class Blatz { // extends Configuration {
 
     private final String blatz;
 

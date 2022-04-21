@@ -24,13 +24,13 @@
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-@SuppressWarnings({ "requires-automatic" })
+@SuppressWarnings({ "requires-automatic", "requires-transitive-automatic" })
 module org.microbean.loader.typesafe.config {
 
   exports org.microbean.loader.typesafe.config;
 
   requires org.microbean.loader.api;
   requires transitive org.microbean.loader;
-  requires typesafe.config;
+  requires transitive typesafe.config;
   
 }

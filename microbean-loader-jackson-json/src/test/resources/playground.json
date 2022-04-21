@@ -12,7 +12,9 @@
             "greeting" : "Yo, I think?"
         }
     },
-    
+
+    "array" : [34, false, { "a" : "b" }, "hoopy", [ "frood" ]],
+
     "@qualifiers" : {
         "default" : {
             "kind" : "normal",
@@ -31,4 +33,5 @@
             }
         }
     }
+
 }

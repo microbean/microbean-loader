@@ -155,8 +155,6 @@ public class InputStreamJacksonProvider extends JacksonProvider {
    * #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
    * Consumer) supplied at construction time} and returns the result.
    *
-   * @param <T> the type of the value ultimately being provided
-   *
    * @param requestingLoader the {@link Loader} requesting a value;
    * must not be {@code null}
    *
@@ -180,54 +178,20 @@ public class InputStreamJacksonProvider extends JacksonProvider {
    * #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
    * Consumer) supplied at construction time} is.
    */
-  @Override // JacksonProvider<T>
-  protected final <T> ObjectCodec objectCodec(final Loader<?> requestingLoader, final Path<? extends Type> absolutePath) {
+  @Override // JacksonProvider
+  protected final ObjectCodec objectCodec(final Loader<?> requestingLoader, final Path<? extends Type> absolutePath) {
     return this.objectCodecFunction.apply(requestingLoader, absolutePath);
   }
 
-  /**
-   * Overrides {@link JacksonProvider#rootNode(Loader, Path,
-   * ObjectCodec)} to produce a {@link TreeNode} using the {@code
-   * inputStreamFunction} {@linkplain
-   * #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
-   * Consumer) supplied at construction time}.
-   *
-   * <p>This method will return {@code null} to indicate that this
-   * {@link InputStreamJacksonProvider} will not handle the current
-   * request.</p>
-   *
-   * @param requestingLoader the {@link Loader} requesting a value;
-   * must not be {@code null}
-   *
-   * @param absolutePath the {@linkplain Path#absolute() absolute}
-   * {@link Path} the {@code requestingLoader} is currently
-   * requesting; must not be {@code null}
-   *
-   * @param objectCodec the {@link ObjectCodec} returned by the {@link
-   * #objectCodec(Loader, Path)} method; may be {@code null} in which
-   * case {@code null} will be returned
-   *
-   * @return a {@link TreeNode}, or {@code null}
-   *
-   * @nullability This method and its overrides may return {@code null}.
-   *
-   * @threadsafety This method is, and its overrides must be, safe for
-   * concurrent use by multiple threads, but the {@code
-   * inputStreamFunction} {@linkplain
-   * #InputStreamJacksonProvider(Type, BiFunction, BiFunction,
-   * Consumer) supplied at construction time} used by this method may
-   * not be
-   *
-   * @idempotency This method is, and its overrides must be,
-   * idempotent, but not necessarily deterministic.
-   */
-  @Override // JacksonProvider<T>
-  protected <T> TreeNode rootNode(final Loader<?> requestingLoader, final Path<? extends Type> absolutePath, final ObjectCodec objectCodec) {
+  @Override // JacksonProvider
+  protected TreeNode rootNode(final Loader<?> requestingLoader,
+                              final Path<? extends Type> absolutePath) {
+    InputStream is = null;
+    RuntimeException runtimeException = null;
+    ObjectCodec objectCodec = this.objectCodec(requestingLoader, absolutePath);
     if (objectCodec == null) {
       return null;
     }
-    InputStream is = null;
-    RuntimeException runtimeException = null;
     JsonParser parser = null;
     try {
       is = this.inputStreamFunction.apply(requestingLoader, absolutePath);
@@ -385,11 +349,11 @@ public class InputStreamJacksonProvider extends JacksonProvider {
     }
     return cl;
   }
-  
+
   private static final void sink(final Object ignored) {
 
   }
-  
+
   private static final <T> T returnNull(final Object ignored, final Object alsoIgnored) {
     return null;
   }

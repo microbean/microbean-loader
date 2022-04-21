@@ -20,12 +20,18 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import org.microbean.loader.DefaultLoader;
+
+import org.microbean.loader.api.Loader;
+
 import org.microbean.loader.spi.Value;
 
 import org.microbean.path.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import static org.microbean.loader.api.Loader.loader;
 
 final class TestSpike {
 
@@ -35,12 +41,11 @@ final class TestSpike {
 
   @Test
   final void testSpike() {
-    final TypesafeConfigHoconProvider p = new TypesafeConfigHoconProvider();
-    Value<?> v = p.get(null, Path.of(String.class, "a"));
-    assertEquals("b", v.get());
-    assertEquals("b", v.get());
-    v = p.get(null, Path.of(Goop.class));
-    assertNotNull(v);
+    final Loader<?> loader = loader().as(DefaultLoader.class).plus(new TypesafeConfigHoconProvider());
+    final String s = loader.load(String.class, "a").get();
+    assertEquals("b", s);
+    final Goop goop = loader.load(Goop.class).get();
+    assertNotNull(goop);
   }
 
   public static class Goop {

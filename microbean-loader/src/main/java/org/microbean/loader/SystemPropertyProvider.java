@@ -88,7 +88,7 @@ public final class SystemPropertyProvider extends AbstractProvider {
 
 
   /**
-   * Returns a {@link Value} suitable for the System property
+   * Returns a {@link Supplier} suitable for the System property
    * represented by the supplied {@link Path}.
    *
    * <p>This method never returns {@code null}.  Its overrides may if
@@ -105,22 +105,17 @@ public final class SystemPropertyProvider extends AbstractProvider {
    * {@link System#getProperty(String)} before simple calls to {@link
    * Properties#get(String) System.getProperties().get(String)}.</p>
    *
-   * <p>Any {@link Value} returned by this method will have no
-   * {@linkplain Value#Value(Value, Supplier)
-   * defaults}, a {@link Qualifiers} equal to the return value of
-   * {@link Qualifiers#of()}, a ({@linkplain Path#absolute()
-   * relative}) {@link Path} equal to the supplied {@code
-   * absolutePath}'s {@linkplain Path#lastElement() last element}, a
-   * {@link Supplier} that is backed by System property access
-   * machinery, and a value of {@link
-   * org.microbean.invoke.OptionalSupplier.Determinism#NON_DETERMINISTIC}
-   * for its {@linkplain Value#determinism() determinism property}.
-   * If the supplied {@link Path}'s {@linkplain Path#qualified() type}
-   * is not assignable from that borne by a System property value,
-   * then the {@link Value} will return {@code null} from its {@link
-   * Value#get() get()} method in such a case, indicating that the
-   * value is present but cannot be represented.  Overrides are
-   * strongly encouraged to abide by these conditions.</p>
+   * <p>Any {@link Supplier} returned by this method will be
+   * {@linkplain
+   * org.microbean.invoke.OptionalSupplier.Determinism#NON_DETERMINISTIC
+   * non-deterministic}, since system properties may change at any
+   * point.  Additionally, if the supplied {@link Path}'s {@linkplain
+   * Path#qualified() type} is not assignable from that borne by a
+   * System property value, then the {@link Supplier} will return
+   * {@code null} from its {@link Value#get() get()} method in such a
+   * case, indicating that the value is present but cannot be
+   * represented.  Overrides are strongly encouraged to abide by these
+   * conditions.</p>
    *
    * @param requestor the {@link Loader} seeking a {@link Value}; must
    * not be {@code null}
@@ -129,7 +124,7 @@ public final class SystemPropertyProvider extends AbstractProvider {
    * <code>Path</code>} for which a {@link Value} is being sought;
    * must not be {@code null}
    *
-   * @return a {@link Value} suitable for the System property whose
+   * @return a {@link Supplier} suitable for the System property whose
    * name is represented by the supplied {@link Path}'s {@linkplain
    * Path#lastElement() last <code>Element</code>}'s {@linkplain
    * Path.Element#name() name}
@@ -145,11 +140,11 @@ public final class SystemPropertyProvider extends AbstractProvider {
    *
    * @idempotency This method is idempotent and deterministic.
    * Overrides must be idempotent, but need not be deterministic.
-   * {@link Value}s returned by this method or its overrides are
+   * {@link Supplier}s returned by this method or its overrides are
    * <em>not</em> guaranteed to be idempotent or deterministic.
    */
-  @Override // AbstractProvider<Object>
-  public Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  @Override
+  protected Supplier<?> find(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
@@ -166,11 +161,50 @@ public final class SystemPropertyProvider extends AbstractProvider {
         } else {
           s = () -> getSystemProperty(name, pathTypeErasure);
         }
-        return new Value<>(s, Path.of(last));
+        return s;
       }
     }
     return null;
   }
+
+  /**
+   * Overrides the {@link AbstractProvider#path(Loader, Path)} method
+   * to return a {@link Path} consisting solely of the {@linkplain
+   * Path#lastElement() last element} of the supplied {@code
+   * absolutePath}.
+   *
+   * @param requestor the {@link Loader} seeking a {@link Value}; must
+   * not be {@code null}
+   *
+   * @param absolutePath an {@linkplain Path#absolute() absolute
+   * <code>Path</code>} for which a {@link Value} is being sought;
+   * must not be {@code null}
+   *
+   * @return a {@link Path} that will be {@linkplain
+   * Value#Value(Supplier, Path) used to build a <code>Value</code>}
+   * to be returned by the {@link #get(Loader, Path)} method
+   *
+   * @nullability This method does not, but overrides may, return
+   * {@code null}.
+   *
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   *
+   * @see AbstractProvider#path(Loader, Path)
+   */
+  @Override
+  protected <T extends Type> Path<T> path(final Loader<?> requestor, final Path<T> absolutePath) {
+    return Path.of(absolutePath.lastElement());
+  }
+
+
+  /*
+   * Static methods.
+   */
+
 
   private static final <T> T getCharSequenceAssignableSystemProperty(final String propertyName, final Class<T> typeErasure) {
     assert CharSequence.class.isAssignableFrom(typeErasure) : "typeErasure: " + typeErasure.getName();

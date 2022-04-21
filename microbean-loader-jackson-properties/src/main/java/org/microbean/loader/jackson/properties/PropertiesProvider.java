@@ -29,8 +29,8 @@ import org.microbean.loader.jackson.InputStreamJacksonProvider;
 import org.microbean.invoke.CachingSupplier;
 
 /**
- * An {@link InputStreamJacksonProvider} that reads TOML-formatted
- * {@code application.toml} classpath resources.
+ * An {@link InputStreamJacksonProvider} that reads Java
+ * properties-formatted files and classpath resources.
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
@@ -54,6 +54,21 @@ public class PropertiesProvider extends InputStreamJacksonProvider {
    */
   public PropertiesProvider() {
     this(null, "application.properties");
+  }
+
+  /**
+   * Creates a new {@link PropertiesProvider}.
+   *
+   * @param resourceName the name of the classpath resource to read
+   * from; must not be {@code null}
+   *
+   * @exception NullPointerException if {@code resourceName} is {@code
+   * null}
+   *
+   * @see #PropertiesProvider(Type, String)
+   */
+  public PropertiesProvider(final String resourceName) {
+    this(null, resourceName);
   }
 
   /**

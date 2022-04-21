@@ -104,22 +104,19 @@ public class ProxyingProvider extends AbstractProvider {
 
 
   @Override // Provider
-  public final Value<?> get(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  protected final Supplier<?> find(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
-
     if (this.isProxiable(requestor, absolutePath)) {
-      final OptionalSupplier<?> os =
+      return
         OptionalSupplier.of(Determinism.PRESENT,
                             () -> this.proxies.computeIfAbsent(absolutePath,
                                                                p -> this.newProxyInstance(requestor, p, JavaTypes.erase(p.qualified()))));
-      final Value<?> returnValue = new Value<>(os, this.path(requestor, absolutePath));
-      return returnValue;
-    } else {
-      return null;
     }
+    return null;
   }
+
 
   /**
    * Returns {@code true} if the {@linkplain Path#qualified() type
@@ -252,6 +249,7 @@ public class ProxyingProvider extends AbstractProvider {
    * @threadsafety This method is, and its overrides must be, safe for
    * concurrent use by multiple threads.
    */
+  @Override // AbstractProvider
   protected <T extends Type> Path<T> path(final Loader<?> requestor, final Path<T> absolutePath) {
     return Path.of(absolutePath.qualified());
   }
