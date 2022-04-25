@@ -77,7 +77,13 @@ import org.microbean.type.JavaTypes;
 public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
 
-  private static final ThreadLocal<Map<Path<? extends Type>, Deque<Provider>>> currentProviderStacks = ThreadLocal.withInitial(() -> new HashMap<>(7));
+  /*
+   * Static fields.
+   */
+
+
+  private static final ThreadLocal<Map<Path<? extends Type>, Deque<Provider>>> currentProviderStacks =
+    ThreadLocal.withInitial(() -> new HashMap<>(7));
 
 
   /*
@@ -655,9 +661,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
           if (disambiguatedValue.equals(candidate)) {
             candidate = new Value<>(candidate, value);
             break;
-          }
-
-          if (disambiguatedValue.equals(value)) {
+          } else if (disambiguatedValue.equals(value)) {
             candidate = new Value<>(disambiguatedValue, candidate);
             candidateProvider = provider;
             candidateQualifiersScore = valueQualifiersScore;
@@ -717,7 +721,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     }
   }
 
-  private static final Provider peek(final Map<?, ? extends Deque<Provider>> map,
+  private static final Provider peek(final Map<?, ? extends Deque<? extends Provider>> map,
                                      final Path<? extends Type> absolutePath) {
     final Queue<? extends Provider> q = map.get(absolutePath);
     return q == null ? null : q.peek();
@@ -729,7 +733,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     map.computeIfAbsent(absolutePath, ap -> new ArrayDeque<>(5)).push(provider);
   }
 
-  private static final Provider pop(final Map<?, ? extends Deque<Provider>> map,
+  private static final Provider pop(final Map<?, ? extends Deque<? extends Provider>> map,
                                     final Path<? extends Type> absolutePath) {
     final Deque<? extends Provider> dq = map.get(absolutePath);
     return dq == null ? null : dq.pop();
@@ -812,10 +816,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       }
     }
     return absoluteReferencePath.endsWith(valuePath, NamesAndTypesAreCompatibleBiPredicate.INSTANCE);
-  }
-
-  private static final <T> T throwNoSuchElementException() {
-    throw new NoSuchElementException();
   }
 
 

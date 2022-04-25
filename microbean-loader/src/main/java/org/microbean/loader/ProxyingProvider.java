@@ -167,10 +167,58 @@ public class ProxyingProvider extends AbstractProvider {
    * idempotent and deterministic.
    *
    * @see #isIndexLike(Class)
+   *
+   * @see #isProxiable(Class)
    */
-  protected boolean isProxiable(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
-    final Class<?> c = JavaTypes.erase(absolutePath.qualified());
-    if (c.isInterface() && !c.isHidden() && !c.isSealed()) {
+  public boolean isProxiable(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+    return this.isProxiable(absolutePath.qualified());
+  }
+
+  /**
+   * Returns {@code true} if the supplied {@link Type} can be
+   * proxied.
+   *
+   * <p>A {@link Type} can be proxied if it:</p>
+   *
+   * <ul>
+   *
+   * <li>is not {@code null}</li>
+   *
+   * <li>represents an {@linkplain Class#isInterface() interface}</li>
+   *
+   * <li>is {@linkplain Class#isHidden() not hidden}</li>
+   *
+   * <li>is {@linkplain Class#isSealed() not sealed}</li>
+   *
+   * </ul>
+   *
+   * <p>In addition, the default implementation of this method rules
+   * out interfaces that declare or inherit {@code public} instance
+   * methods with either exactly one parameter that does not pass the
+   * test codified by the {@link #isIndexLike(Class)} method or more
+   * than one parameter.</p>
+   *
+   * <p>This method does not, and its overrides must not, call the
+   * {@link #isProxiable(Loader, Path)} method or undefined behavior
+   * (such as an infinite loop) may result.</p>
+   *
+   * @param type the {@link Type} to test; may be {@code null} in which
+   * case {@code false} will be returned
+   *
+   * @return {@code true} if the supplied {@link Type} can be
+   * proxied; {@code false} otherwise
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   *
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
+   *
+   * @see #isIndexLike(Class)
+   */
+  public boolean isProxiable(final Type type) {
+    final Class<?> c = JavaTypes.erase(type);
+    if (c != null && c.isInterface() && !c.isHidden() && !c.isSealed()) {
       final LoaderFacade facadeAnnotation = c.getAnnotation(LoaderFacade.class);
       if (facadeAnnotation == null || facadeAnnotation.value()) {
         final Method[] methods = c.getMethods();

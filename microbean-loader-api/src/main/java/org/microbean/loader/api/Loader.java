@@ -920,23 +920,20 @@ public interface Loader<T> extends OptionalSupplier<T> {
    */
   @OverridingDiscouraged
   public default <U extends Type> Path<U> transliterate(final Path<U> path) {
-    if (path.transliterated()) {
+    if (path.transliterated() ||
+        path.lastElement().name().equals("transliterated") &&
+        path.lastElement().qualified() instanceof ParameterizedType ptype &&
+        ptype.getRawType() instanceof Class<?> c &&
+        Path.class.isAssignableFrom(c)) {
+      // The last element's type should be a parameterized type
+      // representing Path<Something>.  The last element's qualifiers
+      // will also contain a "path" key with the original Path being
+      // transliterated, but we don't need to check that.
       return path;
-    }
-    final Element<U> last = path.lastElement();
-    if (last.name().equals("transliterated")) {
-      final Qualifiers<String, ?> lastQualifiers = last.qualifiers();
-      if (lastQualifiers.size() == 1 && lastQualifiers.containsKey("path")) {
-        // Are we in the middle of a transliteration request? Avoid
-        // the infinite loop.
-        return path;
-      }
     }
     final ParameterizedType ptype = (ParameterizedType)new Token<Path<U>>() {}.type();
     final Element<ParameterizedType> e = Element.of(Qualifiers.of("path", path), ptype, "transliterated");
     final Path<ParameterizedType> p = this.path().plus(e);
-    assert p.lastElement().name().equals("transliterated");
-    assert ((TypeVariable<?>)p.qualified().getActualTypeArguments()[0]).getBounds()[0] == Type.class;
     return this.<Path<U>>load(p).orElse(path.transliterate());
   }
 

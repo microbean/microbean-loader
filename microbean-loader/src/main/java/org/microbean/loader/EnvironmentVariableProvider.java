@@ -39,26 +39,50 @@ import org.microbean.qualifier.Qualifiers;
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
  */
-public final class EnvironmentVariableProvider extends AbstractProvider {
+public class EnvironmentVariableProvider extends AbstractProvider {
+
+
+
+  /*
+   * Instance fields.
+   */
+
+
+  private final boolean flatKeys;
 
 
   /*
    * Constructors.
    */
 
-  
+
   /**
-   * Creates a new {@link EnvironmentVariableProvider}.
+   * Creates a new {@link EnvironmentVariableProvider} that uses flat
+   * keys.
+   *
+   * @see #EnvironmentVariableProvider(boolean)
    */
   public EnvironmentVariableProvider() {
+    this(true);
+  }
+
+  /**
+   * Creates a new {@link EnvironmentVariableProvider}.
+   *
+   * @param flatKeys whether the key for an environment variable is
+   * derived from a {@link Path}'s {@linkplain Path#lastElement() last
+   * element}'s {@linkplain Element#name() name} only
+   */
+  public EnvironmentVariableProvider(final boolean flatKeys) {
     super(String.class);
+    this.flatKeys = flatKeys;
   }
 
 
   /*
    * Instance methods.
    */
-  
+
 
   /**
    * If the supplied {@code absolutePath} has a {@linkplain
@@ -121,16 +145,85 @@ public final class EnvironmentVariableProvider extends AbstractProvider {
     // "foo" if ever there was one, and will always return null if
     // there wasn't.
 
-    if (absolutePath.size() == 2) { // 2: root plus a single name
-      final String name = absolutePath.lastElement().name();
-      if (!name.isEmpty()) {
-        final String value = System.getenv(name);
-        if (value != null) {
-          return FixedValueSupplier.of(value); // deterministic
-        }
-      }
+    final String value = System.getenv(key(absolutePath, this.flatKeys));
+    if (value == null) {
+      // Environment variables conflate null with absence.
+      return null;
     }
-    return null;
+    return FixedValueSupplier.of(value);
+  }
+
+  /**
+   * Overrides the {@link AbstractProvider#path(Loader, Path)} method
+   * to return a (relative) {@link Path} consisting solely of the
+   * {@linkplain Path#lastElement() last element} of the supplied
+   * {@code absolutePath}.
+   *
+   * @param requestor the {@link Loader} seeking a {@link Value}; must
+   * not be {@code null}
+   *
+   * @param absolutePath an {@linkplain Path#absolute() absolute
+   * <code>Path</code>} for which a {@link Value} is being sought;
+   * must not be {@code null}
+   *
+   * @return a {@link Path} that will be {@linkplain
+   * Value#Value(Supplier, Path) used to build a <code>Value</code>}
+   * to be returned by the {@link #get(Loader, Path)} method
+   *
+   * @nullability This method does not, but overrides may, return
+   * {@code null}.
+   *
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   *
+   * @see AbstractProvider#path(Loader, Path)
+   */
+  @Override // AbstractProvider
+  protected <T extends Type> Path<T> path(final Loader<?> requestor, final Path<T> absolutePath) {
+    return Path.of(absolutePath.lastElement());
+  }
+
+
+  /*
+   * Static methods.
+   */
+
+
+  /**
+   * Returns a {@link String} representation of the supplied {@link Path}.
+   *
+   * @param path the {@link Path} in question; must not be {@code
+   * null}
+   *
+   * @param flat whether the key is derived from the supplied {@link
+   * Path}'s {@linkplain Path#lastElement() last element}'s
+   * {@linkplain Element#name() name} only
+   *
+   * @return a {@link String} representation of the supplied {@link
+   * Path}
+   *
+   * @exception NullPointerException if {@code path} is {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  protected static final String key(final Path<?> path, final boolean flat) {
+    if (flat) {
+      return path.lastElement().name();
+    } else {
+      return path.stream()
+        .map(Element::name)
+        .filter(s1 -> !s1.isEmpty())
+        .reduce((s1, s2) -> String.join(".", s1, s2))
+        .orElse("");
+    }
   }
 
 }
