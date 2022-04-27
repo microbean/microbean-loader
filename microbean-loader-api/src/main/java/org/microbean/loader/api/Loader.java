@@ -21,6 +21,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.ServiceLoader;
 
 import org.microbean.development.annotation.EntryPoint;
@@ -158,7 +159,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
   }
 
   /**
-   * Returns an {@linkplain Path#absolute() absolute} {@link Path} representing the 
+   * Returns an {@linkplain Path#absolute() absolute} {@link Path} representing the
    *
    * @param <P> the type of the path
    *
@@ -184,7 +185,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
   public default <P> Path<P> absolutePath(final Path<P> path) {
     return path.absolute() ? path : this.parent().absolutePath().plus(path);
   }
-  
+
   /**
    * Uses the addressing information encoded in the supplied {@link
    * Path} to load and return the {@link Loader} logically found at
@@ -758,34 +759,38 @@ public interface Loader<T> extends OptionalSupplier<T> {
   }
 
   /**
-   * Returns a {@link Loader}, derived from this {@link Loader}, that
-   * is suitable for a {@linkplain #transliterate(Path) transliterated
-   * version} of the supplied {@code path}, particularly for cases
-   * where, during the execution of the {@link #load(Path)} method, a
-   * {@link Loader} must be supplied to some other class.
+   * Returns an ancestral {@link Loader}, derived from and possibly
+   * identical to this {@link Loader}, that is suitable for a
+   * {@linkplain #transliterate(Path) transliterated} and {@linkplain
+   * Path#absolute() absolute} version of the supplied {@code path},
+   * particularly for cases where, during the execution of the {@link
+   * #load(Path)} method, a {@link Loader} must be supplied to some
+   * other class.
    *
    * <p>The returned {@link Loader} must be one whose {@link #path()}
    * method returns the {@linkplain Path#size() longest} {@link Path}
-   * that is a parent of the ({@linkplain #transliterate(Path)
-   * transliterated}) supplied {@code path}.  In many cases {@code
-   * this} will be returned.</p>
+   * that is a parent of an {@linkplain Path#absolute() absolute}
+   * version of the ({@linkplain #transliterate(Path) transliterated})
+   * supplied {@code path}.  In many cases {@code this} will be
+   * returned.</p>
    *
    * <p>Typically only classes implementing this interface will need
    * to call this method.  Most users will have no need to call this
    * method directly.</p>
    *
-   * <p>Overriding of this method is <strong>strongly</strong>
+   * <p>Overriding of this method is <strong>very strongly</strong>
    * discouraged.</p>
    *
    * @param path the {@link Path} in question; must not be {@code
    * null}
    *
-   * @return a {@link Loader}, derived from this {@link Loader}, that
-   * is suitable for a {@linkplain #transliterate(Path) transliterated
-   * version} of the supplied {@code path}, particularly for cases
-   * where, during the execution of the {@link #load(Path)} method, a
-   * {@link Loader} must be supplied to some other class; never {@code
-   * null}
+   * @return an ancestral {@link Loader}, derived from and possibly
+   * identical to this {@link Loader}, that is suitable for a
+   * {@linkplain #transliterate(Path) transliterated} and {@linkplain
+   * Path#absolute() absolute} version of the supplied {@code path},
+   * particularly for cases where, during the execution of the {@link
+   * #load(Path)} method, a {@link Loader} must be supplied to some
+   * other class; never {@code null}
    *
    * @exception NullPointerException if {@code path} is {@code null}
    *
@@ -806,50 +811,37 @@ public interface Loader<T> extends OptionalSupplier<T> {
    */
   @OverridingDiscouraged
   public default Loader<?> loaderFor(Path<? extends Type> path) {
-    if (this.isRoot()) {
-      return this;
-    }
-    if (!path.absolute()) {
-      path = this.path().plus(path);
-    }
-    path = this.transliterate(path);
-
-    // (Will be returned.)
-    Loader<?> requestor = this;
-    Path<? extends Type> requestorPath = requestor.absolutePath();
-    
-    assert requestorPath.absolute() : "!requestorPath.absolute(): " + requestorPath;
-    assert requestorPath.transliterated();
-
-    // TODO: note that this does not take a Path's top-level
-    // qualifiers into account.  Maybe that's on purpose?
-    if (requestorPath.startsWith(path)) {
-      // This Loader's absolute path (e.g. /a/b/c/d) begins with path
-      // (e.g. /a/b), and so could also equal its sequence of path
-      // elements (e.g. if path is also /a/b/c/d).  We don't care
-      // about the equals case.
-      final int requestorPathSize = requestorPath.size();
-      final int pathSize = path.size();
-      if (requestorPathSize > pathSize) {
-        // This Loader's absolute path(e.g. /a/b/c/d) begins with path
-        // (e.g. /a/b) and does not have the same sequence of path
-        // elements.
-        final int diff = requestorPathSize - pathSize;
-        // TODO: This is all screwed up.  This for loop presumes that
-        // there is a parent Loader at every "seam", which is not
-        // necessarily the case.  Really size isn't important; it's
-        // got to be something like: keep getting parents until the
-        // one you get "ends with" path (/a/b) (in which case you know
-        // the sizes are the same), or the parent no longer "starts
-        // with" path (/a/b).
-        for (int i = 0; i < diff; i++) {
-          requestor = requestor.parent();
-        }
+    Objects.requireNonNull(path, "path");
+    final Loader<?> parent = this.parent();
+    if (this != parent) {
+      if (!path.absolute()) {
+        path = this.path().plus(path);
       }
-    } else {
-      requestor = requestor.root();
+      path = this.transliterate(path);
+      final Path<? extends Type> absolutePath = this.absolutePath();
+      assert absolutePath.absolute() : "!absolutePath.absolute(): " + absolutePath;
+      assert absolutePath.transliterated();
+      // TODO: note that this does not take a Path's top-level
+      // qualifiers into account.  Maybe that's on purpose?
+      if (absolutePath.startsWith(path)) {
+        // This Loader's absolute path (e.g. /a/b/c/d) begins with
+        // path (e.g. /a/b or /a/b/c/d), and so could also equal its
+        // sequence of path elements (e.g. if path is also /a/b/c/d).
+        // We don't care about the equals case, only the
+        // starts-with-but-not-equal case.
+        final int absolutePathSize = absolutePath.size();
+        final int pathSize = path.size();
+        if (absolutePathSize > pathSize) {
+          // This Loader's absolute path(e.g. /a/b/c/d) begins with
+          // path (e.g. /a/b) and does not have the same sequence of
+          // path elements.
+          return parent.loaderFor(path); // NOTE: recursive call
+        }
+      } else {
+        return this.root();
+      }
     }
-    return requestor;
+    return this;
   }
 
   /**
@@ -944,13 +936,13 @@ public interface Loader<T> extends OptionalSupplier<T> {
                Path.class.isAssignableFrom(c)) {
       // (All of these tests are to check: is the supplied Path a
       // transliteration request?)
-      // 
+      //
       // The last element's type should be a parameterized type
       // representing Path<Something>.  The last element's qualifiers
       // will also contain a "path" key with the original Path being
       // transliterated, but we don't need to check that.
       //
-      // In such a case: 
+      // In such a case:
       return path.transliterate();
     }
     final ParameterizedType ptype = (ParameterizedType)new Token<Path<U>>() {}.type();

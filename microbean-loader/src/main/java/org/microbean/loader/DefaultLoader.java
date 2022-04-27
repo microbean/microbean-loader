@@ -472,6 +472,43 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     return this.requestedPath;
   }
 
+  /**
+   * Returns the {@linkplain Path#absolute() absolute} {@link Path}
+   * representing the {@link Path} with which this {@link
+   * DefaultLoader} was created.
+   *
+   * <p>The {@link Path} that is returned by this method is guaranteed
+   * to be {@linkplain Path#absolute() absolute}.</p>
+   *
+   * <p>The {@link Path} that is returned by this method will be
+   * {@linkplain Path#equals(Object) equal} to a {@linkplain
+   * #transliterate(Path) transliterated} and {@linkplain
+   * Path#absolute() absolute} version of the {@link Path} that was
+   * supplied to the {@link #load(Path)} method of this {@link
+   * DefaultLoader}'s {@linkplain #parent() parent} that resulted in
+   * this {@link DefaultLoader}'s creation.</p>
+   *
+   * @return the non-{@code null} {@linkplain Path#absolute()
+   * absolute} {@link Path} representing the {@link Path} with which
+   * this {@link DefaultLoader} was created
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   * @nullability Implementations of this method must not return
+   * {@code null}.
+   *
+   * @see #parent()
+   *
+   * @see #load(Path)
+   *
+   * @see #path()
+   *
+   * @see #absolutePath(Path)
+   */
   @Override // Loader<T>
   public final Path<? extends Type> absolutePath() {
     return this.absolutePath;
