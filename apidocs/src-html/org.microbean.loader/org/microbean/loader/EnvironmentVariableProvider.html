@@ -53,101 +53,194 @@
 <span class="source-line-no">039</span><span id="line-39"> * @author &lt;a href="https://about.me/lairdnelson"</span>
 <span class="source-line-no">040</span><span id="line-40"> * target="_parent"&gt;Laird Nelson&lt;/a&gt;</span>
 <span class="source-line-no">041</span><span id="line-41"> */</span>
-<span class="source-line-no">042</span><span id="line-42">public final class EnvironmentVariableProvider extends AbstractProvider {</span>
+<span class="source-line-no">042</span><span id="line-42">public class EnvironmentVariableProvider extends AbstractProvider {</span>
 <span class="source-line-no">043</span><span id="line-43"></span>
 <span class="source-line-no">044</span><span id="line-44"></span>
-<span class="source-line-no">045</span><span id="line-45">  /*</span>
-<span class="source-line-no">046</span><span id="line-46">   * Constructors.</span>
-<span class="source-line-no">047</span><span id="line-47">   */</span>
-<span class="source-line-no">048</span><span id="line-48"></span>
-<span class="source-line-no">049</span><span id="line-49">  </span>
-<span class="source-line-no">050</span><span id="line-50">  /**</span>
-<span class="source-line-no">051</span><span id="line-51">   * Creates a new {@link EnvironmentVariableProvider}.</span>
-<span class="source-line-no">052</span><span id="line-52">   */</span>
-<span class="source-line-no">053</span><span id="line-53">  public EnvironmentVariableProvider() {</span>
-<span class="source-line-no">054</span><span id="line-54">    super(String.class);</span>
-<span class="source-line-no">055</span><span id="line-55">  }</span>
-<span class="source-line-no">056</span><span id="line-56"></span>
+<span class="source-line-no">045</span><span id="line-45"></span>
+<span class="source-line-no">046</span><span id="line-46">  /*</span>
+<span class="source-line-no">047</span><span id="line-47">   * Instance fields.</span>
+<span class="source-line-no">048</span><span id="line-48">   */</span>
+<span class="source-line-no">049</span><span id="line-49"></span>
+<span class="source-line-no">050</span><span id="line-50"></span>
+<span class="source-line-no">051</span><span id="line-51">  private final boolean flatKeys;</span>
+<span class="source-line-no">052</span><span id="line-52"></span>
+<span class="source-line-no">053</span><span id="line-53"></span>
+<span class="source-line-no">054</span><span id="line-54">  /*</span>
+<span class="source-line-no">055</span><span id="line-55">   * Constructors.</span>
+<span class="source-line-no">056</span><span id="line-56">   */</span>
 <span class="source-line-no">057</span><span id="line-57"></span>
-<span class="source-line-no">058</span><span id="line-58">  /*</span>
-<span class="source-line-no">059</span><span id="line-59">   * Instance methods.</span>
-<span class="source-line-no">060</span><span id="line-60">   */</span>
-<span class="source-line-no">061</span><span id="line-61">  </span>
-<span class="source-line-no">062</span><span id="line-62"></span>
-<span class="source-line-no">063</span><span id="line-63">  /**</span>
-<span class="source-line-no">064</span><span id="line-64">   * If the supplied {@code absolutePath} has a {@linkplain</span>
-<span class="source-line-no">065</span><span id="line-65">   * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}</span>
-<span class="source-line-no">066</span><span id="line-66">   * plus a single name), returns a {@linkplain FixedValueSupplier</span>
-<span class="source-line-no">067</span><span id="line-67">   * deterministic &lt;code&gt;Supplier&lt;/code&gt;} whose {@link Supplier#get()}</span>
-<span class="source-line-no">068</span><span id="line-68">   * method returns the {@linkplain System#getenv(String) environment</span>
-<span class="source-line-no">069</span><span id="line-69">   * variable} with that name, or {@code null} in all other cases.</span>
-<span class="source-line-no">070</span><span id="line-70">   *</span>
-<span class="source-line-no">071</span><span id="line-71">   * @param requestor the {@link Loader} requesting a {@link Value};</span>
-<span class="source-line-no">072</span><span id="line-72">   * must not be {@code null}</span>
-<span class="source-line-no">073</span><span id="line-73">   *</span>
-<span class="source-line-no">074</span><span id="line-74">   * @param absolutePath an {@linkplain Path#absolute() absolute}</span>
-<span class="source-line-no">075</span><span id="line-75">   * {@link Path}; must not be {@code null}</span>
-<span class="source-line-no">076</span><span id="line-76">   *</span>
-<span class="source-line-no">077</span><span id="line-77">   * @return a {@linkplain FixedValueSupplier deterministic} {@link</span>
-<span class="source-line-no">078</span><span id="line-78">   * Supplier} whose {@link Supplier#get()} method returns the</span>
-<span class="source-line-no">079</span><span id="line-79">   * appropriate {@linkplain System#getenv(String) environment</span>
-<span class="source-line-no">080</span><span id="line-80">   * variable} if the supplied {@code absolutePath} has a {@linkplain</span>
-<span class="source-line-no">081</span><span id="line-81">   * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}</span>
-<span class="source-line-no">082</span><span id="line-82">   * plus a single name) and there actually is a {@linkplain</span>
-<span class="source-line-no">083</span><span id="line-83">   * System#getenv(String) corresponding environment variable}; {@code</span>
-<span class="source-line-no">084</span><span id="line-84">   * null} in all other cases</span>
-<span class="source-line-no">085</span><span id="line-85">   *</span>
-<span class="source-line-no">086</span><span id="line-86">   * @nullability This method may return {@code null}.</span>
-<span class="source-line-no">087</span><span id="line-87">   *</span>
-<span class="source-line-no">088</span><span id="line-88">   * @idempotency This method is idempotent and deterministic during</span>
-<span class="source-line-no">089</span><span id="line-89">   * the lifetime of a Java virtual machine instance.</span>
-<span class="source-line-no">090</span><span id="line-90">   *</span>
-<span class="source-line-no">091</span><span id="line-91">   * @threadsafety This method is safe for concurrent use by multiple</span>
-<span class="source-line-no">092</span><span id="line-92">   * threads.</span>
-<span class="source-line-no">093</span><span id="line-93">   *</span>
-<span class="source-line-no">094</span><span id="line-94">   * @exception NullPointerException if {@code requestor} or {@code</span>
-<span class="source-line-no">095</span><span id="line-95">   * absolutePath} is {@code null}</span>
-<span class="source-line-no">096</span><span id="line-96">   *</span>
-<span class="source-line-no">097</span><span id="line-97">   * @see AbstractProvider#find(Loader, Path)</span>
-<span class="source-line-no">098</span><span id="line-98">   *</span>
-<span class="source-line-no">099</span><span id="line-99">   * @see System#getenv(String)</span>
-<span class="source-line-no">100</span><span id="line-100">   */</span>
-<span class="source-line-no">101</span><span id="line-101">  @Override // AbstractProvider</span>
-<span class="source-line-no">102</span><span id="line-102">  protected Supplier&lt;?&gt; find(final Loader&lt;?&gt; requestor, final Path&lt;? extends Type&gt; absolutePath) {</span>
-<span class="source-line-no">103</span><span id="line-103">    assert absolutePath.absolute();</span>
-<span class="source-line-no">104</span><span id="line-104">    assert absolutePath.startsWith(requestor.path());</span>
-<span class="source-line-no">105</span><span id="line-105">    assert !absolutePath.equals(requestor.path());</span>
-<span class="source-line-no">106</span><span id="line-106"></span>
-<span class="source-line-no">107</span><span id="line-107">    // On Unix systems, there is absolutely no question that the</span>
-<span class="source-line-no">108</span><span id="line-108">    // environment is entirely immutable, even when probed via</span>
-<span class="source-line-no">109</span><span id="line-109">    // System#getenv(String).  See</span>
-<span class="source-line-no">110</span><span id="line-110">    // https://github.com/openjdk/jdk/blob/dfacda488bfbe2e11e8d607a6d08527710286982/src/java.base/unix/classes/java/lang/ProcessEnvironment.java#L67-L91.</span>
-<span class="source-line-no">111</span><span id="line-111">    //</span>
-<span class="source-line-no">112</span><span id="line-112">    // Things are ever so slightly more murky in Windows land.  As of</span>
-<span class="source-line-no">113</span><span id="line-113">    // JDK 17, the environment there is also entirely immutable:</span>
-<span class="source-line-no">114</span><span id="line-114">    // https://github.com/openjdk/jdk/blob/dfacda488bfbe2e11e8d607a6d08527710286982/src/java.base/windows/classes/java/lang/ProcessEnvironment.java#L257-L258</span>
-<span class="source-line-no">115</span><span id="line-115">    // but the class is not as "immutable looking" as the Unix one and</span>
-<span class="source-line-no">116</span><span id="line-116">    // it seems to be designed for updating in some cases.</span>
-<span class="source-line-no">117</span><span id="line-117">    // Nevertheless, for the System#getenv(String) case, the</span>
-<span class="source-line-no">118</span><span id="line-118">    // environment is immutable.</span>
-<span class="source-line-no">119</span><span id="line-119">    //</span>
-<span class="source-line-no">120</span><span id="line-120">    // TL;DR: System.getenv("foo") will always return a value for</span>
-<span class="source-line-no">121</span><span id="line-121">    // "foo" if ever there was one, and will always return null if</span>
-<span class="source-line-no">122</span><span id="line-122">    // there wasn't.</span>
-<span class="source-line-no">123</span><span id="line-123"></span>
-<span class="source-line-no">124</span><span id="line-124">    if (absolutePath.size() == 2) { // 2: root plus a single name</span>
-<span class="source-line-no">125</span><span id="line-125">      final String name = absolutePath.lastElement().name();</span>
-<span class="source-line-no">126</span><span id="line-126">      if (!name.isEmpty()) {</span>
-<span class="source-line-no">127</span><span id="line-127">        final String value = System.getenv(name);</span>
-<span class="source-line-no">128</span><span id="line-128">        if (value != null) {</span>
-<span class="source-line-no">129</span><span id="line-129">          return FixedValueSupplier.of(value); // deterministic</span>
-<span class="source-line-no">130</span><span id="line-130">        }</span>
-<span class="source-line-no">131</span><span id="line-131">      }</span>
-<span class="source-line-no">132</span><span id="line-132">    }</span>
-<span class="source-line-no">133</span><span id="line-133">    return null;</span>
-<span class="source-line-no">134</span><span id="line-134">  }</span>
-<span class="source-line-no">135</span><span id="line-135"></span>
-<span class="source-line-no">136</span><span id="line-136">}</span>
+<span class="source-line-no">058</span><span id="line-58"></span>
+<span class="source-line-no">059</span><span id="line-59">  /**</span>
+<span class="source-line-no">060</span><span id="line-60">   * Creates a new {@link EnvironmentVariableProvider} that uses flat</span>
+<span class="source-line-no">061</span><span id="line-61">   * keys.</span>
+<span class="source-line-no">062</span><span id="line-62">   *</span>
+<span class="source-line-no">063</span><span id="line-63">   * @see #EnvironmentVariableProvider(boolean)</span>
+<span class="source-line-no">064</span><span id="line-64">   */</span>
+<span class="source-line-no">065</span><span id="line-65">  public EnvironmentVariableProvider() {</span>
+<span class="source-line-no">066</span><span id="line-66">    this(true);</span>
+<span class="source-line-no">067</span><span id="line-67">  }</span>
+<span class="source-line-no">068</span><span id="line-68"></span>
+<span class="source-line-no">069</span><span id="line-69">  /**</span>
+<span class="source-line-no">070</span><span id="line-70">   * Creates a new {@link EnvironmentVariableProvider}.</span>
+<span class="source-line-no">071</span><span id="line-71">   *</span>
+<span class="source-line-no">072</span><span id="line-72">   * @param flatKeys whether the key for an environment variable is</span>
+<span class="source-line-no">073</span><span id="line-73">   * derived from a {@link Path}'s {@linkplain Path#lastElement() last</span>
+<span class="source-line-no">074</span><span id="line-74">   * element}'s {@linkplain Element#name() name} only</span>
+<span class="source-line-no">075</span><span id="line-75">   */</span>
+<span class="source-line-no">076</span><span id="line-76">  public EnvironmentVariableProvider(final boolean flatKeys) {</span>
+<span class="source-line-no">077</span><span id="line-77">    super(String.class);</span>
+<span class="source-line-no">078</span><span id="line-78">    this.flatKeys = flatKeys;</span>
+<span class="source-line-no">079</span><span id="line-79">  }</span>
+<span class="source-line-no">080</span><span id="line-80"></span>
+<span class="source-line-no">081</span><span id="line-81"></span>
+<span class="source-line-no">082</span><span id="line-82">  /*</span>
+<span class="source-line-no">083</span><span id="line-83">   * Instance methods.</span>
+<span class="source-line-no">084</span><span id="line-84">   */</span>
+<span class="source-line-no">085</span><span id="line-85"></span>
+<span class="source-line-no">086</span><span id="line-86"></span>
+<span class="source-line-no">087</span><span id="line-87">  /**</span>
+<span class="source-line-no">088</span><span id="line-88">   * If the supplied {@code absolutePath} has a {@linkplain</span>
+<span class="source-line-no">089</span><span id="line-89">   * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}</span>
+<span class="source-line-no">090</span><span id="line-90">   * plus a single name), returns a {@linkplain FixedValueSupplier</span>
+<span class="source-line-no">091</span><span id="line-91">   * deterministic &lt;code&gt;Supplier&lt;/code&gt;} whose {@link Supplier#get()}</span>
+<span class="source-line-no">092</span><span id="line-92">   * method returns the {@linkplain System#getenv(String) environment</span>
+<span class="source-line-no">093</span><span id="line-93">   * variable} with that name, or {@code null} in all other cases.</span>
+<span class="source-line-no">094</span><span id="line-94">   *</span>
+<span class="source-line-no">095</span><span id="line-95">   * @param requestor the {@link Loader} requesting a {@link Value};</span>
+<span class="source-line-no">096</span><span id="line-96">   * must not be {@code null}</span>
+<span class="source-line-no">097</span><span id="line-97">   *</span>
+<span class="source-line-no">098</span><span id="line-98">   * @param absolutePath an {@linkplain Path#absolute() absolute}</span>
+<span class="source-line-no">099</span><span id="line-99">   * {@link Path}; must not be {@code null}</span>
+<span class="source-line-no">100</span><span id="line-100">   *</span>
+<span class="source-line-no">101</span><span id="line-101">   * @return a {@linkplain FixedValueSupplier deterministic} {@link</span>
+<span class="source-line-no">102</span><span id="line-102">   * Supplier} whose {@link Supplier#get()} method returns the</span>
+<span class="source-line-no">103</span><span id="line-103">   * appropriate {@linkplain System#getenv(String) environment</span>
+<span class="source-line-no">104</span><span id="line-104">   * variable} if the supplied {@code absolutePath} has a {@linkplain</span>
+<span class="source-line-no">105</span><span id="line-105">   * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}</span>
+<span class="source-line-no">106</span><span id="line-106">   * plus a single name) and there actually is a {@linkplain</span>
+<span class="source-line-no">107</span><span id="line-107">   * System#getenv(String) corresponding environment variable}; {@code</span>
+<span class="source-line-no">108</span><span id="line-108">   * null} in all other cases</span>
+<span class="source-line-no">109</span><span id="line-109">   *</span>
+<span class="source-line-no">110</span><span id="line-110">   * @nullability This method may return {@code null}.</span>
+<span class="source-line-no">111</span><span id="line-111">   *</span>
+<span class="source-line-no">112</span><span id="line-112">   * @idempotency This method is idempotent and deterministic during</span>
+<span class="source-line-no">113</span><span id="line-113">   * the lifetime of a Java virtual machine instance.</span>
+<span class="source-line-no">114</span><span id="line-114">   *</span>
+<span class="source-line-no">115</span><span id="line-115">   * @threadsafety This method is safe for concurrent use by multiple</span>
+<span class="source-line-no">116</span><span id="line-116">   * threads.</span>
+<span class="source-line-no">117</span><span id="line-117">   *</span>
+<span class="source-line-no">118</span><span id="line-118">   * @exception NullPointerException if {@code requestor} or {@code</span>
+<span class="source-line-no">119</span><span id="line-119">   * absolutePath} is {@code null}</span>
+<span class="source-line-no">120</span><span id="line-120">   *</span>
+<span class="source-line-no">121</span><span id="line-121">   * @see AbstractProvider#find(Loader, Path)</span>
+<span class="source-line-no">122</span><span id="line-122">   *</span>
+<span class="source-line-no">123</span><span id="line-123">   * @see System#getenv(String)</span>
+<span class="source-line-no">124</span><span id="line-124">   */</span>
+<span class="source-line-no">125</span><span id="line-125">  @Override // AbstractProvider</span>
+<span class="source-line-no">126</span><span id="line-126">  protected Supplier&lt;?&gt; find(final Loader&lt;?&gt; requestor, final Path&lt;? extends Type&gt; absolutePath) {</span>
+<span class="source-line-no">127</span><span id="line-127">    assert absolutePath.absolute();</span>
+<span class="source-line-no">128</span><span id="line-128">    assert absolutePath.startsWith(requestor.path());</span>
+<span class="source-line-no">129</span><span id="line-129">    assert !absolutePath.equals(requestor.path());</span>
+<span class="source-line-no">130</span><span id="line-130"></span>
+<span class="source-line-no">131</span><span id="line-131">    // On Unix systems, there is absolutely no question that the</span>
+<span class="source-line-no">132</span><span id="line-132">    // environment is entirely immutable, even when probed via</span>
+<span class="source-line-no">133</span><span id="line-133">    // System#getenv(String).  See</span>
+<span class="source-line-no">134</span><span id="line-134">    // https://github.com/openjdk/jdk/blob/dfacda488bfbe2e11e8d607a6d08527710286982/src/java.base/unix/classes/java/lang/ProcessEnvironment.java#L67-L91.</span>
+<span class="source-line-no">135</span><span id="line-135">    //</span>
+<span class="source-line-no">136</span><span id="line-136">    // Things are ever so slightly more murky in Windows land.  As of</span>
+<span class="source-line-no">137</span><span id="line-137">    // JDK 17, the environment there is also entirely immutable:</span>
+<span class="source-line-no">138</span><span id="line-138">    // https://github.com/openjdk/jdk/blob/dfacda488bfbe2e11e8d607a6d08527710286982/src/java.base/windows/classes/java/lang/ProcessEnvironment.java#L257-L258</span>
+<span class="source-line-no">139</span><span id="line-139">    // but the class is not as "immutable looking" as the Unix one and</span>
+<span class="source-line-no">140</span><span id="line-140">    // it seems to be designed for updating in some cases.</span>
+<span class="source-line-no">141</span><span id="line-141">    // Nevertheless, for the System#getenv(String) case, the</span>
+<span class="source-line-no">142</span><span id="line-142">    // environment is immutable.</span>
+<span class="source-line-no">143</span><span id="line-143">    //</span>
+<span class="source-line-no">144</span><span id="line-144">    // TL;DR: System.getenv("foo") will always return a value for</span>
+<span class="source-line-no">145</span><span id="line-145">    // "foo" if ever there was one, and will always return null if</span>
+<span class="source-line-no">146</span><span id="line-146">    // there wasn't.</span>
+<span class="source-line-no">147</span><span id="line-147"></span>
+<span class="source-line-no">148</span><span id="line-148">    final String value = System.getenv(key(absolutePath, this.flatKeys));</span>
+<span class="source-line-no">149</span><span id="line-149">    if (value == null) {</span>
+<span class="source-line-no">150</span><span id="line-150">      // Environment variables conflate null with absence.</span>
+<span class="source-line-no">151</span><span id="line-151">      return null;</span>
+<span class="source-line-no">152</span><span id="line-152">    }</span>
+<span class="source-line-no">153</span><span id="line-153">    return FixedValueSupplier.of(value);</span>
+<span class="source-line-no">154</span><span id="line-154">  }</span>
+<span class="source-line-no">155</span><span id="line-155"></span>
+<span class="source-line-no">156</span><span id="line-156">  /**</span>
+<span class="source-line-no">157</span><span id="line-157">   * Overrides the {@link AbstractProvider#path(Loader, Path)} method</span>
+<span class="source-line-no">158</span><span id="line-158">   * to return a (relative) {@link Path} consisting solely of the</span>
+<span class="source-line-no">159</span><span id="line-159">   * {@linkplain Path#lastElement() last element} of the supplied</span>
+<span class="source-line-no">160</span><span id="line-160">   * {@code absolutePath}.</span>
+<span class="source-line-no">161</span><span id="line-161">   *</span>
+<span class="source-line-no">162</span><span id="line-162">   * @param requestor the {@link Loader} seeking a {@link Value}; must</span>
+<span class="source-line-no">163</span><span id="line-163">   * not be {@code null}</span>
+<span class="source-line-no">164</span><span id="line-164">   *</span>
+<span class="source-line-no">165</span><span id="line-165">   * @param absolutePath an {@linkplain Path#absolute() absolute</span>
+<span class="source-line-no">166</span><span id="line-166">   * &lt;code&gt;Path&lt;/code&gt;} for which a {@link Value} is being sought;</span>
+<span class="source-line-no">167</span><span id="line-167">   * must not be {@code null}</span>
+<span class="source-line-no">168</span><span id="line-168">   *</span>
+<span class="source-line-no">169</span><span id="line-169">   * @return a {@link Path} that will be {@linkplain</span>
+<span class="source-line-no">170</span><span id="line-170">   * Value#Value(Supplier, Path) used to build a &lt;code&gt;Value&lt;/code&gt;}</span>
+<span class="source-line-no">171</span><span id="line-171">   * to be returned by the {@link #get(Loader, Path)} method</span>
+<span class="source-line-no">172</span><span id="line-172">   *</span>
+<span class="source-line-no">173</span><span id="line-173">   * @nullability This method does not, but overrides may, return</span>
+<span class="source-line-no">174</span><span id="line-174">   * {@code null}.</span>
+<span class="source-line-no">175</span><span id="line-175">   *</span>
+<span class="source-line-no">176</span><span id="line-176">   * @idempotency This method is, and its overrides must be,</span>
+<span class="source-line-no">177</span><span id="line-177">   * idempotent and deterministic.</span>
+<span class="source-line-no">178</span><span id="line-178">   *</span>
+<span class="source-line-no">179</span><span id="line-179">   * @threadsafety This method is, and its overrides must be, safe for</span>
+<span class="source-line-no">180</span><span id="line-180">   * concurrent use by multiple threads.</span>
+<span class="source-line-no">181</span><span id="line-181">   *</span>
+<span class="source-line-no">182</span><span id="line-182">   * @see AbstractProvider#path(Loader, Path)</span>
+<span class="source-line-no">183</span><span id="line-183">   */</span>
+<span class="source-line-no">184</span><span id="line-184">  @Override // AbstractProvider</span>
+<span class="source-line-no">185</span><span id="line-185">  protected &lt;T extends Type&gt; Path&lt;T&gt; path(final Loader&lt;?&gt; requestor, final Path&lt;T&gt; absolutePath) {</span>
+<span class="source-line-no">186</span><span id="line-186">    return Path.of(absolutePath.lastElement());</span>
+<span class="source-line-no">187</span><span id="line-187">  }</span>
+<span class="source-line-no">188</span><span id="line-188"></span>
+<span class="source-line-no">189</span><span id="line-189"></span>
+<span class="source-line-no">190</span><span id="line-190">  /*</span>
+<span class="source-line-no">191</span><span id="line-191">   * Static methods.</span>
+<span class="source-line-no">192</span><span id="line-192">   */</span>
+<span class="source-line-no">193</span><span id="line-193"></span>
+<span class="source-line-no">194</span><span id="line-194"></span>
+<span class="source-line-no">195</span><span id="line-195">  /**</span>
+<span class="source-line-no">196</span><span id="line-196">   * Returns a {@link String} representation of the supplied {@link Path}.</span>
+<span class="source-line-no">197</span><span id="line-197">   *</span>
+<span class="source-line-no">198</span><span id="line-198">   * @param path the {@link Path} in question; must not be {@code</span>
+<span class="source-line-no">199</span><span id="line-199">   * null}</span>
+<span class="source-line-no">200</span><span id="line-200">   *</span>
+<span class="source-line-no">201</span><span id="line-201">   * @param flat whether the key is derived from the supplied {@link</span>
+<span class="source-line-no">202</span><span id="line-202">   * Path}'s {@linkplain Path#lastElement() last element}'s</span>
+<span class="source-line-no">203</span><span id="line-203">   * {@linkplain Element#name() name} only</span>
+<span class="source-line-no">204</span><span id="line-204">   *</span>
+<span class="source-line-no">205</span><span id="line-205">   * @return a {@link String} representation of the supplied {@link</span>
+<span class="source-line-no">206</span><span id="line-206">   * Path}</span>
+<span class="source-line-no">207</span><span id="line-207">   *</span>
+<span class="source-line-no">208</span><span id="line-208">   * @exception NullPointerException if {@code path} is {@code null}</span>
+<span class="source-line-no">209</span><span id="line-209">   *</span>
+<span class="source-line-no">210</span><span id="line-210">   * @nullability This method never returns {@code null}.</span>
+<span class="source-line-no">211</span><span id="line-211">   *</span>
+<span class="source-line-no">212</span><span id="line-212">   * @idempotency This method is idempotent and deterministic.</span>
+<span class="source-line-no">213</span><span id="line-213">   *</span>
+<span class="source-line-no">214</span><span id="line-214">   * @threadsafety This method is safe for concurrent use by multiple</span>
+<span class="source-line-no">215</span><span id="line-215">   * threads.</span>
+<span class="source-line-no">216</span><span id="line-216">   */</span>
+<span class="source-line-no">217</span><span id="line-217">  protected static final String key(final Path&lt;?&gt; path, final boolean flat) {</span>
+<span class="source-line-no">218</span><span id="line-218">    if (flat) {</span>
+<span class="source-line-no">219</span><span id="line-219">      return path.lastElement().name();</span>
+<span class="source-line-no">220</span><span id="line-220">    } else {</span>
+<span class="source-line-no">221</span><span id="line-221">      return path.stream()</span>
+<span class="source-line-no">222</span><span id="line-222">        .map(Element::name)</span>
+<span class="source-line-no">223</span><span id="line-223">        .filter(s1 -&gt; !s1.isEmpty())</span>
+<span class="source-line-no">224</span><span id="line-224">        .reduce((s1, s2) -&gt; String.join(".", s1, s2))</span>
+<span class="source-line-no">225</span><span id="line-225">        .orElse("");</span>
+<span class="source-line-no">226</span><span id="line-226">    }</span>
+<span class="source-line-no">227</span><span id="line-227">  }</span>
+<span class="source-line-no">228</span><span id="line-228"></span>
+<span class="source-line-no">229</span><span id="line-229">}</span>
 
 
 

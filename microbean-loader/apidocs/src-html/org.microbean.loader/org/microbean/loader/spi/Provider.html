@@ -34,150 +34,154 @@
 <span class="source-line-no">020</span><span id="line-20">import java.lang.reflect.ParameterizedType;</span>
 <span class="source-line-no">021</span><span id="line-21">import java.lang.reflect.Type;</span>
 <span class="source-line-no">022</span><span id="line-22"></span>
-<span class="source-line-no">023</span><span id="line-23">import org.microbean.loader.api.Loader;</span>
+<span class="source-line-no">023</span><span id="line-23">import java.util.ServiceLoader;</span>
 <span class="source-line-no">024</span><span id="line-24"></span>
-<span class="source-line-no">025</span><span id="line-25">import org.microbean.path.Path;</span>
+<span class="source-line-no">025</span><span id="line-25">import org.microbean.loader.api.Loader;</span>
 <span class="source-line-no">026</span><span id="line-26"></span>
-<span class="source-line-no">027</span><span id="line-27">/**</span>
-<span class="source-line-no">028</span><span id="line-28"> * A service provider of {@link Value}s that might be suitable for a</span>
-<span class="source-line-no">029</span><span id="line-29"> * {@link Loader} implementation to return.</span>
-<span class="source-line-no">030</span><span id="line-30"> *</span>
-<span class="source-line-no">031</span><span id="line-31"> * &lt;p&gt;{@link Provider} instances are subordinate to {@link</span>
-<span class="source-line-no">032</span><span id="line-32"> * org.microbean.loader.DefaultLoader}.&lt;/p&gt;</span>
-<span class="source-line-no">033</span><span id="line-33"> *</span>
-<span class="source-line-no">034</span><span id="line-34"> * &lt;p&gt;Any {@link Provider} implementation must have a {@code public}</span>
-<span class="source-line-no">035</span><span id="line-35"> * constructor that has no arguments.&lt;/p&gt;</span>
-<span class="source-line-no">036</span><span id="line-36"> *</span>
-<span class="source-line-no">037</span><span id="line-37"> * @author &lt;a href="https://about.me/lairdnelson"</span>
-<span class="source-line-no">038</span><span id="line-38"> * target="_parent"&gt;Laird Nelson&lt;/a&gt;</span>
-<span class="source-line-no">039</span><span id="line-39"> *</span>
-<span class="source-line-no">040</span><span id="line-40"> * @see #get(Loader, Path)</span>
+<span class="source-line-no">027</span><span id="line-27">import org.microbean.path.Path;</span>
+<span class="source-line-no">028</span><span id="line-28"></span>
+<span class="source-line-no">029</span><span id="line-29">/**</span>
+<span class="source-line-no">030</span><span id="line-30"> * A service provider of {@link Value}s that might be suitable for a</span>
+<span class="source-line-no">031</span><span id="line-31"> * {@link Loader} implementation to return.</span>
+<span class="source-line-no">032</span><span id="line-32"> *</span>
+<span class="source-line-no">033</span><span id="line-33"> * &lt;p&gt;{@link Provider} instances are subordinate to {@link</span>
+<span class="source-line-no">034</span><span id="line-34"> * org.microbean.loader.DefaultLoader}.&lt;/p&gt;</span>
+<span class="source-line-no">035</span><span id="line-35"> *</span>
+<span class="source-line-no">036</span><span id="line-36"> * &lt;p&gt;Any {@link Provider} implementation must have a {@code public}</span>
+<span class="source-line-no">037</span><span id="line-37"> * constructor that has no arguments.&lt;/p&gt;</span>
+<span class="source-line-no">038</span><span id="line-38"> *</span>
+<span class="source-line-no">039</span><span id="line-39"> * @author &lt;a href="https://about.me/lairdnelson"</span>
+<span class="source-line-no">040</span><span id="line-40"> * target="_parent"&gt;Laird Nelson&lt;/a&gt;</span>
 <span class="source-line-no">041</span><span id="line-41"> *</span>
-<span class="source-line-no">042</span><span id="line-42"> * @see AbstractProvider</span>
+<span class="source-line-no">042</span><span id="line-42"> * @see #get(Loader, Path)</span>
 <span class="source-line-no">043</span><span id="line-43"> *</span>
-<span class="source-line-no">044</span><span id="line-44"> * @see org.microbean.loader.DefaultLoader</span>
-<span class="source-line-no">045</span><span id="line-45"> */</span>
-<span class="source-line-no">046</span><span id="line-46">@FunctionalInterface</span>
-<span class="source-line-no">047</span><span id="line-47">public interface Provider {</span>
-<span class="source-line-no">048</span><span id="line-48"></span>
-<span class="source-line-no">049</span><span id="line-49"></span>
-<span class="source-line-no">050</span><span id="line-50">  /*</span>
-<span class="source-line-no">051</span><span id="line-51">   * Instance methods.</span>
-<span class="source-line-no">052</span><span id="line-52">   */</span>
-<span class="source-line-no">053</span><span id="line-53"></span>
-<span class="source-line-no">054</span><span id="line-54"></span>
-<span class="source-line-no">055</span><span id="line-55">  /**</span>
-<span class="source-line-no">056</span><span id="line-56">   * Returns a {@link Type} representing the &lt;em&gt;lower type bound&lt;/em&gt;</span>
-<span class="source-line-no">057</span><span id="line-57">   * of all possible {@linkplain Value values} {@linkplain</span>
-<span class="source-line-no">058</span><span id="line-58">   * #get(Loader, Path) supplied} by this {@link Provider}.</span>
-<span class="source-line-no">059</span><span id="line-59">   *</span>
-<span class="source-line-no">060</span><span id="line-60">   * &lt;p&gt;Often the value returned by implementations of this method is</span>
-<span class="source-line-no">061</span><span id="line-61">   * no more specific than the lowest possible type, which is {@code</span>
-<span class="source-line-no">062</span><span id="line-62">   * null}, meaning that the {@link Provider} has at least a chance of</span>
-<span class="source-line-no">063</span><span id="line-63">   * {@linkplain #get(Loader, Path) producing} a {@link Value} for any</span>
-<span class="source-line-no">064</span><span id="line-64">   * requested type.&lt;/p&gt;</span>
-<span class="source-line-no">065</span><span id="line-65">   *</span>
-<span class="source-line-no">066</span><span id="line-66">   * &lt;p&gt;A return value of, for example, {@link String String.class}</span>
-<span class="source-line-no">067</span><span id="line-67">   * indicates that the {@link Provider} may satisfy requests for</span>
-<span class="source-line-no">068</span><span id="line-68">   * {@link String String.class}, or any of its supertypes (such as</span>
-<span class="source-line-no">069</span><span id="line-69">   * {@link CharSequence}), but cannot satisfy requests for {@link</span>
-<span class="source-line-no">070</span><span id="line-70">   * Integer Integer.class}, for example.&lt;/p&gt;</span>
-<span class="source-line-no">071</span><span id="line-71">   *</span>
-<span class="source-line-no">072</span><span id="line-72">   * &lt;p&gt;A return value of {@link Object Object.class} indicates a</span>
-<span class="source-line-no">073</span><span id="line-73">   * maximally opaque type, i.e. only requests for {@link Object</span>
-<span class="source-line-no">074</span><span id="line-74">   * Object.class} have the possibility of being satisfied by this</span>
-<span class="source-line-no">075</span><span id="line-75">   * {@link Provider}.  Such a return value is possible, but rarely</span>
-<span class="source-line-no">076</span><span id="line-76">   * used, and {@link Provider} implementations are urged to consider</span>
-<span class="source-line-no">077</span><span id="line-77">   * a different {@link Type}.&lt;/p&gt;</span>
-<span class="source-line-no">078</span><span id="line-78">   *</span>
-<span class="source-line-no">079</span><span id="line-79">   * &lt;p&gt;Note that this method is used solely to help eliminate types,</span>
-<span class="source-line-no">080</span><span id="line-80">   * not permit them.  That is, although {@link Provider} may indicate</span>
-<span class="source-line-no">081</span><span id="line-81">   * via an implementation of this method that a given {@link Type} is</span>
-<span class="source-line-no">082</span><span id="line-82">   * suitable, it is not thereby obliged to return a {@link Value}</span>
-<span class="source-line-no">083</span><span id="line-83">   * corresponding to it from its {@link #get(Loader, Path)</span>
-<span class="source-line-no">084</span><span id="line-84">   * get(Loader, Path)} method implementation.&lt;/p&gt;</span>
-<span class="source-line-no">085</span><span id="line-85">   *</span>
-<span class="source-line-no">086</span><span id="line-86">   * &lt;p&gt;The default implementation of this method returns {@code</span>
-<span class="source-line-no">087</span><span id="line-87">   * null}.&lt;/p&gt;</span>
+<span class="source-line-no">044</span><span id="line-44"> * @see AbstractProvider</span>
+<span class="source-line-no">045</span><span id="line-45"> *</span>
+<span class="source-line-no">046</span><span id="line-46"> * @see org.microbean.loader.DefaultLoader</span>
+<span class="source-line-no">047</span><span id="line-47"> */</span>
+<span class="source-line-no">048</span><span id="line-48">@FunctionalInterface</span>
+<span class="source-line-no">049</span><span id="line-49">public interface Provider {</span>
+<span class="source-line-no">050</span><span id="line-50"></span>
+<span class="source-line-no">051</span><span id="line-51"></span>
+<span class="source-line-no">052</span><span id="line-52">  /*</span>
+<span class="source-line-no">053</span><span id="line-53">   * Instance methods.</span>
+<span class="source-line-no">054</span><span id="line-54">   */</span>
+<span class="source-line-no">055</span><span id="line-55"></span>
+<span class="source-line-no">056</span><span id="line-56"></span>
+<span class="source-line-no">057</span><span id="line-57">  /**</span>
+<span class="source-line-no">058</span><span id="line-58">   * Returns a {@link Type} representing the &lt;em&gt;lower type bound&lt;/em&gt;</span>
+<span class="source-line-no">059</span><span id="line-59">   * of all possible {@linkplain Value values} {@linkplain</span>
+<span class="source-line-no">060</span><span id="line-60">   * #get(Loader, Path) supplied} by this {@link Provider}.</span>
+<span class="source-line-no">061</span><span id="line-61">   *</span>
+<span class="source-line-no">062</span><span id="line-62">   * &lt;p&gt;Often the value returned by implementations of this method is</span>
+<span class="source-line-no">063</span><span id="line-63">   * no more specific than the lowest possible type, which is {@code</span>
+<span class="source-line-no">064</span><span id="line-64">   * null}, meaning that the {@link Provider} has a chance of</span>
+<span class="source-line-no">065</span><span id="line-65">   * {@linkplain #get(Loader, Path) producing} a {@link Value} for any</span>
+<span class="source-line-no">066</span><span id="line-66">   * requested type.&lt;/p&gt;</span>
+<span class="source-line-no">067</span><span id="line-67">   *</span>
+<span class="source-line-no">068</span><span id="line-68">   * &lt;p&gt;A return value of, for example, {@link String String.class}</span>
+<span class="source-line-no">069</span><span id="line-69">   * indicates that the {@link Provider} may satisfy requests for</span>
+<span class="source-line-no">070</span><span id="line-70">   * {@link String String.class}, or any of its supertypes (such as</span>
+<span class="source-line-no">071</span><span id="line-71">   * {@link CharSequence} or {@link Object}), but cannot satisfy</span>
+<span class="source-line-no">072</span><span id="line-72">   * requests for {@link Integer Integer.class}, for example.&lt;/p&gt;</span>
+<span class="source-line-no">073</span><span id="line-73">   *</span>
+<span class="source-line-no">074</span><span id="line-74">   * &lt;p&gt;A return value of {@link Object Object.class} would be</span>
+<span class="source-line-no">075</span><span id="line-75">   * extremely unusual and would indicate a maximally opaque type,</span>
+<span class="source-line-no">076</span><span id="line-76">   * i.e. only requests for &lt;em&gt;exactly&lt;/em&gt; {@link Object</span>
+<span class="source-line-no">077</span><span id="line-77">   * Object.class} have the possibility of being satisfied by this</span>
+<span class="source-line-no">078</span><span id="line-78">   * {@link Provider}.  Such a return value is possible, but rarely</span>
+<span class="source-line-no">079</span><span id="line-79">   * used, and {@link Provider} implementations are urged to consider</span>
+<span class="source-line-no">080</span><span id="line-80">   * returning a different {@link Type}.&lt;/p&gt;</span>
+<span class="source-line-no">081</span><span id="line-81">   *</span>
+<span class="source-line-no">082</span><span id="line-82">   * &lt;p&gt;Note that this method is used solely to help eliminate types</span>
+<span class="source-line-no">083</span><span id="line-83">   * from consideration, not permit them.  That is, although {@link</span>
+<span class="source-line-no">084</span><span id="line-84">   * Provider} may indicate via an implementation of this method that</span>
+<span class="source-line-no">085</span><span id="line-85">   * a given {@link Type} is suitable, it is not thereby obliged to</span>
+<span class="source-line-no">086</span><span id="line-86">   * return a {@link Value} corresponding to it from its {@link</span>
+<span class="source-line-no">087</span><span id="line-87">   * #get(Loader, Path) get(Loader, Path)} method implementation.&lt;/p&gt;</span>
 <span class="source-line-no">088</span><span id="line-88">   *</span>
-<span class="source-line-no">089</span><span id="line-89">   * @return a {@link Type} representing the lower type bound of all</span>
-<span class="source-line-no">090</span><span id="line-90">   * possible {@linkplain Value values} {@linkplain #get(Loader, Path)</span>
-<span class="source-line-no">091</span><span id="line-91">   * supplied} by this {@link Provider}, or {@code null} to indicate</span>
-<span class="source-line-no">092</span><span id="line-92">   * the lowest possible type bound</span>
-<span class="source-line-no">093</span><span id="line-93">   *</span>
-<span class="source-line-no">094</span><span id="line-94">   * @nullability This method does, and overrides may, return {@code</span>
-<span class="source-line-no">095</span><span id="line-95">   * null}.</span>
-<span class="source-line-no">096</span><span id="line-96">   *</span>
-<span class="source-line-no">097</span><span id="line-97">   * @idempotency This method is, and overrides of this method must</span>
-<span class="source-line-no">098</span><span id="line-98">   * be, idempotent and deterministic.</span>
-<span class="source-line-no">099</span><span id="line-99">   *</span>
-<span class="source-line-no">100</span><span id="line-100">   * @threadsafety This method is, and overrides of this method must</span>
-<span class="source-line-no">101</span><span id="line-101">   * be, safe for concurrent use by multiple threads.</span>
-<span class="source-line-no">102</span><span id="line-102">   */</span>
-<span class="source-line-no">103</span><span id="line-103">  public default Type lowerBound() {</span>
-<span class="source-line-no">104</span><span id="line-104">    return null; // the lowest possible type, assignable to all others</span>
-<span class="source-line-no">105</span><span id="line-105">  }</span>
-<span class="source-line-no">106</span><span id="line-106"></span>
-<span class="source-line-no">107</span><span id="line-107">  /**</span>
-<span class="source-line-no">108</span><span id="line-108">   * Returns a {@link Value} suitable for the supplied {@link</span>
-<span class="source-line-no">109</span><span id="line-109">   * Loader} and {@link Path}, or {@code null} if there is no such</span>
-<span class="source-line-no">110</span><span id="line-110">   * {@link Value} now &lt;strong&gt;and if there never will be such a</span>
-<span class="source-line-no">111</span><span id="line-111">   * {@link Value}&lt;/strong&gt; for the supplied arguments.</span>
-<span class="source-line-no">112</span><span id="line-112">   *</span>
-<span class="source-line-no">113</span><span id="line-113">   * &lt;p&gt;In addition to the other requirements described here, the</span>
-<span class="source-line-no">114</span><span id="line-114">   * following assertions will be (and must be) true when this method</span>
-<span class="source-line-no">115</span><span id="line-115">   * is called in the normal course of events:&lt;/p&gt;</span>
+<span class="source-line-no">089</span><span id="line-89">   * &lt;p&gt;The default implementation of this method returns {@code</span>
+<span class="source-line-no">090</span><span id="line-90">   * null}.  Many {@link Provider} implementations will choose not to</span>
+<span class="source-line-no">091</span><span id="line-91">   * override this method.&lt;/p&gt;</span>
+<span class="source-line-no">092</span><span id="line-92">   *</span>
+<span class="source-line-no">093</span><span id="line-93">   * @return a {@link Type} representing the lower type bound of all</span>
+<span class="source-line-no">094</span><span id="line-94">   * possible {@linkplain Value values} {@linkplain #get(Loader, Path)</span>
+<span class="source-line-no">095</span><span id="line-95">   * supplied} by this {@link Provider}, or {@code null} to indicate</span>
+<span class="source-line-no">096</span><span id="line-96">   * the lowest possible type bound</span>
+<span class="source-line-no">097</span><span id="line-97">   *</span>
+<span class="source-line-no">098</span><span id="line-98">   * @nullability This method always does, and overrides often may,</span>
+<span class="source-line-no">099</span><span id="line-99">   * return {@code null}.</span>
+<span class="source-line-no">100</span><span id="line-100">   *</span>
+<span class="source-line-no">101</span><span id="line-101">   * @idempotency This method is, and overrides of this method must</span>
+<span class="source-line-no">102</span><span id="line-102">   * be, idempotent and deterministic.</span>
+<span class="source-line-no">103</span><span id="line-103">   *</span>
+<span class="source-line-no">104</span><span id="line-104">   * @threadsafety This method is, and overrides of this method must</span>
+<span class="source-line-no">105</span><span id="line-105">   * be, safe for concurrent use by multiple threads.</span>
+<span class="source-line-no">106</span><span id="line-106">   */</span>
+<span class="source-line-no">107</span><span id="line-107">  public default Type lowerBound() {</span>
+<span class="source-line-no">108</span><span id="line-108">    return null; // the lowest possible type, assignable to all others</span>
+<span class="source-line-no">109</span><span id="line-109">  }</span>
+<span class="source-line-no">110</span><span id="line-110"></span>
+<span class="source-line-no">111</span><span id="line-111">  /**</span>
+<span class="source-line-no">112</span><span id="line-112">   * Returns a {@link Value} suitable for the supplied {@link Loader}</span>
+<span class="source-line-no">113</span><span id="line-113">   * and {@link Path}, &lt;strong&gt;or {@code null} if there is no such</span>
+<span class="source-line-no">114</span><span id="line-114">   * {@link Value} now and if there never will be such a {@link</span>
+<span class="source-line-no">115</span><span id="line-115">   * Value}&lt;/strong&gt; for the supplied arguments.</span>
 <span class="source-line-no">116</span><span id="line-116">   *</span>
-<span class="source-line-no">117</span><span id="line-117">   * &lt;ul&gt;</span>
-<span class="source-line-no">118</span><span id="line-118">   *</span>
-<span class="source-line-no">119</span><span id="line-119">   * &lt;li&gt;{@code assert absolutePath.isAbsolute();}&lt;/li&gt;</span>
+<span class="source-line-no">117</span><span id="line-117">   * &lt;p&gt;In addition to the other requirements described here, the</span>
+<span class="source-line-no">118</span><span id="line-118">   * following assertions will be (and must be) true when this method</span>
+<span class="source-line-no">119</span><span id="line-119">   * is called in the normal course of events:&lt;/p&gt;</span>
 <span class="source-line-no">120</span><span id="line-120">   *</span>
-<span class="source-line-no">121</span><span id="line-121">   * &lt;li&gt;{@code assert</span>
-<span class="source-line-no">122</span><span id="line-122">   * absolutePath.startsWith(requestor.absolutePath());}&lt;/li&gt;</span>
-<span class="source-line-no">123</span><span id="line-123">   *</span>
-<span class="source-line-no">124</span><span id="line-124">   * &lt;li&gt;{@code assert</span>
-<span class="source-line-no">125</span><span id="line-125">   * !absolutePath.equals(requestor.absolutePath());}&lt;/li&gt;</span>
-<span class="source-line-no">126</span><span id="line-126">   *</span>
-<span class="source-line-no">127</span><span id="line-127">   * &lt;/ul&gt;</span>
-<span class="source-line-no">128</span><span id="line-128">   *</span>
-<span class="source-line-no">129</span><span id="line-129">   * &lt;p&gt;If any caller does not honor these requirements, undefined</span>
-<span class="source-line-no">130</span><span id="line-130">   * behavior may result.&lt;/p&gt;</span>
-<span class="source-line-no">131</span><span id="line-131">   *</span>
-<span class="source-line-no">132</span><span id="line-132">   * @param requestor the {@link Loader} seeking a {@link Value};</span>
-<span class="source-line-no">133</span><span id="line-133">   * must not be {@code null}</span>
-<span class="source-line-no">134</span><span id="line-134">   *</span>
-<span class="source-line-no">135</span><span id="line-135">   * @param absolutePath an {@linkplain Path#absolute() absolute</span>
-<span class="source-line-no">136</span><span id="line-136">   * &lt;code&gt;Path&lt;/code&gt;} for which the supplied {@link Loader} is</span>
-<span class="source-line-no">137</span><span id="line-137">   * seeking a value; must not be {@code null}</span>
+<span class="source-line-no">121</span><span id="line-121">   * &lt;ul&gt;</span>
+<span class="source-line-no">122</span><span id="line-122">   *</span>
+<span class="source-line-no">123</span><span id="line-123">   * &lt;li&gt;{@code assert absolutePath.isAbsolute();}&lt;/li&gt;</span>
+<span class="source-line-no">124</span><span id="line-124">   *</span>
+<span class="source-line-no">125</span><span id="line-125">   * &lt;li&gt;{@code assert</span>
+<span class="source-line-no">126</span><span id="line-126">   * absolutePath.startsWith(requestor.absolutePath());}&lt;/li&gt;</span>
+<span class="source-line-no">127</span><span id="line-127">   *</span>
+<span class="source-line-no">128</span><span id="line-128">   * &lt;li&gt;{@code assert</span>
+<span class="source-line-no">129</span><span id="line-129">   * !absolutePath.equals(requestor.absolutePath());}&lt;/li&gt;</span>
+<span class="source-line-no">130</span><span id="line-130">   *</span>
+<span class="source-line-no">131</span><span id="line-131">   * &lt;/ul&gt;</span>
+<span class="source-line-no">132</span><span id="line-132">   *</span>
+<span class="source-line-no">133</span><span id="line-133">   * &lt;p&gt;If any caller does not honor these requirements, undefined</span>
+<span class="source-line-no">134</span><span id="line-134">   * behavior may result.&lt;/p&gt;</span>
+<span class="source-line-no">135</span><span id="line-135">   *</span>
+<span class="source-line-no">136</span><span id="line-136">   * @param requestor the {@link Loader} seeking a {@link Value};</span>
+<span class="source-line-no">137</span><span id="line-137">   * must not be {@code null}</span>
 <span class="source-line-no">138</span><span id="line-138">   *</span>
-<span class="source-line-no">139</span><span id="line-139">   * @return a {@link Value} more or less suitable for the combination</span>
-<span class="source-line-no">140</span><span id="line-140">   * of the supplied {@link Loader} and {@link Path}, or {@code</span>
-<span class="source-line-no">141</span><span id="line-141">   * null} if there is no such {@link Value} now &lt;strong&gt;and if there</span>
-<span class="source-line-no">142</span><span id="line-142">   * never will be such a {@link Value}&lt;/strong&gt; for the supplied</span>
-<span class="source-line-no">143</span><span id="line-143">   * arguments</span>
-<span class="source-line-no">144</span><span id="line-144">   *</span>
-<span class="source-line-no">145</span><span id="line-145">   * @exception NullPointerException if either {@code requestor} or</span>
-<span class="source-line-no">146</span><span id="line-146">   * {@code absolutePath} is {@code null}</span>
-<span class="source-line-no">147</span><span id="line-147">   *</span>
-<span class="source-line-no">148</span><span id="line-148">   * @exception IllegalArgumentException if {@code absolutePath}</span>
-<span class="source-line-no">149</span><span id="line-149">   * {@linkplain Path#absolute() is not absolute}, or if {@link</span>
-<span class="source-line-no">150</span><span id="line-150">   * Path#startsWith(Path)</span>
-<span class="source-line-no">151</span><span id="line-151">   * !absolutePath.startsWith(requestor.absolutePath())}, or if {@link</span>
-<span class="source-line-no">152</span><span id="line-152">   * Path#equals(Object)</span>
-<span class="source-line-no">153</span><span id="line-153">   * absolutePath.equals(requestor.absolutePath())}</span>
-<span class="source-line-no">154</span><span id="line-154">   *</span>
-<span class="source-line-no">155</span><span id="line-155">   * @nullability Implementations of this method may return {@code</span>
-<span class="source-line-no">156</span><span id="line-156">   * null}.</span>
-<span class="source-line-no">157</span><span id="line-157">   *</span>
-<span class="source-line-no">158</span><span id="line-158">   * @threadsafety Implementations of this method must be safe for</span>
-<span class="source-line-no">159</span><span id="line-159">   * concurrent use by multiple threads.</span>
-<span class="source-line-no">160</span><span id="line-160">   *</span>
-<span class="source-line-no">161</span><span id="line-161">   * @idempotency Implementations of this method must be idempotent</span>
-<span class="source-line-no">162</span><span id="line-162">   * but are not assumed to be deterministic.</span>
-<span class="source-line-no">163</span><span id="line-163">   */</span>
-<span class="source-line-no">164</span><span id="line-164">  public Value&lt;?&gt; get(final Loader&lt;?&gt; requestor, final Path&lt;? extends Type&gt; absolutePath);</span>
-<span class="source-line-no">165</span><span id="line-165"></span>
-<span class="source-line-no">166</span><span id="line-166">}</span>
+<span class="source-line-no">139</span><span id="line-139">   * @param absolutePath an {@linkplain Path#absolute() absolute</span>
+<span class="source-line-no">140</span><span id="line-140">   * &lt;code&gt;Path&lt;/code&gt;} for which the supplied {@link Loader} is</span>
+<span class="source-line-no">141</span><span id="line-141">   * seeking a value; must not be {@code null}</span>
+<span class="source-line-no">142</span><span id="line-142">   *</span>
+<span class="source-line-no">143</span><span id="line-143">   * @return a {@link Value} more or less suitable for the combination</span>
+<span class="source-line-no">144</span><span id="line-144">   * of the supplied {@link Loader} and {@link Path}, &lt;strong&gt;or</span>
+<span class="source-line-no">145</span><span id="line-145">   * {@code null} if there is no such {@link Value} now and if there</span>
+<span class="source-line-no">146</span><span id="line-146">   * never will be such a {@link Value}&lt;/strong&gt; for the supplied</span>
+<span class="source-line-no">147</span><span id="line-147">   * arguments</span>
+<span class="source-line-no">148</span><span id="line-148">   *</span>
+<span class="source-line-no">149</span><span id="line-149">   * @exception NullPointerException if either {@code requestor} or</span>
+<span class="source-line-no">150</span><span id="line-150">   * {@code absolutePath} is {@code null}</span>
+<span class="source-line-no">151</span><span id="line-151">   *</span>
+<span class="source-line-no">152</span><span id="line-152">   * @exception IllegalArgumentException if {@code absolutePath}</span>
+<span class="source-line-no">153</span><span id="line-153">   * {@linkplain Path#absolute() is not absolute}, or if {@link</span>
+<span class="source-line-no">154</span><span id="line-154">   * Path#startsWith(Path)</span>
+<span class="source-line-no">155</span><span id="line-155">   * !absolutePath.startsWith(requestor.absolutePath())}, or if {@link</span>
+<span class="source-line-no">156</span><span id="line-156">   * Path#equals(Object)</span>
+<span class="source-line-no">157</span><span id="line-157">   * absolutePath.equals(requestor.absolutePath())}</span>
+<span class="source-line-no">158</span><span id="line-158">   *</span>
+<span class="source-line-no">159</span><span id="line-159">   * @nullability Implementations of this method may return {@code</span>
+<span class="source-line-no">160</span><span id="line-160">   * null}.</span>
+<span class="source-line-no">161</span><span id="line-161">   *</span>
+<span class="source-line-no">162</span><span id="line-162">   * @threadsafety Implementations of this method must be safe for</span>
+<span class="source-line-no">163</span><span id="line-163">   * concurrent use by multiple threads.</span>
+<span class="source-line-no">164</span><span id="line-164">   *</span>
+<span class="source-line-no">165</span><span id="line-165">   * @idempotency Implementations of this method must be idempotent</span>
+<span class="source-line-no">166</span><span id="line-166">   * but are not assumed to be deterministic.</span>
+<span class="source-line-no">167</span><span id="line-167">   */</span>
+<span class="source-line-no">168</span><span id="line-168">  public Value&lt;?&gt; get(final Loader&lt;?&gt; requestor, final Path&lt;? extends Type&gt; absolutePath);</span>
+<span class="source-line-no">169</span><span id="line-169"></span>
+<span class="source-line-no">170</span><span id="line-170">}</span>
 
 
 
