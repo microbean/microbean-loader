@@ -91,14 +91,13 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    */
 
 
-  // Package-private for testing only.
-  final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache;
+  private final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache;
 
   private final Path<? extends Type> requestedPath;
-  
+
   private final Path<? extends Type> absolutePath;
 
-  private final DefaultLoader<?> parent;
+  private final Loader<?> parent;
 
   private final OptionalSupplier<? extends T> supplier;
 
@@ -160,7 +159,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   @SuppressWarnings("unchecked")
   private DefaultLoader(final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache,
                         final Collection<? extends Provider> providers,
-                        final DefaultLoader<?> parent, // if null, will end up being "this" if absolutePath is null or Path.root()
+                        final Loader<?> parent, // if null, will end up being "this" if absolutePath is null or Path.root()
                         final Path<? extends Type> requestedPath,
                         final OptionalSupplier<? extends T> supplier, // if null, will end up being () -> this if absolutePath is null or Path.root()
                         final AmbiguityHandler ambiguityHandler) {
@@ -201,11 +200,15 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       this.requestedPath = requestedPath;
       this.parent = parent;
       assert parent.absolutePath().transliterated();
-      this.absolutePath = requestedPath.absolute() ? requestedPath : parent.absolutePath().plus(requestedPath).transliterate();
-      assert this.absolutePath.transliterated();
       this.supplier = Objects.requireNonNull(supplier, "supplier");
       this.providers = List.copyOf(providers);
       this.ambiguityHandler = Objects.requireNonNull(ambiguityHandler, "ambiguityHandler");
+      if (requestedPath.absolute()) {
+        this.absolutePath = requestedPath;
+      } else {
+        this.absolutePath = this.transliterate(parent.absolutePath().plus(requestedPath));
+      }
+      assert this.absolutePath.transliterated();
     }
   }
 
@@ -349,6 +352,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   public final DefaultLoader<T> with(final AmbiguityHandler ambiguityHandler) {
     if (ambiguityHandler == this.ambiguityHandler()) {
       return this;
+    } else if (ambiguityHandler == null) {
+      return new DefaultLoader<>(this, NoOpAmbiguityHandler.INSTANCE);
     } else {
       return new DefaultLoader<>(this, ambiguityHandler);
     }
@@ -408,17 +413,17 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   }
 
   /**
-   * Returns the {@link DefaultLoader} serving as the parent of this
-   * {@link DefaultLoader}.
+   * Returns the {@link Loader} serving as the parent of this {@link
+   * DefaultLoader}.
    *
    * <p>The "root" {@link DefaultLoader} returns itself from its
    * {@link #parent()} implementation.</p>
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * @return the non-{@code null} {@link DefaultLoader} serving as the
-   * parent of this {@link DefaultLoader}; may be this {@link
-   * DefaultLoader} itself
+   * @return the non-{@code null} {@link Loader} serving as the parent
+   * of this {@link DefaultLoader}; may be this {@link DefaultLoader}
+   * itself
    *
    * @nullability This method never returns {@code null}.
    *
@@ -429,7 +434,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    */
   // Note that the root will have itself as its parent.
   @Override // Loader<T>
-  public final DefaultLoader<?> parent() {
+  public final Loader<?> parent() {
     return this.parent;
   }
 
@@ -587,7 +592,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     if (requestedPath.absolute()) {
       absolutePath = requestedPath; // already transliterated
     } else {
-      absolutePath = this.transliterate(this.path().plus(requestedPath));
+      absolutePath = this.transliterate(this.absolutePath().plus(requestedPath));
       if (!absolutePath.absolute()) {
         throw new IllegalArgumentException("!absolutePath.absolute(): " + absolutePath);
       }
@@ -624,11 +629,21 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   }
 
   @SuppressWarnings("unchecked")
-  private final <U> DefaultLoader<U> computeLoader(final DefaultLoader<?> requestor,
+  private final <U> DefaultLoader<U> computeLoader(final Loader<?> requestor,
                                                    final Path<? extends Type> requestedPath,
                                                    final Path<? extends Type> absolutePath) {
+    assert requestedPath.transliterated();
+    assert absolutePath.absolute();
+    assert absolutePath.transliterated();
     final Qualifiers<? extends String, ?> qualifiers = absolutePath.qualifiers();
-    final AmbiguityHandler ambiguityHandler = requestor.ambiguityHandler();
+    final AmbiguityHandler ambiguityHandler;
+    if (requestor instanceof AmbiguityHandler ah) {
+      ambiguityHandler = ah;
+    } else if (requestor instanceof DefaultLoader<?> dl) {
+      ambiguityHandler = dl.ambiguityHandler();
+    } else {
+      ambiguityHandler = this.ambiguityHandler();
+    }
     Value<U> candidate = null;
     final Collection<? extends Provider> providers = this.providers();
     if (!providers.isEmpty()) {
@@ -733,6 +748,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
             break;
           }
 
+          // The Path scores were equal.  Give the AmbiguityHandler a
+          // chance to resolve the ambguity.
           final Value<U> disambiguatedValue =
             ambiguityHandler.disambiguate(requestor, absolutePath, candidateProvider, candidate, provider, value);
 
@@ -742,9 +759,13 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
           }
 
           if (disambiguatedValue.equals(candidate)) {
-            candidate = new Value<>(candidate, value);
+            // Candidate wins; value is a backup.
+            candidate = new Value<>(disambiguatedValue, value);
             break;
-          } else if (disambiguatedValue.equals(value)) {
+          }
+
+          if (disambiguatedValue.equals(value)) {
+            // Value wins; candidate is a backup.
             candidate = new Value<>(disambiguatedValue, candidate);
             candidateProvider = provider;
             candidateQualifiersScore = valueQualifiersScore;
@@ -752,8 +773,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
             break;
           }
 
-          // Disambiguation came up with an entirely different value,
-          // so run it back through the while loop.
+          // The AmbiguityHandler came up with an entirely different
+          // value, so run it back through the while loop.
           value = disambiguatedValue;
 
         }

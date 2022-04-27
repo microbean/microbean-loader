@@ -814,13 +814,14 @@ public interface Loader<T> extends OptionalSupplier<T> {
     Objects.requireNonNull(path, "path");
     final Loader<?> parent = this.parent();
     if (this != parent) {
-      if (!path.absolute()) {
-        path = this.path().plus(path);
-      }
-      path = this.transliterate(path);
       final Path<? extends Type> absolutePath = this.absolutePath();
       assert absolutePath.absolute() : "!absolutePath.absolute(): " + absolutePath;
       assert absolutePath.transliterated();
+      if (!path.absolute()) {
+        path = absolutePath.plus(path);
+        assert path.absolute();
+      }
+      path = this.transliterate(path);
       // TODO: note that this does not take a Path's top-level
       // qualifiers into account.  Maybe that's on purpose?
       if (absolutePath.startsWith(path)) {
@@ -929,8 +930,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
   public default <U extends Type> Path<U> transliterate(final Path<U> path) {
     if (path.transliterated()) {
       return path;
-    } else if (path.size() == 1 ||
-               path.lastElement().name().equals("transliterated") &&
+    } else if (path.lastElement().name().equals("org.microbean.loader.api.transliteration") &&
                path.lastElement().qualified() instanceof ParameterizedType ptype &&
                ptype.getRawType() instanceof Class<?> c &&
                Path.class.isAssignableFrom(c)) {
@@ -942,15 +942,17 @@ public interface Loader<T> extends OptionalSupplier<T> {
       // will also contain a "path" key with the original Path being
       // transliterated, but we don't need to check that.
       //
-      // In such a case:
+      // In such a case: mark the transliteration request itself as
+      // already transliterated to kill off infinite loops.
       return path.transliterate();
     }
     final ParameterizedType ptype = (ParameterizedType)new Token<Path<U>>() {}.type();
-    final Element<ParameterizedType> e = Element.of(Qualifiers.of("path", path), ptype, "transliterated");
+    final Element<ParameterizedType> e = Element.of(Qualifiers.of("path", path), ptype, "org.microbean.loader.api.transliteration");
     // Note that we transliterate the transliteration request itself
     // with a no-op: this marks the request itself as already
     // transliterated, which should kill off any infinite loops.
-    final Path<ParameterizedType> transliterationRequest = this.path().plus(e).transliterate();
+    final Path<ParameterizedType> transliterationRequest = Path.root().plus(e).transliterate();
+    assert transliterationRequest.absolute();
     Path<U> returnValue = this.<Path<U>>load(transliterationRequest).orElse(path);
     if (returnValue == null) {
       // null is not a permitted return value for this method,

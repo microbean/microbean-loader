@@ -207,15 +207,15 @@ public class SystemPropertyProvider extends AbstractProvider {
     // even in the case of the "required" properties the designers
     // were thinking in terms of hierarchies.
     //
-    // Anyway, suppose an absolute Path of ".com.foo.bar" (making up
-    // the syntax; "."  is a Path.Element separator; each "word" is a
-    // Path.Element name() value) has a length of 4 (the leading
+    // Anyway, suppose an absolute Path of "/com/foo/bar" (making up
+    // the syntax; "/" is a Path.Element separator; each "word" is a
+    // Path.Element name() value) has a size of 4 (the leading
     // element's name is always "") (hierarchical).  Should this
     // Provider respond by trying
     // System.getProperties().getProperty("com.foo.bar")?
     //
-    // Or should this Provider only accept a Path of ".com.foo.bar"
-    // whose length is 2 (flat), so that the name of only the *last*
+    // Or should this Provider only accept a Path of "/com.foo.bar"
+    // whose size is 2 (flat), so that the name of only the *last*
     // element is the property key ("com.foo.bar")?
     //
     // (The end call to System.getProperty() is the same, of course.)
@@ -233,7 +233,8 @@ public class SystemPropertyProvider extends AbstractProvider {
 
     final String key = key(absolutePath, this.flatKeys);
     if (key == null || key.isEmpty()) {
-      // System properties never permit null or empty keys.
+      // System properties never permit null or empty keys.  See
+      // https://github.com/openjdk/jdk/blob/jdk-17+35/src/java.base/share/classes/java/lang/System.java#L1043-L1050.
       return null;
     }
     final Type type = absolutePath.qualified();
@@ -270,7 +271,8 @@ public class SystemPropertyProvider extends AbstractProvider {
       // ordinary Map.  We also know that is is a Properties instance,
       // so we also know it is fully synchronized on itself.  Putting
       // this all together we can tell definitively when a value has
-      // been set to null versus when it is absent.
+      // been explicitly and deliberately set to null versus when it
+      // is absent.
       return () -> {
         final Object returnValue;
         final Map<?, ?> map = System.getProperties();
