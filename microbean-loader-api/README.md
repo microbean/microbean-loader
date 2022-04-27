@@ -32,7 +32,7 @@ Loader: API as a Maven dependency:
   <groupId>org.microbean</groupId>
   <artifactId>microbean-loader-api</artifactId>
   <!-- Always check https://search.maven.org/artifact/org.microbean/microbean-loader-api for up-to-date available versions. -->
-  <version>0.0.3</version>
+  <version>0.0.4</version>
 </dependency>
 ```
 

@@ -1086,6 +1086,11 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * implementation that is {@linkplain Path#equals(Object) equal to}
    * {@link Path#root() Path.root()}.</li>
    *
+   * <li>It must return a {@link Path} from its {@link
+   * #absolutePath()} implementation that is {@linkplain
+   * Path#equals(Object) equal to} {@link Path#root()
+   * Path.root()}.</li>
+   *
    * <li>It must return itself ({@code this}) from its {@link
    * #parent()} implementation.</li>
    *
@@ -1117,21 +1122,25 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * implementation that is equal to {@link Path#root() Path.root()}
    * (same as above).</li>
    *
+   * <li>It must return a {@link Path} from its {@link
+   * #absolutePath()} implementation that is equal to {@link
+   * Path#root() Path.root()} (same as above).</li>
+   *
    * <li>It must return {@link Determinism#PRESENT} from its {@link
    * #determinism() determinism()} method (same as above).</li>
    *
-   * <li>It must return the bootstrap {@link Loader} from its {@link
+   * <li>It must return the root {@link Loader} from its {@link
    * #parent()} implementation (which may be itself ({@code
-   * this}).</li>
+   * this})).</li>
    *
    * <li>It must return a {@link Loader} implementation, often itself
    * ({@code this}), from its {@link #get() get()} method.</li>
    *
    * </ul>
    *
-   * <p>Undefined behavior will result if an implementation of the
-   * {@link Loader} interface does not honor the requirements
-   * above.</p>
+   * <p>An {@link IllegalStateException} will be thrown if an
+   * implementation of the {@link Loader} interface does not honor the
+   * requirements above.</p>
    *
    * <p>This method is the primary entry point for end users of this
    * framework.</p>
@@ -1145,6 +1154,9 @@ public interface Loader<T> extends OptionalSupplier<T> {
    *
    * @exception java.util.ServiceConfigurationError if the root {@link
    * Loader} could not be loaded for any reason
+   *
+   * @exception NoClassDefFoundError if the root {@link Loader} could
+   * not be loaded for any reason
    */
   @EntryPoint
   public static Loader<?> loader() {
@@ -1157,24 +1169,28 @@ public interface Loader<T> extends OptionalSupplier<T> {
           throw new IllegalStateException("rootLoader.determinism() != PRESENT: " + rootLoader.determinism());
         } else if (!rootLoader.path().isRoot()) {
           throw new IllegalStateException("!rootLoader.path().isRoot(): " + rootLoader.path());
+        } else if (!rootLoader.absolutePath().isRoot()) {
+          throw new IllegalStateException("!rootLoader.absolutePath().isRoot(): " + rootLoader.absolutePath());
         } else if (rootLoader.parent() != rootLoader) {
-          throw new IllegalStateException("rootLoader.parent(): " + rootLoader.parent());
+          throw new IllegalStateException("rootLoader.parent() != rootLoader: " + rootLoader.parent() + "; rootLoader: " + rootLoader);
         } else if (rootLoader.get() != rootLoader) {
-          throw new IllegalStateException("rootLoader.get(): " + rootLoader.get());
+          throw new IllegalStateException("rootLoader.get() != rootLoader: " + rootLoader.get() + "; rootLoader: " + rootLoader);
         } else if (!rootLoader.isRoot()) {
           throw new IllegalStateException("!rootLoader.isRoot()");
         } else if (rootLoader.root() != rootLoader) {
-          throw new IllegalStateException("rootLoader.root(): " + rootLoader.root());
+          throw new IllegalStateException("rootLoader.root() != rootLoader: " + rootLoader.root() + "; rootLoader: " + rootLoader);
         }
         INSTANCE = rootLoader.<Loader<?>>load(Path.of(new Token<Loader<?>>() {}.type())).orElse(rootLoader);
         if (INSTANCE.determinism() != Determinism.PRESENT) {
           throw new IllegalStateException("INSTANCE.determinism() != PRESENT: " + INSTANCE.determinism());
         } else if (!INSTANCE.path().isRoot()) {
           throw new IllegalStateException("!INSTANCE.path().isRoot(): " + INSTANCE.path());
+        } else if (!INSTANCE.absolutePath().isRoot()) {
+          throw new IllegalStateException("!INSTANCE.absolutePath().isRoot(): " + INSTANCE.absolutePath());
         } else if (INSTANCE.parent() != rootLoader) {
-          throw new IllegalStateException("INSTANCE.parent(): " + INSTANCE.parent());
+          throw new IllegalStateException("INSTANCE.parent() != rootLoader: " + INSTANCE.parent());
         } else if (!(INSTANCE.get() instanceof Loader)) {
-          throw new IllegalStateException("INSTANCE.get(): " + INSTANCE.get());
+          throw new IllegalStateException("!(INSTANCE.get() instanceof Loader): " + INSTANCE.get());
         }
       }
     };

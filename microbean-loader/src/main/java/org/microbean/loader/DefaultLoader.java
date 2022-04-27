@@ -54,6 +54,7 @@ import org.microbean.qualifier.Qualifiers;
 
 import org.microbean.loader.spi.AmbiguityHandler;
 import org.microbean.loader.spi.Provider;
+import org.microbean.loader.spi.ServiceProviderInstantiator;
 import org.microbean.loader.spi.Value;
 
 import org.microbean.type.JavaType.Token;
@@ -972,17 +973,25 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
   private static final class Loaded {
 
+    private static final ServiceProviderInstantiator instantiator =
+      ServiceLoader.load(ServiceProviderInstantiator.class, ServiceProviderInstantiator.class.getClassLoader())
+      .stream()
+      .findFirst()
+      .map(ServiceLoader.Provider::get)
+      .orElse(new ServiceProviderInstantiator() {});
+    
     private static final List<Provider> providers =
       ServiceLoader.load(Provider.class, Provider.class.getClassLoader())
       .stream()
-      .map(ServiceLoader.Provider::get)
+      .map(instantiator::instantiate)
+      .filter(Objects::nonNull)
       .toList();
 
     private static final AmbiguityHandler ambiguityHandler =
       ServiceLoader.load(AmbiguityHandler.class, AmbiguityHandler.class.getClassLoader())
       .stream()
-      .map(ServiceLoader.Provider::get)
       .findFirst()
+      .map(instantiator::instantiate)
       .orElse(NoOpAmbiguityHandler.INSTANCE);
 
   }

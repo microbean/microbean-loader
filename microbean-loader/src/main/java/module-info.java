@@ -23,6 +23,7 @@ import org.microbean.loader.api.Loader;
 
 import org.microbean.loader.spi.AmbiguityHandler;
 import org.microbean.loader.spi.Provider;
+import org.microbean.loader.spi.ServiceProviderInstantiator;
 
 /**
  * Provides packages related to the {@linkplain DefaultLoader default
@@ -52,5 +53,7 @@ module org.microbean.loader {
 
   uses AmbiguityHandler;
   uses Provider;
+  uses ServiceProviderInstantiator;
+
 
 }
