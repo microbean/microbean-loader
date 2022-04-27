@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 import org.microbean.development.annotation.EntryPoint;
+import org.microbean.development.annotation.Experimental;
 import org.microbean.development.annotation.OverridingDiscouraged;
 
 import org.microbean.invoke.OptionalSupplier;
@@ -95,39 +96,95 @@ public interface Loader<T> extends OptionalSupplier<T> {
   public Loader<?> parent();
 
   /**
-   * Returns the <strong>{@linkplain Path#absolute()
-   * absolute}</strong> representation of the {@link Path} that was
-   * supplied to an invocation of this {@link Loader}'s {@linkplain
-   * #parent() parent <code>Loader</code>}'s {@link #load(Path)}
-   * method and that resulted in this {@link Loader} being {@linkplain
-   * #load(Path) loaded} as a result.
+   * Returns the {@link Path} with which this {@link Loader} was
+   * created.
    *
-   * <p>Implementations of this method must return an {@linkplain
-   * Path#absolute() absolute} {@link Path} that adheres to these
-   * requirements or undefined behavior will result.</p>
+   * <p>The {@link Path} that is returned by an implementation of this
+   * method is not guaranteed to be {@linkplain Path#absolute()
+   * absolute}.</p>
    *
-   * @return the <strong>{@linkplain Path#absolute()
-   * absolute}</strong> representation of the {@link Path} that was
-   * supplied to an invocation of this {@link Loader}'s {@linkplain
-   * #parent() parent <code>Loader</code>}'s {@link #load(Path)}
-   * method and that resulted in this {@link Loader} being {@linkplain
-   * #load(Path) loaded} as a result
+   * <p>The {@link Path} that is returned by an implementation of this
+   * method must be {@linkplain Path#equals(Object) equal} to a
+   * {@linkplain #transliterate(Path) transliterated} version of the
+   * {@link Path} that was supplied to the {@link #load(Path)} method
+   * of this {@link Loader}'s {@linkplain #parent() parent} that
+   * resulted in this {@link Loader}'s creation.</p>
+   *
+   * @return the non-{@code null} {@link Path} with which this {@link
+   * Loader} was created
    *
    * @nullability Implementations of this method must not return
    * {@code null}.
    *
-   * @idempotency Implementations of this method must be idempotent
-   * and deterministic.
-   *
    * @threadsafety Implementations of this method must be safe for
    * concurrent use by multiple threads.
    *
-   * @see #load(path)
+   * @idempotency Implementations of this method must be idempotent
+   * and deterministic.
    *
-   * @see Path#absolute()
+   * @see #parent()
+   *
+   * @see #load(Path)
+   *
+   * @see #absolutePath()
+   *
+   * @see #absolutePath(Path)
    */
   public Path<? extends Type> path(); // must be absolute
 
+  /**
+   * Experimental; do not use.
+   *
+   * @return an {@linkplain Path#absolute() absolute
+   * <code>Path</code>}
+   *
+   * @exception NullPointerException if {@link #path()} or {@link
+   * #parent()} is implemented incorrectly
+   *
+   * @nullability This method does not, and its overrides must not,
+   * return {@code null}.
+   *
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   *
+   * @see #absolutePath(Path)
+   */
+  @Experimental
+  public default Path<? extends Type> absolutePath() {
+    return this.absolutePath(this.path());
+  }
+
+  /**
+   * Returns an {@linkplain Path#absolute() absolute} {@link Path} representing the 
+   *
+   * @param <P> the type of the path
+   *
+   * @param path a {@link Path}; must not be {@code null}
+   *
+   * @return an {@linkplain Path#absolute() absolute
+   * <code>Path</code>}
+   *
+   * @exception NullPointerException if {@code path} is {@code null}
+   * or if #parent()} is implemented incorrectly
+   *
+   * @nullability This method does not, and its (discouraged)
+   * overrides must not, return {@code null}.
+   *
+   * @idempotency This method is, and its (discouraged) overrides must
+   * be, idempotent and deterministic.
+   *
+   * @threadsafety This method is, and its (discouraged) overrides
+   * must be, safe for concurrent use by multiple threads.
+   */
+  @Experimental
+  @OverridingDiscouraged
+  public default <P> Path<P> absolutePath(final Path<P> path) {
+    return path.absolute() ? path : this.parent().absolutePath().plus(path);
+  }
+  
   /**
    * Uses the addressing information encoded in the supplied {@link
    * Path} to load and return the {@link Loader} logically found at
@@ -147,12 +204,6 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * {@linkplain #get() supply}</li>
    *
    * </ul>
-   *
-   * <p>An implementation of this method <strong>must</strong> first
-   * call {@link #normalize(Path)} with the supplied {@link Path}, and
-   * <strong>must</strong> use the {@link Path} returned by that
-   * method in place of the supplied {@link Path}, or undefined
-   * behavior will result.</p>
    *
    * <p>The default implementations of all other methods in this
    * interface named {@code load} call this method.</p>
@@ -180,8 +231,6 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * @see #get()
    *
    * @see #determinism()
-   *
-   * @see #normalize(Path)
    */
   @EntryPoint
   public <U> Loader<U> load(final Path<? extends Type> path);
@@ -709,66 +758,17 @@ public interface Loader<T> extends OptionalSupplier<T> {
   }
 
   /**
-   * {@linkplain #transliterate(Path) Transliterates} the supplied
-   * {@link Path}, if needed, after converting the supplied {@link
-   * Path} into an {@linkplain Path#absolute() absolute} {@link Path},
-   * and returns the result.
-   *
-   * <p>Overriding of this method is strongly discouraged.</p>
-   *
-   * <p>Most users will have no need to call this method directly.</p>
-   *
-   * @param <U> the {@link Type} designated by the supplied {@link
-   * Path}
-   *
-   * @param path the {@link Path} to normalize; must not be {@code
-   * null}
-   *
-   * @return a {@link Path} that {@linkplain Path#transliterated() is
-   * transliterated} and {@linkplain Path#absolute() absolute}
-   *
-   * @exception NullPointerException if {@code path} is {@code null}
-   *
-   * @nullability This method does not, and its (discouraged)
-   * overrides must not, return {@code null}.
-   *
-   * @idempotency This method is, and its (discouraged) overrides must
-   * be, idempotent and deterministic.
-   *
-   * @threadsafety This method is, and its (discouraged) overrides
-   * must be, safe for concurrent use by multiple threads.
-   *
-   * @see #transliterate(Path)
-   *
-   * @see Path#transliterated()
-   *
-   * @see Path#absolute()
-   */
-  @OverridingDiscouraged
-  public default <U extends Type> Path<U> normalize(final Path<U> path) {
-    if (path.absolute()) {
-      if (path.transliterated() || path.size() == 1) {
-        return path;
-      } else {
-        return this.transliterate(path);
-      }
-    } else {
-      return this.transliterate(this.path().plus(path));
-    }
-  }
-
-  /**
    * Returns a {@link Loader}, derived from this {@link Loader}, that
-   * is suitable for a {@linkplain #normalize(Path) normalized
+   * is suitable for a {@linkplain #transliterate(Path) transliterated
    * version} of the supplied {@code path}, particularly for cases
    * where, during the execution of the {@link #load(Path)} method, a
    * {@link Loader} must be supplied to some other class.
    *
    * <p>The returned {@link Loader} must be one whose {@link #path()}
    * method returns the {@linkplain Path#size() longest} {@link Path}
-   * that is a parent of the ({@linkplain #normalize(Path)
-   * normalized}) supplied {@code path}.  In many cases {@code this}
-   * will be returned.</p>
+   * that is a parent of the ({@linkplain #transliterate(Path)
+   * transliterated}) supplied {@code path}.  In many cases {@code
+   * this} will be returned.</p>
    *
    * <p>Typically only classes implementing this interface will need
    * to call this method.  Most users will have no need to call this
@@ -781,7 +781,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * null}
    *
    * @return a {@link Loader}, derived from this {@link Loader}, that
-   * is suitable for a {@linkplain #normalize(Path) normalized
+   * is suitable for a {@linkplain #transliterate(Path) transliterated
    * version} of the supplied {@code path}, particularly for cases
    * where, during the execution of the {@link #load(Path)} method, a
    * {@link Loader} must be supplied to some other class; never {@code
@@ -800,34 +800,54 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * its (discouraged) overrides must be, idempotent and
    * deterministic.
    *
-   * @see #normalize(Path)
-   *
    * @see #transliterate(Path)
    *
    * @see #root()
    */
   @OverridingDiscouraged
   public default Loader<?> loaderFor(Path<? extends Type> path) {
-    path = this.normalize(path);
+    if (this.isRoot()) {
+      return this;
+    }
+    if (!path.absolute()) {
+      path = this.path().plus(path);
+    }
+    path = this.transliterate(path);
+
+    // (Will be returned.)
     Loader<?> requestor = this;
-    final Path<? extends Type> requestorPath = requestor.path();
+    Path<? extends Type> requestorPath = requestor.absolutePath();
+    
     assert requestorPath.absolute() : "!requestorPath.absolute(): " + requestorPath;
+    assert requestorPath.transliterated();
+
+    // TODO: note that this does not take a Path's top-level
+    // qualifiers into account.  Maybe that's on purpose?
     if (requestorPath.startsWith(path)) {
-      if (!requestorPath.equals(path)) {
-        final int requestorPathSize = requestorPath.size();
-        final int pathSize = path.size();
-        assert requestorPathSize != pathSize;
-        if (requestorPathSize > pathSize) {
-          for (int i = 0; i < requestorPathSize - pathSize; i++) {
-            requestor = requestor.parent();
-          }
-          assert requestor.path().equals(path) : "!requestor.path().equals(path); requestor.path(): " + requestor.path() + "; path: " + path;
-        } else {
-          throw new AssertionError("requestorPath.size() < path.size(); requestorPath: " + requestorPath + "; path: " + path);
+      // This Loader's absolute path (e.g. /a/b/c/d) begins with path
+      // (e.g. /a/b), and so could also equal its sequence of path
+      // elements (e.g. if path is also /a/b/c/d).  We don't care
+      // about the equals case.
+      final int requestorPathSize = requestorPath.size();
+      final int pathSize = path.size();
+      if (requestorPathSize > pathSize) {
+        // This Loader's absolute path(e.g. /a/b/c/d) begins with path
+        // (e.g. /a/b) and does not have the same sequence of path
+        // elements.
+        final int diff = requestorPathSize - pathSize;
+        // TODO: This is all screwed up.  This for loop presumes that
+        // there is a parent Loader at every "seam", which is not
+        // necessarily the case.  Really size isn't important; it's
+        // got to be something like: keep getting parents until the
+        // one you get "ends with" path (/a/b) (in which case you know
+        // the sizes are the same), or the parent no longer "starts
+        // with" path (/a/b).
+        for (int i = 0; i < diff; i++) {
+          requestor = requestor.parent();
         }
-      } else {
-        requestor = requestor.root();
       }
+    } else {
+      requestor = requestor.root();
     }
     return requestor;
   }
@@ -865,9 +885,6 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * corresponding to the supplied {@link Path}, returning the
    * supplied {@code path} itself if no transliteration can take
    * place.  Infinite loops are avoided except as noted below.</p>
-   *
-   * <p>Overrides of this method <strong>must not call {@link
-   * #normalize(Path)}</strong> or an infinite loop may result.</p>
    *
    * <p>Overrides of this method <strong>must not call {@link
    * #loaderFor(Path)}</strong> or an infinite loop may
@@ -912,29 +929,47 @@ public interface Loader<T> extends OptionalSupplier<T> {
    *
    * @see Path#transliterate(java.util.function.BiFunction)
    *
-   * @see #normalize(Path)
-   *
    * @see #loaderFor(Path)
    *
    * @see #load(Path)
    */
   @OverridingDiscouraged
   public default <U extends Type> Path<U> transliterate(final Path<U> path) {
-    if (path.transliterated() ||
-        path.lastElement().name().equals("transliterated") &&
-        path.lastElement().qualified() instanceof ParameterizedType ptype &&
-        ptype.getRawType() instanceof Class<?> c &&
-        Path.class.isAssignableFrom(c)) {
+    if (path.transliterated()) {
+      return path;
+    } else if (path.size() == 1 ||
+               path.lastElement().name().equals("transliterated") &&
+               path.lastElement().qualified() instanceof ParameterizedType ptype &&
+               ptype.getRawType() instanceof Class<?> c &&
+               Path.class.isAssignableFrom(c)) {
+      // (All of these tests are to check: is the supplied Path a
+      // transliteration request?)
+      // 
       // The last element's type should be a parameterized type
       // representing Path<Something>.  The last element's qualifiers
       // will also contain a "path" key with the original Path being
       // transliterated, but we don't need to check that.
-      return path;
+      //
+      // In such a case: 
+      return path.transliterate();
     }
     final ParameterizedType ptype = (ParameterizedType)new Token<Path<U>>() {}.type();
     final Element<ParameterizedType> e = Element.of(Qualifiers.of("path", path), ptype, "transliterated");
-    final Path<ParameterizedType> p = this.path().plus(e);
-    return this.<Path<U>>load(p).orElse(path.transliterate());
+    // Note that we transliterate the transliteration request itself
+    // with a no-op: this marks the request itself as already
+    // transliterated, which should kill off any infinite loops.
+    final Path<ParameterizedType> transliterationRequest = this.path().plus(e).transliterate();
+    Path<U> returnValue = this.<Path<U>>load(transliterationRequest).orElse(path);
+    if (returnValue == null) {
+      // null is not a permitted return value for this method,
+      // although it may be a valid value from a provider.  Treat it
+      // as absent by simply marking the supplied path as already
+      // transliterated.
+      returnValue = path.transliterate();
+    } else if (!returnValue.transliterated()) {
+      returnValue = returnValue.transliterate();
+    }
+    return returnValue;
   }
 
   /**
@@ -998,8 +1033,9 @@ public interface Loader<T> extends OptionalSupplier<T> {
       root = parent;
       parent = root.parent();
     }
-    assert root.path().equals(Path.root());
-    assert this != root ? !this.path().equals(Path.root()) : true;
+    assert root.path().isRoot();
+    assert root.parent() == root;
+    assert this == root ? true : !this.path().isRoot();
     return root;
   }
 
@@ -1125,8 +1161,8 @@ public interface Loader<T> extends OptionalSupplier<T> {
           ServiceLoader.load(Loader.class, Loader.class.getClassLoader()).findFirst().orElseThrow();
         if (rootLoader.determinism() != Determinism.PRESENT) {
           throw new IllegalStateException("rootLoader.determinism() != PRESENT: " + rootLoader.determinism());
-        } else if (!Path.root().equals(rootLoader.path())) {
-          throw new IllegalStateException("rootLoader.path(): " + rootLoader.path());
+        } else if (!rootLoader.path().isRoot()) {
+          throw new IllegalStateException("!rootLoader.path().isRoot(): " + rootLoader.path());
         } else if (rootLoader.parent() != rootLoader) {
           throw new IllegalStateException("rootLoader.parent(): " + rootLoader.parent());
         } else if (rootLoader.get() != rootLoader) {
@@ -1139,8 +1175,8 @@ public interface Loader<T> extends OptionalSupplier<T> {
         INSTANCE = rootLoader.<Loader<?>>load(Path.of(new Token<Loader<?>>() {}.type())).orElse(rootLoader);
         if (INSTANCE.determinism() != Determinism.PRESENT) {
           throw new IllegalStateException("INSTANCE.determinism() != PRESENT: " + INSTANCE.determinism());
-        } else if (!Path.root().equals(INSTANCE.path())) {
-          throw new IllegalStateException("INSTANCE.path(): " + INSTANCE.path());
+        } else if (!INSTANCE.path().isRoot()) {
+          throw new IllegalStateException("!INSTANCE.path().isRoot(): " + INSTANCE.path());
         } else if (INSTANCE.parent() != rootLoader) {
           throw new IllegalStateException("INSTANCE.parent(): " + INSTANCE.parent());
         } else if (!(INSTANCE.get() instanceof Loader)) {
