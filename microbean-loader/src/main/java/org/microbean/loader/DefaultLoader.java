@@ -54,6 +54,7 @@ import org.microbean.qualifier.Qualifiers;
 
 import org.microbean.loader.spi.AmbiguityHandler;
 import org.microbean.loader.spi.Provider;
+import org.microbean.loader.spi.ServiceProviderInstantiator;
 import org.microbean.loader.spi.Value;
 
 import org.microbean.type.JavaType.Token;
@@ -77,7 +78,13 @@ import org.microbean.type.JavaTypes;
 public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
 
-  private static final ThreadLocal<Map<Path<? extends Type>, Deque<Provider>>> currentProviderStacks = ThreadLocal.withInitial(() -> new HashMap<>(7));
+  /*
+   * Static fields.
+   */
+
+
+  private static final ThreadLocal<Map<Path<? extends Type>, Deque<Provider>>> currentProviderStacks =
+    ThreadLocal.withInitial(() -> new HashMap<>(7));
 
 
   /*
@@ -85,12 +92,13 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    */
 
 
-  // Package-private for testing only.
-  final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache;
+  private final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache;
+
+  private final Path<? extends Type> requestedPath;
 
   private final Path<? extends Type> absolutePath;
 
-  private final DefaultLoader<?> parent;
+  private final Loader<?> parent;
 
   private final OptionalSupplier<? extends T> supplier;
 
@@ -107,89 +115,148 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   /**
    * Creates a new {@link DefaultLoader}.
    *
-   * @see org.microbean.loader.api.Loader#loader()
+   * <p>The new {@link DefaultLoader} will return {@code this} from
+   * its {@link #parent()} method.</p>
    *
-   * @deprecated This constructor should be invoked by subclasses and
-   * {@link ServiceLoader java.util.ServiceLoader} instances only.
+   * @see org.microbean.loader.api.Loader#loader()
    */
-  @Deprecated // intended for use by subclasses and java.util.ServiceLoader only
   public DefaultLoader() {
     this(new ConcurrentHashMap<Path<? extends Type>, DefaultLoader<?>>(),
          null, // providers
          null, // parent,
-         null, // absolutePath
+         null, // requestedPath
          null, // Supplier
          null); // AmbiguityHandler
+  }
+
+  /**
+   * Creates a new {@link DefaultLoader} that will use the supplied
+   * {@link Provider}s and an {@link AmbiguityHandler} disovered via
+   * the {@link ServiceLoader} mechanism.
+   *
+   * <p>The new {@link DefaultLoader} will return {@code this} from
+   * its {@link #parent()} method.</p>
+   *
+   * @param providers the {@link Provider}s to use; may be {@code
+   * null} in which case {@link Provider}s will be discovered using
+   * the {@link ServiceLoader} mechanism; may be empty in which case
+   * the new {@link DefaultLoader} may be useless
+   */
+  public DefaultLoader(final Collection<? extends Provider> providers) {
+    this(new ConcurrentHashMap<Path<? extends Type>, DefaultLoader<?>>(),
+         providers,
+         null, // parent,
+         null, // requestedPath
+         null, // Supplier
+         null); // AmbiguityHandler
+  }
+
+  /**
+   * Creates a new {@link DefaultLoader} that will use the supplied
+   * {@link Provider}s and {@link AmbiguityHandler}.
+   *
+   * <p>The new {@link DefaultLoader} will return {@code this} from
+   * its {@link #parent()} method.</p>
+   *
+   * @param providers the {@link Provider}s to use; may be {@code
+   * null} in which case {@link Provider}s will be discovered using
+   * the {@link ServiceLoader} mechanism; may be empty in which case
+   * the new {@link DefaultLoader} may be useless
+   *
+   * @param ambiguityHandler the {@link AmbiguityHandler} to use; may
+   * be {@code null} in which case an {@link AmbiguityHandler} will be
+   * discovered using the {@link ServiceLoader} mechanism
+   */
+  public DefaultLoader(final Collection<? extends Provider> providers,
+                       final AmbiguityHandler ambiguityHandler) {
+    this(new ConcurrentHashMap<Path<? extends Type>, DefaultLoader<?>>(),
+         providers,
+         null, // parent,
+         null, // requestedPath
+         null, // Supplier
+         ambiguityHandler);
   }
 
   private DefaultLoader(final DefaultLoader<T> loader) {
     this(loader.loaderCache,
          loader.providers(),
-         loader.parent(),
+         loader.parent() == loader ? null : loader.parent(), // root case
          loader.path(),
-         loader.supplier,
+         loader.parent() == loader ? null : loader.supplier, // root case
          loader.ambiguityHandler());
   }
 
   private DefaultLoader(final DefaultLoader<T> loader, final AmbiguityHandler ambiguityHandler) {
     this(loader.loaderCache,
          loader.providers(),
-         loader.parent(),
+         loader.parent() == loader ? null : loader.parent(), // root case
          loader.path(),
-         loader.supplier,
+         loader.parent() == loader ? null : loader.supplier, // root case
          ambiguityHandler);
   }
 
   private DefaultLoader(final DefaultLoader<T> loader, final Collection<? extends Provider> providers) {
     this(loader.loaderCache,
          providers,
-         loader.parent(),
+         loader.parent() == loader ? null : loader.parent(), // root case
          loader.path(),
-         loader.supplier,
+         loader.parent() == loader ? null : loader.supplier, // root case
          loader.ambiguityHandler());
   }
 
   @SuppressWarnings("unchecked")
   private DefaultLoader(final ConcurrentMap<Path<? extends Type>, DefaultLoader<?>> loaderCache,
                         final Collection<? extends Provider> providers,
-                        final DefaultLoader<?> parent, // if null, will end up being "this" if absolutePath is null or Path.root()
-                        final Path<? extends Type> absolutePath,
+                        final Loader<?> parent, // if null, will end up being "this" if absolutePath is null or Path.root()
+                        final Path<? extends Type> requestedPath,
                         final OptionalSupplier<? extends T> supplier, // if null, will end up being () -> this if absolutePath is null or Path.root()
                         final AmbiguityHandler ambiguityHandler) {
     super();
     this.loaderCache = Objects.requireNonNull(loaderCache, "loaderCache");
     if (parent == null) {
-      // Bootstrap case, i.e. the zero-argument constructor called us.
-      // Pay attention.
-      if (absolutePath == null || absolutePath.equals(Path.root())) {
+      // Root case. Pay attention.
+      if (requestedPath == null || requestedPath.isRoot()) {
         final Path<? extends Type> rootPath = (Path<? extends Type>)Path.root();
-        this.absolutePath = rootPath;
+        this.requestedPath = rootPath;
         this.parent = this; // NOTE
+        this.absolutePath = rootPath;
         this.supplier = supplier == null ? FixedValueSupplier.of((T)this) : supplier;
         this.providers = providers == null ? loadedProviders() : List.copyOf(providers);
         this.loaderCache.put(rootPath, this); // NOTE
-        // While the following call is in effect, our
-        // final-but-as-yet-uninitialized ambiguityHandler field will
-        // be null.  Note that the ambiguityHandler() instance method
-        // accounts for this.
-        try {
-          this.ambiguityHandler = this.load(AmbiguityHandler.class).orElseGet(DefaultLoader::loadedAmbiguityHandler);
-        } finally {
-          this.loaderCache.remove(rootPath);
+        if (ambiguityHandler == null) {
+          // While the following call is in effect, our
+          // final-but-as-yet-uninitialized ambiguityHandler field will
+          // be null.  Note that the ambiguityHandler() instance method
+          // accounts for this.
+          try {
+            this.ambiguityHandler = this.load(AmbiguityHandler.class).orElseGet(DefaultLoader::loadedAmbiguityHandler);
+          } finally {
+            this.loaderCache.remove(rootPath);
+          }
+        } else {
+          this.ambiguityHandler = ambiguityHandler;
         }
       } else {
-        throw new IllegalArgumentException("!absolutePath.equals(Path.root()): " + absolutePath);
+        throw new IllegalArgumentException("!requestedPath.equals(Path.root()): " + requestedPath);
       }
-    } else if (!absolutePath.absolute()) {
-      throw new IllegalArgumentException("!absolutePath.absolute(): " + absolutePath);
-    } else if (!parent.path().absolute()) {
-      throw new IllegalArgumentException("!parent.path().absolute(): " + parent.path());
+    } else if (!parent.absolutePath().absolute()) {
+      throw new IllegalArgumentException("!parent.absolutePath().absolute(): " + parent.absolutePath());
+    } else if (requestedPath.isRoot()) {
+      throw new IllegalArgumentException("requestedPath.isRoot()");
     } else {
-      this.absolutePath = absolutePath;
+      assert requestedPath.transliterated();
+      this.requestedPath = requestedPath;
       this.parent = parent;
+      assert parent.absolutePath().transliterated();
       this.supplier = Objects.requireNonNull(supplier, "supplier");
       this.providers = List.copyOf(providers);
       this.ambiguityHandler = Objects.requireNonNull(ambiguityHandler, "ambiguityHandler");
+      if (requestedPath.absolute()) {
+        this.absolutePath = requestedPath;
+      } else {
+        this.absolutePath = this.transliterate(parent.absolutePath().plus(requestedPath));
+      }
+      assert this.absolutePath.transliterated();
     }
   }
 
@@ -333,6 +400,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   public final DefaultLoader<T> with(final AmbiguityHandler ambiguityHandler) {
     if (ambiguityHandler == this.ambiguityHandler()) {
       return this;
+    } else if (ambiguityHandler == null) {
+      return new DefaultLoader<>(this, NoOpAmbiguityHandler.INSTANCE);
     } else {
       return new DefaultLoader<>(this, ambiguityHandler);
     }
@@ -392,17 +461,17 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   }
 
   /**
-   * Returns the {@link DefaultLoader} serving as the parent of this
-   * {@link DefaultLoader}.
+   * Returns the {@link Loader} serving as the parent of this {@link
+   * DefaultLoader}.
    *
    * <p>The "root" {@link DefaultLoader} returns itself from its
    * {@link #parent()} implementation.</p>
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * @return the non-{@code null} {@link DefaultLoader} serving as the
-   * parent of this {@link DefaultLoader}; may be this {@link
-   * DefaultLoader} itself
+   * @return the non-{@code null} {@link Loader} serving as the parent
+   * of this {@link DefaultLoader}; may be this {@link DefaultLoader}
+   * itself
    *
    * @nullability This method never returns {@code null}.
    *
@@ -413,19 +482,26 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    */
   // Note that the root will have itself as its parent.
   @Override // Loader<T>
-  public final DefaultLoader<?> parent() {
+  public final Loader<?> parent() {
     return this.parent;
   }
 
   /**
-   * Returns the {@linkplain Path#absolute() absolute} {@link Path}
-   * with which this {@link DefaultLoader} is associated.
+   * Returns the {@link Path} with which this {@link DefaultLoader}
+   * was created.
    *
-   * <p>This method never returns {@code null}.</p>
+   * <p>The {@link Path} that is returned by this method is not
+   * guaranteed to be {@linkplain Path#absolute() absolute}.</p>
    *
-   * @return the non-{@code null} {@linkplain Path#absolute()
-   * absolute} {@link Path} with which this {@link DefaultLoader} is
-   * associated
+   * <p>The {@link Path} that is returned by this method will be
+   * {@linkplain Path#equals(Object) equal} to a {@linkplain
+   * #transliterate(Path) transliterated} version of the {@link Path}
+   * that was supplied to the {@link #load(Path)} method of this
+   * {@link DefaultLoader}'s {@linkplain #parent() parent} that
+   * resulted in this {@link DefaultLoader}'s creation.</p>
+   *
+   * @return the non-{@code null} {@link Path} with which this {@link
+   * DefaultLoader} was created
    *
    * @nullability This method never returns {@code null}.
    *
@@ -433,9 +509,61 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    * threads.
    *
    * @idempotency This method is idempotent and deterministic.
+   * @nullability Implementations of this method must not return
+   * {@code null}.
+   *
+   * @see #parent()
+   *
+   * @see #load(Path)
+   *
+   * @see #absolutePath()
+   *
+   * @see #absolutePath(Path)
    */
   @Override // Loader<T>
   public final Path<? extends Type> path() {
+    return this.requestedPath;
+  }
+
+  /**
+   * Returns the {@linkplain Path#absolute() absolute} {@link Path}
+   * representing the {@link Path} with which this {@link
+   * DefaultLoader} was created.
+   *
+   * <p>The {@link Path} that is returned by this method is guaranteed
+   * to be {@linkplain Path#absolute() absolute}.</p>
+   *
+   * <p>The {@link Path} that is returned by this method will be
+   * {@linkplain Path#equals(Object) equal} to a {@linkplain
+   * #transliterate(Path) transliterated} and {@linkplain
+   * Path#absolute() absolute} version of the {@link Path} that was
+   * supplied to the {@link #load(Path)} method of this {@link
+   * DefaultLoader}'s {@linkplain #parent() parent} that resulted in
+   * this {@link DefaultLoader}'s creation.</p>
+   *
+   * @return the non-{@code null} {@linkplain Path#absolute()
+   * absolute} {@link Path} representing the {@link Path} with which
+   * this {@link DefaultLoader} was created
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   * @nullability Implementations of this method must not return
+   * {@code null}.
+   *
+   * @see #parent()
+   *
+   * @see #load(Path)
+   *
+   * @see #path()
+   *
+   * @see #absolutePath(Path)
+   */
+  @Override // Loader<T>
+  public final Path<? extends Type> absolutePath() {
     return this.absolutePath;
   }
 
@@ -461,11 +589,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   @Override // Loader<T>
   public final T get() {
     return this.supplier.get();
-  }
-
-  @Override // Loader<T>
-  public final DefaultLoader<?> loaderFor(Path<? extends Type> path) {
-    return (DefaultLoader<?>)Loader.super.loaderFor(path);
   }
 
   /**
@@ -495,7 +618,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    * @exception NullPointerException if {@code path} is {@code null}
    *
    * @exception IllegalArgumentException if the {@code path}, after
-   * {@linkplain #normalize(Path) normalization}, {@linkplain
+   * {@linkplain #absolutePath(Path) normalization}, {@linkplain
    * Path#isRoot() is the root <code>Path</code>}
    *
    * @nullability This method never returns {@code null}.
@@ -506,14 +629,20 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
    * @threadsafety This method is idempotent and deterministic.
    */
   @Override // Loader<T>
-  public final <U> DefaultLoader<U> load(final Path<? extends Type> path) {
-    final Path<? extends Type> absolutePath = this.normalize(path);
-    if (!absolutePath.absolute()) {
-      throw new IllegalArgumentException("!normalize(path).absolute(): " + absolutePath);
-    } else if (absolutePath.isRoot()) {
-      throw new IllegalArgumentException("normalize(path).isRoot(): " + absolutePath);
+  public final <U> DefaultLoader<U> load(Path<? extends Type> path) {
+    final Path<? extends Type> requestedPath = this.transliterate(path);
+    final Path<? extends Type> absolutePath;
+    if (requestedPath.absolute()) {
+      absolutePath = requestedPath; // already transliterated
+    } else {
+      absolutePath = this.transliterate(this.absolutePath().plus(requestedPath));
+      if (!absolutePath.absolute()) {
+        throw new IllegalArgumentException("!absolutePath.absolute(): " + absolutePath);
+      }
     }
-    final DefaultLoader<?> requestor = this.loaderFor(absolutePath);
+    if (absolutePath.isRoot()) {
+      throw new IllegalArgumentException("absolutePath.isRoot(): " + absolutePath);
+    }
     // We deliberately do not use computeIfAbsent() because load()
     // operations can kick off other load() operations, and then you'd
     // have a cache mutating operation occuring within a cache
@@ -526,8 +655,14 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     // configuration use cases will cause this work to happen anyway.
     DefaultLoader<?> defaultLoader = this.loaderCache.get(absolutePath);
     if (defaultLoader == null) {
-      defaultLoader = this.loaderCache.putIfAbsent(absolutePath, this.computeLoader(requestor, absolutePath));
+      defaultLoader =
+        this.loaderCache.putIfAbsent(absolutePath,
+                                     this.computeLoader(this.loaderFor(absolutePath), requestedPath, absolutePath));
       if (defaultLoader == null) {
+        // putIfAbsent() returns the *old* value, which may be null.
+        // Contrast with computeIfAbsent(), which returns the *new*
+        // value.  See comments above for why we do not use
+        // computeIfAbsent().
         defaultLoader = this.loaderCache.get(absolutePath);
       }
     }
@@ -537,9 +672,21 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   }
 
   @SuppressWarnings("unchecked")
-  private final <U> DefaultLoader<U> computeLoader(final DefaultLoader<?> requestor, final Path<? extends Type> absolutePath) {
+  private final <U> DefaultLoader<U> computeLoader(final Loader<?> requestor,
+                                                   final Path<? extends Type> requestedPath,
+                                                   final Path<? extends Type> absolutePath) {
+    assert requestedPath.transliterated();
+    assert absolutePath.absolute();
+    assert absolutePath.transliterated();
     final Qualifiers<? extends String, ?> qualifiers = absolutePath.qualifiers();
-    final AmbiguityHandler ambiguityHandler = requestor.ambiguityHandler();
+    final AmbiguityHandler ambiguityHandler;
+    if (requestor instanceof AmbiguityHandler ah) {
+      ambiguityHandler = ah;
+    } else if (requestor instanceof DefaultLoader<?> dl) {
+      ambiguityHandler = dl.ambiguityHandler();
+    } else {
+      ambiguityHandler = this.ambiguityHandler();
+    }
     Value<U> candidate = null;
     final Collection<? extends Provider> providers = this.providers();
     if (!providers.isEmpty()) {
@@ -644,6 +791,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
             break;
           }
 
+          // The Path scores were equal.  Give the AmbiguityHandler a
+          // chance to resolve the ambguity.
           final Value<U> disambiguatedValue =
             ambiguityHandler.disambiguate(requestor, absolutePath, candidateProvider, candidate, provider, value);
 
@@ -653,11 +802,13 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
           }
 
           if (disambiguatedValue.equals(candidate)) {
-            candidate = new Value<>(candidate, value);
+            // Candidate wins; value is a backup.
+            candidate = new Value<>(disambiguatedValue, value);
             break;
           }
 
           if (disambiguatedValue.equals(value)) {
+            // Value wins; candidate is a backup.
             candidate = new Value<>(disambiguatedValue, candidate);
             candidateProvider = provider;
             candidateQualifiersScore = valueQualifiersScore;
@@ -665,8 +816,8 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
             break;
           }
 
-          // Disambiguation came up with an entirely different value,
-          // so run it back through the while loop.
+          // The AmbiguityHandler came up with an entirely different
+          // value, so run it back through the while loop.
           value = disambiguatedValue;
 
         }
@@ -676,7 +827,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
       new DefaultLoader<>(this.loaderCache,
                           providers,
                           requestor, // parent
-                          absolutePath,
+                          requestedPath,
                           candidate == null ? Absence.instance() : candidate,
                           ambiguityHandler);
   }
@@ -717,7 +868,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     }
   }
 
-  private static final Provider peek(final Map<?, ? extends Deque<Provider>> map,
+  private static final Provider peek(final Map<?, ? extends Deque<? extends Provider>> map,
                                      final Path<? extends Type> absolutePath) {
     final Queue<? extends Provider> q = map.get(absolutePath);
     return q == null ? null : q.peek();
@@ -729,7 +880,7 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     map.computeIfAbsent(absolutePath, ap -> new ArrayDeque<>(5)).push(provider);
   }
 
-  private static final Provider pop(final Map<?, ? extends Deque<Provider>> map,
+  private static final Provider pop(final Map<?, ? extends Deque<? extends Provider>> map,
                                     final Path<? extends Type> absolutePath) {
     final Deque<? extends Provider> dq = map.get(absolutePath);
     return dq == null ? null : dq.pop();
@@ -814,10 +965,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     return absoluteReferencePath.endsWith(valuePath, NamesAndTypesAreCompatibleBiPredicate.INSTANCE);
   }
 
-  private static final <T> T throwNoSuchElementException() {
-    throw new NoSuchElementException();
-  }
-
 
   /*
    * Inner and nested classes.
@@ -826,17 +973,25 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
   private static final class Loaded {
 
+    private static final ServiceProviderInstantiator instantiator =
+      ServiceLoader.load(ServiceProviderInstantiator.class, ServiceProviderInstantiator.class.getClassLoader())
+      .stream()
+      .findFirst()
+      .map(ServiceLoader.Provider::get)
+      .orElse(new ServiceProviderInstantiator() {});
+    
     private static final List<Provider> providers =
       ServiceLoader.load(Provider.class, Provider.class.getClassLoader())
       .stream()
-      .map(ServiceLoader.Provider::get)
+      .map(instantiator::instantiate)
+      .filter(Objects::nonNull)
       .toList();
 
     private static final AmbiguityHandler ambiguityHandler =
       ServiceLoader.load(AmbiguityHandler.class, AmbiguityHandler.class.getClassLoader())
       .stream()
-      .map(ServiceLoader.Provider::get)
       .findFirst()
+      .map(instantiator::instantiate)
       .orElse(NoOpAmbiguityHandler.INSTANCE);
 
   }

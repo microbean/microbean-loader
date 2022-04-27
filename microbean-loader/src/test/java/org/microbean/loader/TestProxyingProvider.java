@@ -131,18 +131,6 @@ final class TestProxyingProvider {
                   return 24;
                 }
               });
-          /*
-          @SuppressWarnings("unchecked")
-          final Value<?> returnValue =
-            new Value<>(FixedValueSupplier.of(new Wheel() {
-                @Override
-                public final int getDiameterInInches() {
-                  return 24;
-                }
-              }),
-              Path.of(Element.of(Qualifiers.of("arg0", "LR"), wheelClass, "wheel")));
-          return returnValue;
-          */
         }
       }
       return null;

@@ -20,6 +20,8 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+import java.util.ServiceLoader;
+
 import org.microbean.loader.api.Loader;
 
 import org.microbean.path.Path;
@@ -59,40 +61,42 @@ public interface Provider {
    *
    * <p>Often the value returned by implementations of this method is
    * no more specific than the lowest possible type, which is {@code
-   * null}, meaning that the {@link Provider} has at least a chance of
+   * null}, meaning that the {@link Provider} has a chance of
    * {@linkplain #get(Loader, Path) producing} a {@link Value} for any
    * requested type.</p>
    *
    * <p>A return value of, for example, {@link String String.class}
    * indicates that the {@link Provider} may satisfy requests for
    * {@link String String.class}, or any of its supertypes (such as
-   * {@link CharSequence}), but cannot satisfy requests for {@link
-   * Integer Integer.class}, for example.</p>
+   * {@link CharSequence} or {@link Object}), but cannot satisfy
+   * requests for {@link Integer Integer.class}, for example.</p>
    *
-   * <p>A return value of {@link Object Object.class} indicates a
-   * maximally opaque type, i.e. only requests for {@link Object
+   * <p>A return value of {@link Object Object.class} would be
+   * extremely unusual and would indicate a maximally opaque type,
+   * i.e. only requests for <em>exactly</em> {@link Object
    * Object.class} have the possibility of being satisfied by this
    * {@link Provider}.  Such a return value is possible, but rarely
    * used, and {@link Provider} implementations are urged to consider
-   * a different {@link Type}.</p>
+   * returning a different {@link Type}.</p>
    *
-   * <p>Note that this method is used solely to help eliminate types,
-   * not permit them.  That is, although {@link Provider} may indicate
-   * via an implementation of this method that a given {@link Type} is
-   * suitable, it is not thereby obliged to return a {@link Value}
-   * corresponding to it from its {@link #get(Loader, Path)
-   * get(Loader, Path)} method implementation.</p>
+   * <p>Note that this method is used solely to help eliminate types
+   * from consideration, not permit them.  That is, although {@link
+   * Provider} may indicate via an implementation of this method that
+   * a given {@link Type} is suitable, it is not thereby obliged to
+   * return a {@link Value} corresponding to it from its {@link
+   * #get(Loader, Path) get(Loader, Path)} method implementation.</p>
    *
    * <p>The default implementation of this method returns {@code
-   * null}.</p>
+   * null}.  Many {@link Provider} implementations will choose not to
+   * override this method.</p>
    *
    * @return a {@link Type} representing the lower type bound of all
    * possible {@linkplain Value values} {@linkplain #get(Loader, Path)
    * supplied} by this {@link Provider}, or {@code null} to indicate
    * the lowest possible type bound
    *
-   * @nullability This method does, and overrides may, return {@code
-   * null}.
+   * @nullability This method always does, and overrides often may,
+   * return {@code null}.
    *
    * @idempotency This method is, and overrides of this method must
    * be, idempotent and deterministic.
@@ -105,10 +109,10 @@ public interface Provider {
   }
 
   /**
-   * Returns a {@link Value} suitable for the supplied {@link
-   * Loader} and {@link Path}, or {@code null} if there is no such
-   * {@link Value} now <strong>and if there never will be such a
-   * {@link Value}</strong> for the supplied arguments.
+   * Returns a {@link Value} suitable for the supplied {@link Loader}
+   * and {@link Path}, <strong>or {@code null} if there is no such
+   * {@link Value} now and if there never will be such a {@link
+   * Value}</strong> for the supplied arguments.
    *
    * <p>In addition to the other requirements described here, the
    * following assertions will be (and must be) true when this method
@@ -137,8 +141,8 @@ public interface Provider {
    * seeking a value; must not be {@code null}
    *
    * @return a {@link Value} more or less suitable for the combination
-   * of the supplied {@link Loader} and {@link Path}, or {@code
-   * null} if there is no such {@link Value} now <strong>and if there
+   * of the supplied {@link Loader} and {@link Path}, <strong>or
+   * {@code null} if there is no such {@link Value} now and if there
    * never will be such a {@link Value}</strong> for the supplied
    * arguments
    *

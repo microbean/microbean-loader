@@ -104,7 +104,7 @@ public class ProxyingProvider extends AbstractProvider {
 
 
   @Override // Provider
-  protected final Supplier<?> find(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+  protected Supplier<?> find(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
     assert absolutePath.absolute();
     assert absolutePath.startsWith(requestor.path());
     assert !absolutePath.equals(requestor.path());
@@ -167,10 +167,58 @@ public class ProxyingProvider extends AbstractProvider {
    * idempotent and deterministic.
    *
    * @see #isIndexLike(Class)
+   *
+   * @see #isProxiable(Class)
    */
-  protected boolean isProxiable(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
-    final Class<?> c = JavaTypes.erase(absolutePath.qualified());
-    if (c.isInterface() && !c.isHidden() && !c.isSealed()) {
+  public boolean isProxiable(final Loader<?> requestor, final Path<? extends Type> absolutePath) {
+    return this.isProxiable(absolutePath.qualified());
+  }
+
+  /**
+   * Returns {@code true} if the supplied {@link Type} can be
+   * proxied.
+   *
+   * <p>A {@link Type} can be proxied if it:</p>
+   *
+   * <ul>
+   *
+   * <li>is not {@code null}</li>
+   *
+   * <li>represents an {@linkplain Class#isInterface() interface}</li>
+   *
+   * <li>is {@linkplain Class#isHidden() not hidden}</li>
+   *
+   * <li>is {@linkplain Class#isSealed() not sealed}</li>
+   *
+   * </ul>
+   *
+   * <p>In addition, the default implementation of this method rules
+   * out interfaces that declare or inherit {@code public} instance
+   * methods with either exactly one parameter that does not pass the
+   * test codified by the {@link #isIndexLike(Class)} method or more
+   * than one parameter.</p>
+   *
+   * <p>This method does not, and its overrides must not, call the
+   * {@link #isProxiable(Loader, Path)} method or undefined behavior
+   * (such as an infinite loop) may result.</p>
+   *
+   * @param type the {@link Type} to test; may be {@code null} in which
+   * case {@code false} will be returned
+   *
+   * @return {@code true} if the supplied {@link Type} can be
+   * proxied; {@code false} otherwise
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   *
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
+   *
+   * @see #isIndexLike(Class)
+   */
+  public boolean isProxiable(final Type type) {
+    final Class<?> c = JavaTypes.erase(type);
+    if (c != null && c.isInterface() && !c.isHidden() && !c.isSealed()) {
       final LoaderFacade facadeAnnotation = c.getAnnotation(LoaderFacade.class);
       if (facadeAnnotation == null || facadeAnnotation.value()) {
         final Method[] methods = c.getMethods();
@@ -398,39 +446,35 @@ public class ProxyingProvider extends AbstractProvider {
    * @see #decapitalize(CharSequence)
    */
   @Convenience
-  @SuppressWarnings("fallthrough")
   public static final String propertyName(final CharSequence cs, final boolean methodReturnsBoolean) {
     if (cs == null) {
       return null;
     } else {
       final int length = cs.length();
-      if (length <= 2) {
-        return decapitalize(cs);
-      } else if (methodReturnsBoolean) {
-        switch (cs.charAt(0)) {
-        case 'i':
-          if (cs.charAt(1) == 's') {
-            return decapitalize(cs.subSequence(2, length));
-          }
-        case 'g':
-          if (length > 3 && cs.charAt(1) == 'e' && cs.charAt(2) == 't') {
-            return decapitalize(cs.subSequence(3, length));
-          }
-        default:
-          return decapitalize(cs);
-        }
-      } else if (length > 3) {
+      if (length > 3) {
         switch (cs.charAt(0)) {
         case 'g':
           if (cs.charAt(1) == 'e' && cs.charAt(2) == 't') {
+            // getFoo() -> decapitalize("Foo")
             return decapitalize(cs.subSequence(3, length));
           }
+          break;
         default:
-          return decapitalize(cs);
+          break;
         }
-      } else {
-        return decapitalize(cs);
+      } else if (methodReturnsBoolean && length > 2) {
+        switch (cs.charAt(0)) {
+        case 'i':
+          if (cs.charAt(1) == 's') {
+            // isFoo() -> decapitalize("Foo")
+            return decapitalize(cs.subSequence(2, length));
+          }
+          break;
+        default:
+          break;
+        }
       }
+      return decapitalize(cs);
     }
   }
 
@@ -454,14 +498,22 @@ public class ProxyingProvider extends AbstractProvider {
   public static final String decapitalize(final CharSequence cs) {
     if (cs == null) {
       return null;
-    } else if (cs.isEmpty() || Character.isLowerCase(cs.charAt(0))) {
-      return cs.toString();
-    } else if (cs.length() == 1) {
-      return cs.toString().toLowerCase();
-    } else if (Character.isUpperCase(cs.charAt(1))) {
-      return cs.toString();
-    } else {
-      final char[] chars = cs.toString().toCharArray();
+    }
+    final String s = cs.toString(); // for atomicity
+    switch (s.length()) {
+    case 0:
+      return s;
+    case 1:
+      return s.toLowerCase();
+    default:
+      if (Character.isUpperCase(s.charAt(1))) {
+        if (Character.isUpperCase(s.charAt(0))) {
+          return s;
+        }
+      } else if (Character.isLowerCase(s.charAt(0))) {
+        return s;
+      }
+      final char[] chars = s.toCharArray();
       chars[0] = Character.toLowerCase(chars[0]);
       return String.valueOf(chars);
     }
