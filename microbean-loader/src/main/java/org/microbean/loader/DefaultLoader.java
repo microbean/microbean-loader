@@ -114,12 +114,11 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   /**
    * Creates a new {@link DefaultLoader}.
    *
-   * @see org.microbean.loader.api.Loader#loader()
+   * <p>The new {@link DefaultLoader} will return {@code this} from
+   * its {@link #parent()} method.</p>
    *
-   * @deprecated This constructor should be invoked by subclasses and
-   * {@link ServiceLoader java.util.ServiceLoader} instances only.
+   * @see org.microbean.loader.api.Loader#loader()
    */
-  @Deprecated // intended for use by subclasses and java.util.ServiceLoader only
   public DefaultLoader() {
     this(new ConcurrentHashMap<Path<? extends Type>, DefaultLoader<?>>(),
          null, // providers
@@ -127,6 +126,54 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
          null, // requestedPath
          null, // Supplier
          null); // AmbiguityHandler
+  }
+
+  /**
+   * Creates a new {@link DefaultLoader} that will use the supplied
+   * {@link Provider}s and an {@link AmbiguityHandler} disovered via
+   * the {@link ServiceLoader} mechanism.
+   *
+   * <p>The new {@link DefaultLoader} will return {@code this} from
+   * its {@link #parent()} method.</p>
+   *
+   * @param providers the {@link Provider}s to use; may be {@code
+   * null} in which case {@link Provider}s will be discovered using
+   * the {@link ServiceLoader} mechanism; may be empty in which case
+   * the new {@link DefaultLoader} may be useless
+   */
+  public DefaultLoader(final Collection<? extends Provider> providers) {
+    this(new ConcurrentHashMap<Path<? extends Type>, DefaultLoader<?>>(),
+         providers,
+         null, // parent,
+         null, // requestedPath
+         null, // Supplier
+         null); // AmbiguityHandler
+  }
+
+  /**
+   * Creates a new {@link DefaultLoader} that will use the supplied
+   * {@link Provider}s and {@link AmbiguityHandler}.
+   *
+   * <p>The new {@link DefaultLoader} will return {@code this} from
+   * its {@link #parent()} method.</p>
+   *
+   * @param providers the {@link Provider}s to use; may be {@code
+   * null} in which case {@link Provider}s will be discovered using
+   * the {@link ServiceLoader} mechanism; may be empty in which case
+   * the new {@link DefaultLoader} may be useless
+   *
+   * @param ambiguityHandler the {@link AmbiguityHandler} to use; may
+   * be {@code null} in which case an {@link AmbiguityHandler} will be
+   * discovered using the {@link ServiceLoader} mechanism
+   */
+  public DefaultLoader(final Collection<? extends Provider> providers,
+                       final AmbiguityHandler ambiguityHandler) {
+    this(new ConcurrentHashMap<Path<? extends Type>, DefaultLoader<?>>(),
+         providers,
+         null, // parent,
+         null, // requestedPath
+         null, // Supplier
+         ambiguityHandler);
   }
 
   private DefaultLoader(final DefaultLoader<T> loader) {
@@ -541,11 +588,6 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
   @Override // Loader<T>
   public final T get() {
     return this.supplier.get();
-  }
-
-  @Override // Loader<T>
-  public final DefaultLoader<?> loaderFor(Path<? extends Type> path) {
-    return (DefaultLoader<?>)Loader.super.loaderFor(path);
   }
 
   /**
