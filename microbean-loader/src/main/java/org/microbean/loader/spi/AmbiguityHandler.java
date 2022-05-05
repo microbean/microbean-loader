@@ -330,7 +330,7 @@ public interface AmbiguityHandler {
    * element}'s {@linkplain Element#qualifiers() qualifiers} are not
    * {@linkplain Qualifiers#isEmpty() empty} and the first {@linkplain
    * Element element}'s {@linkplain Element#qualifiers() qualifiers}
-   * {@linkplain Qualifiers#intersectionSize(Qualifiers) do not
+   * {@linkplain Qualifiers#intersectionSize(Iterable) do not
    * intersect} with the second {@linkplain Element element}'s
    * {@linkplain Element#qualifiers() qualifiers}</li>
    *

@@ -27,11 +27,13 @@ import java.lang.reflect.Type;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -53,6 +55,7 @@ import org.microbean.loader.spi.Value;
 import org.microbean.path.Path;
 import org.microbean.path.Path.Element;
 
+import org.microbean.qualifier.Qualifier;
 import org.microbean.qualifier.Qualifiers;
 
 import org.microbean.type.JavaTypes;
@@ -400,21 +403,21 @@ public class ProxyingProvider extends AbstractProvider {
 
 
   private static final Path<? extends Type> path(final Method m, final Object[] args) {
-    final Map<String, Object> map;
+    final Collection<Qualifier<String, Object>> c;
     final Parameter[] parameters = m.getParameters();
     if (parameters.length > 0) {
       if (args.length != parameters.length) {
         throw new IllegalArgumentException("args: " + args);
       }
-      map = new TreeMap<>();
+      c = new TreeSet<>();      
       for (int i = 0; i < parameters.length; i++) {
-        map.put(parameters[i].getName(), String.valueOf(args[i]));
+        c.add(Qualifier.of(parameters[i].getName(), String.valueOf(args[i])));
       }
     } else {
-      map = Collections.emptySortedMap();
+      c = Collections.emptySortedSet();
     }
     final Type type = m.getGenericReturnType();
-    return Path.of(Element.of(Qualifiers.of(map), type, propertyName(m.getName(), boolean.class == type)));
+    return Path.of(Element.of(Qualifiers.of(c), type, propertyName(m.getName(), boolean.class == type)));
   }
 
   /**

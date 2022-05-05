@@ -19,17 +19,20 @@ package org.microbean.loader.spi;
 import java.lang.reflect.Type;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeSet;
 
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import org.microbean.invoke.FixedValueSupplier;
 
+import org.microbean.qualifier.Qualifier;
 import org.microbean.qualifier.Qualifiers;
 
 import org.microbean.loader.api.Loader;
@@ -622,10 +625,10 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
     if (qualifiersNode == null || reader == null || size(qualifiersNode) <= 0) {
       return Qualifiers.of();
     } else {
-      final Map<String, Object> qualifiersMap;
+      final Collection<Qualifier<String, Object>> qualifiersSet;
       final Iterator<? extends String> fieldNamesIterator = names(qualifiersNode);
       if (fieldNamesIterator.hasNext()) {
-        qualifiersMap = new HashMap<>();
+        qualifiersSet = new TreeSet<>();
         while (fieldNamesIterator.hasNext()) {
           final String qualifierKey = fieldNamesIterator.next();
           final N qualifierValueNode = get(qualifiersNode, qualifierKey);
@@ -634,40 +637,47 @@ public abstract class AbstractTreeBasedProvider<N> extends AbstractProvider {
           if (!map(qualifierValueNode) || !qualifierKey.equals(nextPathElementName)) {
             final Object qualifierValue = reader.apply(qualifierValueNode, Object.class);
             if (qualifierValue != null) {
-              qualifiersMap.put(qualifierKey, qualifierValue);
+              qualifiersSet.add(Qualifier.of(qualifierKey, qualifierValue));
             }
           }
         }
       } else {
-        qualifiersMap = Map.of();
+        qualifiersSet = List.of();
       }
-      return qualifiersMap.isEmpty() ? Qualifiers.of() : Qualifiers.of(qualifiersMap);
+      return qualifiersSet.isEmpty() ? Qualifiers.of() : Qualifiers.of(qualifiersSet);
     }
   }
 
   private final N handleListNode(final Element<?> element, N node) {
-    final String key;
-    final Qualifiers<String, Object> q = element.qualifiers();
-    if (q.containsKey("index")) {
-      key = "index";
-    } else if (q.containsKey("arg0")) {
-      key = "arg0";
-    } else {
-      return null;
-    }
-    final Object o = q.get(key);
-    assert o != null; // qualifiers can't contain null values
-    int index;
-    if (o instanceof Number n) {
-      index = n.intValue();
-    } else {
-      try {
-        index = Integer.parseInt(o.toString());
-      } catch (final NumberFormatException numberFormatException) {
-        return null;
+    String key = null;
+    final Qualifiers<String, Object> qs = element.qualifiers();    
+    for (final Qualifier<? extends String, ?> q : qs) {
+      final String name = q.name();
+      if (key == null) {
+        if (name.equals("index")) {
+          key = "index";
+        } else if (name.equals("arg0")) {
+          key = "arg0";
+        }
+      }
+      if (key != null) {
+        int index = -1;
+        final Object value = q.value();
+        if (value instanceof Number n) {
+          index = n.intValue();
+        } else {
+          try {
+            index = Integer.parseInt(value.toString());
+          } catch (final NumberFormatException numberFormatException) {
+            break;
+          }
+        }
+        if (index >= 0) {
+          return get(node, index);
+        }
       }
     }
-    return get(node, index);
+    return null;
   }
 
 }

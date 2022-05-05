@@ -33,8 +33,6 @@ import org.microbean.loader.spi.Value;
 import org.microbean.path.Path;
 import org.microbean.path.Path.Element;
 
-import org.microbean.qualifier.Qualifiers;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -55,8 +53,8 @@ final class TestMoreRealWorld {
                                                       final BiFunction<? super TreeNode, ? super Type, ?> reader) {
           final Path<T> p = super.path(requestor, path, reader);
           if (p != null && "hostname".equals(p.lastElement().name())) {
-            assertEquals("test", p.qualifiers().get("env"));
-            assertEquals("bar", p.qualifiers().get("foo"));
+            assertEquals("test", p.qualifiers().uniqueValue("env"));
+            assertEquals("bar", p.qualifiers().uniqueValue("foo"));
           }
           return p;
         }

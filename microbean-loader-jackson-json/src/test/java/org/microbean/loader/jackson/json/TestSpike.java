@@ -31,9 +31,7 @@ import org.microbean.loader.api.Loader;
 
 import org.microbean.loader.jackson.Configuration;
 
-
 import org.microbean.qualifier.Qualifiers;
-
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -58,7 +56,7 @@ final class TestSpike {
     assertEquals(37, f.getFrobnicationInterval());
     Qualifiers<?, ?> q = f.qualifiers();
     assertEquals(1, q.size());
-    assertEquals("b", q.get("a"));
+    assertEquals("b", q.uniqueValue("a"));
 
     // This extracts a Blatz object out of application.json named
     // "gorp", also ignoring unknown properties.

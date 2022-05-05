@@ -16,10 +16,14 @@
  */
 package org.microbean.loader.jackson;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.TreeSet;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -27,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.microbean.development.annotation.Experimental;
 import org.microbean.development.annotation.Incomplete;
 
+import org.microbean.qualifier.Qualifier;
 import org.microbean.qualifier.Qualifiers;
 
 /**
@@ -112,8 +117,14 @@ public class Configuration {
         }
       }
     }
-    map.entrySet().removeIf(e -> e.getValue() instanceof Map);
-    return Qualifiers.of(map); // TODO: check
+    final Collection<Qualifier<String, Object>> c = new TreeSet<>();
+    for (final Entry<? extends String, ?> e : map.entrySet()) {
+      final Object value = e.getValue();
+      if (!(value instanceof Map)) {
+        c.add(Qualifier.of(e.getKey(), value));
+      }
+    }
+    return Qualifiers.of(c);
   }
 
   /**
@@ -141,8 +152,6 @@ public class Configuration {
     if (name.equals("@qualifiers")) {
       if (value == null) {
         this.qualifiersMap = Map.of();
-      } else if (value instanceof Qualifiers) {
-        this.qualifiersMap = ((Qualifiers<? extends String, ?>)value).toMap();
       } else if (value instanceof Map) {
         this.qualifiersMap = (Map<? extends String, ?>)value;
       } else {
