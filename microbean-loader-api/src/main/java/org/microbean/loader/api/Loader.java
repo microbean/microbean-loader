@@ -33,6 +33,7 @@ import org.microbean.invoke.OptionalSupplier;
 import org.microbean.path.Path;
 import org.microbean.path.Path.Element;
 
+import org.microbean.qualifier.Qualifier;
 import org.microbean.qualifier.Qualifiers;
 
 import org.microbean.type.JavaType.Token;
@@ -947,7 +948,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
       return path.transliterate();
     }
     final ParameterizedType ptype = (ParameterizedType)new Token<Path<U>>() {}.type();
-    final Element<ParameterizedType> e = Element.of(Qualifiers.of("path", path), ptype, "org.microbean.loader.api.transliteration");
+    final Element<ParameterizedType> e = Element.of(Qualifiers.of(Qualifier.<String, Path<U>>of("path", path)), ptype, "org.microbean.loader.api.transliteration");
     // Note that we transliterate the transliteration request itself
     // with a no-op: this marks the request itself as already
     // transliterated, which should kill off any infinite loops.

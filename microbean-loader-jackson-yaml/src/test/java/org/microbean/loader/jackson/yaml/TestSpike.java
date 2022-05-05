@@ -32,8 +32,6 @@ import org.microbean.loader.api.Loader;
 
 import org.microbean.path.Path;
 
-import org.microbean.qualifier.Qualifiers;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 

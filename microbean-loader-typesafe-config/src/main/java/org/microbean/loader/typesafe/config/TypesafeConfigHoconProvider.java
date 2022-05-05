@@ -68,8 +68,6 @@ import org.microbean.loader.spi.Value;
 import org.microbean.path.Path;
 import org.microbean.path.Path.Element;
 
-import org.microbean.qualifier.Qualifiers;
-
 import org.microbean.type.JavaTypes;
 
 import org.microbean.type.Type.CovariantSemantics;

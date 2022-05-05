@@ -60,7 +60,7 @@ final class TestSpike {
     assertEquals(37, f.getFrobnicationInterval());
     Qualifiers<?, ?> q = f.qualifiers();
     assertEquals(1, q.size());
-    assertEquals("b", q.get("a"));
+    assertEquals("b", q.uniqueValue("a"));
 
     // This extracts a Blatz object out of application.toml named
     // "gorp", also ignoring unknown properties.

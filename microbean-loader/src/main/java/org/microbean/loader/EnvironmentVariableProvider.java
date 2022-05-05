@@ -30,8 +30,6 @@ import org.microbean.loader.spi.Value;
 import org.microbean.path.Path;
 import org.microbean.path.Path.Element;
 
-import org.microbean.qualifier.Qualifiers;
-
 /**
  * An {@link AbstractProvider} that provides access to {@linkplain
  * System#getenv(String) environment variables}.

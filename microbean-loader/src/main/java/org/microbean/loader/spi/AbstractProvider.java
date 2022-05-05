@@ -27,8 +27,6 @@ import org.microbean.loader.api.Loader;
 
 import org.microbean.path.Path;
 
-import org.microbean.qualifier.Qualifiers;
-
 /**
  * A skeletal {@link Provider} implementation.
  *

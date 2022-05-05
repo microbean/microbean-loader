@@ -20,7 +20,9 @@ import java.lang.reflect.Type;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,7 @@ import org.microbean.loader.api.Loader;
 import org.microbean.path.Path;
 import org.microbean.path.Path.Element;
 
+import org.microbean.qualifier.Qualifier;
 import org.microbean.qualifier.Qualifiers;
 
 import org.microbean.loader.spi.AbstractProvider;
@@ -45,6 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import static org.microbean.loader.api.Loader.loader;
 
@@ -120,25 +124,34 @@ final class TestProxyingProvider {
       if ("wheel".equals(last.name())) {
         final Qualifiers<?, ?> lastQualifiers = last.qualifiers();        
         assertFalse(lastQualifiers.isEmpty());
-        assertTrue(lastQualifiers.containsKey("arg0"));
-        if ("LR".equals(lastQualifiers.get("arg0"))) {
-          final Class<?> wheelClass = JavaTypes.erase(path.qualified());
-          assertSame(Wheel.class, wheelClass);
-          return
-            FixedValueSupplier.of(new Wheel() {
-                @Override
-                public final int getDiameterInInches() {
-                  return 24;
-                }
-              });
-        }
+        // This is kind of a neat trick: map nulls via
+        // Optional::ofNullable, then reduce matching values to
+        // nothing via Otpional.empty(). The reduction won't happen if
+        // there's only one value.
+        return
+          lastQualifiers.stream()
+          .filter(q -> "arg0".equals(q.name()) && "LR".equals(q.value())) // cut the stream down early
+          .map(Optional::ofNullable) // nulls to optionals
+          .reduce((o0, o1) -> Optional.empty())
+          .map(o -> {
+              final Class<?> wheelClass = JavaTypes.erase(path.qualified());
+              assertSame(Wheel.class, wheelClass);
+              return
+                FixedValueSupplier.of(new Wheel() {
+                    @Override
+                    public final int getDiameterInInches() {
+                      return 24;
+                    }
+                  });
+            })
+          .orElse(null);
       }
       return null;
     }
 
     @Override
     protected final <T extends Type> Path<T> path(final Loader<?> requestor, final Path<T> path) {
-      return Path.of(Element.of(Qualifiers.of("arg0", "LR"), path.qualified(), "wheel"));
+      return Path.of(Element.of(Qualifiers.of(Qualifier.<String, String>of("arg0", "LR")), path.qualified(), "wheel"));
     }
 
   }
