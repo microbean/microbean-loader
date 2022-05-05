@@ -50,346 +50,344 @@
 <span class="source-line-no">036</span><span id="line-36">import org.microbean.path.Path;</span>
 <span class="source-line-no">037</span><span id="line-37">import org.microbean.path.Path.Element;</span>
 <span class="source-line-no">038</span><span id="line-38"></span>
-<span class="source-line-no">039</span><span id="line-39">import org.microbean.qualifier.Qualifiers;</span>
-<span class="source-line-no">040</span><span id="line-40"></span>
-<span class="source-line-no">041</span><span id="line-41">import org.microbean.type.JavaTypes;</span>
-<span class="source-line-no">042</span><span id="line-42">import org.microbean.type.Type.CovariantSemantics;</span>
-<span class="source-line-no">043</span><span id="line-43"></span>
-<span class="source-line-no">044</span><span id="line-44">/**</span>
-<span class="source-line-no">045</span><span id="line-45"> * An {@link AbstractProvider} that can return {@link Value}s backed</span>
-<span class="source-line-no">046</span><span id="line-46"> * by System properties.</span>
-<span class="source-line-no">047</span><span id="line-47"> *</span>
-<span class="source-line-no">048</span><span id="line-48"> * &lt;p&gt;While System properties are often casually assumed to be stable</span>
-<span class="source-line-no">049</span><span id="line-49"> * and {@link String}-typed, the exact opposite is true: System</span>
-<span class="source-line-no">050</span><span id="line-50"> * properties may contain arbitrarily-typed {@link Object}s under</span>
-<span class="source-line-no">051</span><span id="line-51"> * arbitrarily-typed keys, and the properties themselves {@linkplain</span>
-<span class="source-line-no">052</span><span id="line-52"> * System#setProperties(Properties) may be replaced} at any point.</span>
-<span class="source-line-no">053</span><span id="line-53"> * This means that all {@link Value}s supplied by this {@link</span>
-<span class="source-line-no">054</span><span id="line-54"> * SystemPropertyProvider} are {@linkplain Value#determinism()</span>
-<span class="source-line-no">055</span><span id="line-55"> * non-deterministic} and may change type and presence from one call</span>
-<span class="source-line-no">056</span><span id="line-56"> * to another.&lt;/p&gt;</span>
-<span class="source-line-no">057</span><span id="line-57"> *</span>
-<span class="source-line-no">058</span><span id="line-58"> * &lt;p&gt;It is also worth mentioning explicitly that, deliberately, no</span>
-<span class="source-line-no">059</span><span id="line-59"> * type conversion of any System property value takes place in this</span>
-<span class="source-line-no">060</span><span id="line-60"> * class.&lt;/p&gt;</span>
-<span class="source-line-no">061</span><span id="line-61"> *</span>
-<span class="source-line-no">062</span><span id="line-62"> * @author &lt;a href="https://about.me/lairdnelson"</span>
-<span class="source-line-no">063</span><span id="line-63"> * target="_parent"&gt;Laird Nelson&lt;/a&gt;</span>
+<span class="source-line-no">039</span><span id="line-39">import org.microbean.type.JavaTypes;</span>
+<span class="source-line-no">040</span><span id="line-40">import org.microbean.type.Type.CovariantSemantics;</span>
+<span class="source-line-no">041</span><span id="line-41"></span>
+<span class="source-line-no">042</span><span id="line-42">/**</span>
+<span class="source-line-no">043</span><span id="line-43"> * An {@link AbstractProvider} that can return {@link Value}s backed</span>
+<span class="source-line-no">044</span><span id="line-44"> * by System properties.</span>
+<span class="source-line-no">045</span><span id="line-45"> *</span>
+<span class="source-line-no">046</span><span id="line-46"> * &lt;p&gt;While System properties are often casually assumed to be stable</span>
+<span class="source-line-no">047</span><span id="line-47"> * and {@link String}-typed, the exact opposite is true: System</span>
+<span class="source-line-no">048</span><span id="line-48"> * properties may contain arbitrarily-typed {@link Object}s under</span>
+<span class="source-line-no">049</span><span id="line-49"> * arbitrarily-typed keys, and the properties themselves {@linkplain</span>
+<span class="source-line-no">050</span><span id="line-50"> * System#setProperties(Properties) may be replaced} at any point.</span>
+<span class="source-line-no">051</span><span id="line-51"> * This means that all {@link Value}s supplied by this {@link</span>
+<span class="source-line-no">052</span><span id="line-52"> * SystemPropertyProvider} are {@linkplain Value#determinism()</span>
+<span class="source-line-no">053</span><span id="line-53"> * non-deterministic} and may change type and presence from one call</span>
+<span class="source-line-no">054</span><span id="line-54"> * to another.&lt;/p&gt;</span>
+<span class="source-line-no">055</span><span id="line-55"> *</span>
+<span class="source-line-no">056</span><span id="line-56"> * &lt;p&gt;It is also worth mentioning explicitly that, deliberately, no</span>
+<span class="source-line-no">057</span><span id="line-57"> * type conversion of any System property value takes place in this</span>
+<span class="source-line-no">058</span><span id="line-58"> * class.&lt;/p&gt;</span>
+<span class="source-line-no">059</span><span id="line-59"> *</span>
+<span class="source-line-no">060</span><span id="line-60"> * @author &lt;a href="https://about.me/lairdnelson"</span>
+<span class="source-line-no">061</span><span id="line-61"> * target="_parent"&gt;Laird Nelson&lt;/a&gt;</span>
+<span class="source-line-no">062</span><span id="line-62"> *</span>
+<span class="source-line-no">063</span><span id="line-63"> * @see System#getProperty(String, String)</span>
 <span class="source-line-no">064</span><span id="line-64"> *</span>
-<span class="source-line-no">065</span><span id="line-65"> * @see System#getProperty(String, String)</span>
+<span class="source-line-no">065</span><span id="line-65"> * @see System#getProperties()</span>
 <span class="source-line-no">066</span><span id="line-66"> *</span>
-<span class="source-line-no">067</span><span id="line-67"> * @see System#getProperties()</span>
+<span class="source-line-no">067</span><span id="line-67"> * @see System#setProperties(Properties)</span>
 <span class="source-line-no">068</span><span id="line-68"> *</span>
-<span class="source-line-no">069</span><span id="line-69"> * @see System#setProperties(Properties)</span>
+<span class="source-line-no">069</span><span id="line-69"> * @see Properties#getProperty(String, String)</span>
 <span class="source-line-no">070</span><span id="line-70"> *</span>
-<span class="source-line-no">071</span><span id="line-71"> * @see Properties#getProperty(String, String)</span>
-<span class="source-line-no">072</span><span id="line-72"> *</span>
-<span class="source-line-no">073</span><span id="line-73"> * @see Value#determinism()</span>
-<span class="source-line-no">074</span><span id="line-74"> */</span>
-<span class="source-line-no">075</span><span id="line-75">public class SystemPropertyProvider extends AbstractProvider {</span>
-<span class="source-line-no">076</span><span id="line-76"></span>
-<span class="source-line-no">077</span><span id="line-77"></span>
-<span class="source-line-no">078</span><span id="line-78">  /*</span>
-<span class="source-line-no">079</span><span id="line-79">   * Instance fields.</span>
-<span class="source-line-no">080</span><span id="line-80">   */</span>
-<span class="source-line-no">081</span><span id="line-81"></span>
+<span class="source-line-no">071</span><span id="line-71"> * @see Value#determinism()</span>
+<span class="source-line-no">072</span><span id="line-72"> */</span>
+<span class="source-line-no">073</span><span id="line-73">public class SystemPropertyProvider extends AbstractProvider {</span>
+<span class="source-line-no">074</span><span id="line-74"></span>
+<span class="source-line-no">075</span><span id="line-75"></span>
+<span class="source-line-no">076</span><span id="line-76">  /*</span>
+<span class="source-line-no">077</span><span id="line-77">   * Instance fields.</span>
+<span class="source-line-no">078</span><span id="line-78">   */</span>
+<span class="source-line-no">079</span><span id="line-79"></span>
+<span class="source-line-no">080</span><span id="line-80"></span>
+<span class="source-line-no">081</span><span id="line-81">  private final boolean flatKeys;</span>
 <span class="source-line-no">082</span><span id="line-82"></span>
-<span class="source-line-no">083</span><span id="line-83">  private final boolean flatKeys;</span>
+<span class="source-line-no">083</span><span id="line-83">  private final boolean onlyStrings;</span>
 <span class="source-line-no">084</span><span id="line-84"></span>
-<span class="source-line-no">085</span><span id="line-85">  private final boolean onlyStrings;</span>
-<span class="source-line-no">086</span><span id="line-86"></span>
-<span class="source-line-no">087</span><span id="line-87">  private final boolean mutable;</span>
-<span class="source-line-no">088</span><span id="line-88">  </span>
-<span class="source-line-no">089</span><span id="line-89"></span>
-<span class="source-line-no">090</span><span id="line-90">  /*</span>
-<span class="source-line-no">091</span><span id="line-91">   * Constructors.</span>
-<span class="source-line-no">092</span><span id="line-92">   */</span>
-<span class="source-line-no">093</span><span id="line-93"></span>
-<span class="source-line-no">094</span><span id="line-94"></span>
-<span class="source-line-no">095</span><span id="line-95">  /**</span>
-<span class="source-line-no">096</span><span id="line-96">   * Creates a new {@link SystemPropertyProvider} that uses flat keys,</span>
-<span class="source-line-no">097</span><span id="line-97">   * does not presume that the only things stored in the System</span>
-<span class="source-line-no">098</span><span id="line-98">   * properties are {@link String}s, and honors the fact that System</span>
-<span class="source-line-no">099</span><span id="line-99">   * properties are mutable.</span>
-<span class="source-line-no">100</span><span id="line-100">   *</span>
-<span class="source-line-no">101</span><span id="line-101">   * @see #SystemPropertyProvider(boolean, boolean, boolean)</span>
-<span class="source-line-no">102</span><span id="line-102">   */</span>
-<span class="source-line-no">103</span><span id="line-103">  public SystemPropertyProvider() {</span>
-<span class="source-line-no">104</span><span id="line-104">    this(true, false, true);</span>
-<span class="source-line-no">105</span><span id="line-105">  }</span>
-<span class="source-line-no">106</span><span id="line-106"></span>
-<span class="source-line-no">107</span><span id="line-107">  /**</span>
-<span class="source-line-no">108</span><span id="line-108">   * Creates a new {@link SystemPropertyProvider}.</span>
-<span class="source-line-no">109</span><span id="line-109">   *</span>
-<span class="source-line-no">110</span><span id="line-110">   * @param flatKeys whether the key for a system property is derived</span>
-<span class="source-line-no">111</span><span id="line-111">   * from a {@link Path}'s {@linkplain Path#lastElement() last</span>
-<span class="source-line-no">112</span><span id="line-112">   * element}'s {@linkplain Element#name() name} only</span>
-<span class="source-line-no">113</span><span id="line-113">   *</span>
-<span class="source-line-no">114</span><span id="line-114">   * @param onlyStrings whether all System properties are expected to</span>
-<span class="source-line-no">115</span><span id="line-115">   * be {@link String}-typed</span>
-<span class="source-line-no">116</span><span id="line-116">   *</span>
-<span class="source-line-no">117</span><span id="line-117">   * @param mutable whether System properties should be treated as</span>
-<span class="source-line-no">118</span><span id="line-118">   * mutable (which they are, strictly speaking, but for many</span>
-<span class="source-line-no">119</span><span id="line-119">   * applications this may not matter in practice)</span>
-<span class="source-line-no">120</span><span id="line-120">   */</span>
-<span class="source-line-no">121</span><span id="line-121">  public SystemPropertyProvider(final boolean flatKeys,</span>
-<span class="source-line-no">122</span><span id="line-122">                                final boolean onlyStrings,</span>
-<span class="source-line-no">123</span><span id="line-123">                                final boolean mutable) {</span>
-<span class="source-line-no">124</span><span id="line-124">    super(onlyStrings ? String.class : null);</span>
-<span class="source-line-no">125</span><span id="line-125">    this.flatKeys = flatKeys;</span>
-<span class="source-line-no">126</span><span id="line-126">    this.onlyStrings = onlyStrings;</span>
-<span class="source-line-no">127</span><span id="line-127">    this.mutable = mutable;</span>
-<span class="source-line-no">128</span><span id="line-128">  }</span>
-<span class="source-line-no">129</span><span id="line-129"></span>
-<span class="source-line-no">130</span><span id="line-130"></span>
-<span class="source-line-no">131</span><span id="line-131">  /*</span>
-<span class="source-line-no">132</span><span id="line-132">   * Instance methods.</span>
-<span class="source-line-no">133</span><span id="line-133">   */</span>
-<span class="source-line-no">134</span><span id="line-134"></span>
-<span class="source-line-no">135</span><span id="line-135"></span>
-<span class="source-line-no">136</span><span id="line-136">  /**</span>
-<span class="source-line-no">137</span><span id="line-137">   * Returns a {@link Supplier} suitable for the System property</span>
-<span class="source-line-no">138</span><span id="line-138">   * represented by the supplied {@link Path}.</span>
-<span class="source-line-no">139</span><span id="line-139">   *</span>
-<span class="source-line-no">140</span><span id="line-140">   * &lt;p&gt;This method never returns {@code null}.  Its overrides may if</span>
-<span class="source-line-no">141</span><span id="line-141">   * they wish.&lt;/p&gt;</span>
-<span class="source-line-no">142</span><span id="line-142">   *</span>
-<span class="source-line-no">143</span><span id="line-143">   * &lt;p&gt;The {@linkplain Path.Element#name() name} of the {@linkplain</span>
-<span class="source-line-no">144</span><span id="line-144">   * Path#lastElement() last element} of the supplied {@link Path} is</span>
-<span class="source-line-no">145</span><span id="line-145">   * taken to be the name of the System property value to retrieve.</span>
-<span class="source-line-no">146</span><span id="line-146">   * If the {@linkplain JavaTypes#erase(Type) type erasure} of the</span>
-<span class="source-line-no">147</span><span id="line-147">   * supplied {@link Path}'s {@link Path#qualified() qualified()}</span>
-<span class="source-line-no">148</span><span id="line-148">   * method {@linkplain Class#isAssignableFrom(Class) is assignable</span>
-<span class="source-line-no">149</span><span id="line-149">   * from} {@link String String.class}, then calls will be made by the</span>
-<span class="source-line-no">150</span><span id="line-150">   * returned {@link Value}'s {@link Value#get() get()} method to</span>
-<span class="source-line-no">151</span><span id="line-151">   * {@link System#getProperty(String)} before simple calls to {@link</span>
-<span class="source-line-no">152</span><span id="line-152">   * Properties#get(String) System.getProperties().get(String)}.&lt;/p&gt;</span>
-<span class="source-line-no">153</span><span id="line-153">   *</span>
-<span class="source-line-no">154</span><span id="line-154">   * &lt;p&gt;Any {@link Supplier} returned by this method will be</span>
-<span class="source-line-no">155</span><span id="line-155">   * {@linkplain</span>
-<span class="source-line-no">156</span><span id="line-156">   * org.microbean.invoke.OptionalSupplier.Determinism#NON_DETERMINISTIC</span>
-<span class="source-line-no">157</span><span id="line-157">   * non-deterministic}, since system properties may change at any</span>
-<span class="source-line-no">158</span><span id="line-158">   * point.  Additionally, if the supplied {@link Path}'s {@linkplain</span>
-<span class="source-line-no">159</span><span id="line-159">   * Path#qualified() type} is not assignable from that borne by a</span>
-<span class="source-line-no">160</span><span id="line-160">   * System property value, then the {@link Supplier} will return</span>
-<span class="source-line-no">161</span><span id="line-161">   * {@code null} from its {@link Value#get() get()} method in such a</span>
-<span class="source-line-no">162</span><span id="line-162">   * case, indicating that the value is present but cannot be</span>
-<span class="source-line-no">163</span><span id="line-163">   * represented.  Overrides are strongly encouraged to abide by these</span>
-<span class="source-line-no">164</span><span id="line-164">   * conditions.&lt;/p&gt;</span>
-<span class="source-line-no">165</span><span id="line-165">   *</span>
-<span class="source-line-no">166</span><span id="line-166">   * @param requestor the {@link Loader} seeking a {@link Value}; must</span>
-<span class="source-line-no">167</span><span id="line-167">   * not be {@code null}</span>
-<span class="source-line-no">168</span><span id="line-168">   *</span>
-<span class="source-line-no">169</span><span id="line-169">   * @param absolutePath an {@linkplain Path#absolute() absolute</span>
-<span class="source-line-no">170</span><span id="line-170">   * &lt;code&gt;Path&lt;/code&gt;} for which a {@link Value} is being sought;</span>
-<span class="source-line-no">171</span><span id="line-171">   * must not be {@code null}</span>
-<span class="source-line-no">172</span><span id="line-172">   *</span>
-<span class="source-line-no">173</span><span id="line-173">   * @return a {@link Supplier} suitable for the System property whose</span>
-<span class="source-line-no">174</span><span id="line-174">   * name is represented by the supplied {@link Path}'s {@linkplain</span>
-<span class="source-line-no">175</span><span id="line-175">   * Path#lastElement() last &lt;code&gt;Element&lt;/code&gt;}'s {@linkplain</span>
-<span class="source-line-no">176</span><span id="line-176">   * Path.Element#name() name}</span>
-<span class="source-line-no">177</span><span id="line-177">   *</span>
-<span class="source-line-no">178</span><span id="line-178">   * @exception NullPointerException if an argument for either</span>
-<span class="source-line-no">179</span><span id="line-179">   * parameter is {@code null}</span>
-<span class="source-line-no">180</span><span id="line-180">   *</span>
-<span class="source-line-no">181</span><span id="line-181">   * @nullability This method never returns {@code null} but its</span>
-<span class="source-line-no">182</span><span id="line-182">   * overrides may.</span>
-<span class="source-line-no">183</span><span id="line-183">   *</span>
-<span class="source-line-no">184</span><span id="line-184">   * @threadsafety This method is, and its overrides must be, safe for</span>
-<span class="source-line-no">185</span><span id="line-185">   * concurrent use by multiple threads.</span>
-<span class="source-line-no">186</span><span id="line-186">   *</span>
-<span class="source-line-no">187</span><span id="line-187">   * @idempotency This method is idempotent and deterministic.</span>
-<span class="source-line-no">188</span><span id="line-188">   * Overrides must be idempotent, but need not be deterministic.</span>
-<span class="source-line-no">189</span><span id="line-189">   * {@link Supplier}s returned by this method or its overrides are</span>
-<span class="source-line-no">190</span><span id="line-190">   * &lt;em&gt;not&lt;/em&gt; guaranteed to be idempotent or deterministic.</span>
-<span class="source-line-no">191</span><span id="line-191">   */</span>
-<span class="source-line-no">192</span><span id="line-192">  @Override</span>
-<span class="source-line-no">193</span><span id="line-193">  protected Supplier&lt;?&gt; find(final Loader&lt;?&gt; requestor, final Path&lt;? extends Type&gt; absolutePath) {</span>
-<span class="source-line-no">194</span><span id="line-194">    assert absolutePath.absolute();</span>
-<span class="source-line-no">195</span><span id="line-195">    assert absolutePath.startsWith(requestor.path());</span>
-<span class="source-line-no">196</span><span id="line-196">    assert !absolutePath.equals(requestor.path());</span>
-<span class="source-line-no">197</span><span id="line-197"></span>
-<span class="source-line-no">198</span><span id="line-198">    // This is tricky.  System properties suck.</span>
-<span class="source-line-no">199</span><span id="line-199">    //</span>
-<span class="source-line-no">200</span><span id="line-200">    // System properties are mutable.  They can come and go at any</span>
-<span class="source-line-no">201</span><span id="line-201">    // point.  They can also be of any type.  If you set them to null,</span>
-<span class="source-line-no">202</span><span id="line-202">    // the "required" ones get re-initialized to newly sourced values.</span>
-<span class="source-line-no">203</span><span id="line-203">    // And so on.</span>
-<span class="source-line-no">204</span><span id="line-204">    //</span>
-<span class="source-line-no">205</span><span id="line-205">    // Next, while the keys are "flat", they are often naively assumed</span>
-<span class="source-line-no">206</span><span id="line-206">    // to represent a hierarchy.  But the naming scheme suggests that</span>
-<span class="source-line-no">207</span><span id="line-207">    // even in the case of the "required" properties the designers</span>
-<span class="source-line-no">208</span><span id="line-208">    // were thinking in terms of hierarchies.</span>
-<span class="source-line-no">209</span><span id="line-209">    //</span>
-<span class="source-line-no">210</span><span id="line-210">    // Anyway, suppose an absolute Path of "/com/foo/bar" (making up</span>
-<span class="source-line-no">211</span><span id="line-211">    // the syntax; "/" is a Path.Element separator; each "word" is a</span>
-<span class="source-line-no">212</span><span id="line-212">    // Path.Element name() value) has a size of 4 (the leading</span>
-<span class="source-line-no">213</span><span id="line-213">    // element's name is always "") (hierarchical).  Should this</span>
-<span class="source-line-no">214</span><span id="line-214">    // Provider respond by trying</span>
-<span class="source-line-no">215</span><span id="line-215">    // System.getProperties().getProperty("com.foo.bar")?</span>
-<span class="source-line-no">216</span><span id="line-216">    //</span>
-<span class="source-line-no">217</span><span id="line-217">    // Or should this Provider only accept a Path of "/com.foo.bar"</span>
-<span class="source-line-no">218</span><span id="line-218">    // whose size is 2 (flat), so that the name of only the *last*</span>
-<span class="source-line-no">219</span><span id="line-219">    // element is the property key ("com.foo.bar")?</span>
+<span class="source-line-no">085</span><span id="line-85">  private final boolean mutable;</span>
+<span class="source-line-no">086</span><span id="line-86">  </span>
+<span class="source-line-no">087</span><span id="line-87"></span>
+<span class="source-line-no">088</span><span id="line-88">  /*</span>
+<span class="source-line-no">089</span><span id="line-89">   * Constructors.</span>
+<span class="source-line-no">090</span><span id="line-90">   */</span>
+<span class="source-line-no">091</span><span id="line-91"></span>
+<span class="source-line-no">092</span><span id="line-92"></span>
+<span class="source-line-no">093</span><span id="line-93">  /**</span>
+<span class="source-line-no">094</span><span id="line-94">   * Creates a new {@link SystemPropertyProvider} that uses flat keys,</span>
+<span class="source-line-no">095</span><span id="line-95">   * does not presume that the only things stored in the System</span>
+<span class="source-line-no">096</span><span id="line-96">   * properties are {@link String}s, and honors the fact that System</span>
+<span class="source-line-no">097</span><span id="line-97">   * properties are mutable.</span>
+<span class="source-line-no">098</span><span id="line-98">   *</span>
+<span class="source-line-no">099</span><span id="line-99">   * @see #SystemPropertyProvider(boolean, boolean, boolean)</span>
+<span class="source-line-no">100</span><span id="line-100">   */</span>
+<span class="source-line-no">101</span><span id="line-101">  public SystemPropertyProvider() {</span>
+<span class="source-line-no">102</span><span id="line-102">    this(true, false, true);</span>
+<span class="source-line-no">103</span><span id="line-103">  }</span>
+<span class="source-line-no">104</span><span id="line-104"></span>
+<span class="source-line-no">105</span><span id="line-105">  /**</span>
+<span class="source-line-no">106</span><span id="line-106">   * Creates a new {@link SystemPropertyProvider}.</span>
+<span class="source-line-no">107</span><span id="line-107">   *</span>
+<span class="source-line-no">108</span><span id="line-108">   * @param flatKeys whether the key for a system property is derived</span>
+<span class="source-line-no">109</span><span id="line-109">   * from a {@link Path}'s {@linkplain Path#lastElement() last</span>
+<span class="source-line-no">110</span><span id="line-110">   * element}'s {@linkplain Element#name() name} only</span>
+<span class="source-line-no">111</span><span id="line-111">   *</span>
+<span class="source-line-no">112</span><span id="line-112">   * @param onlyStrings whether all System properties are expected to</span>
+<span class="source-line-no">113</span><span id="line-113">   * be {@link String}-typed</span>
+<span class="source-line-no">114</span><span id="line-114">   *</span>
+<span class="source-line-no">115</span><span id="line-115">   * @param mutable whether System properties should be treated as</span>
+<span class="source-line-no">116</span><span id="line-116">   * mutable (which they are, strictly speaking, but for many</span>
+<span class="source-line-no">117</span><span id="line-117">   * applications this may not matter in practice)</span>
+<span class="source-line-no">118</span><span id="line-118">   */</span>
+<span class="source-line-no">119</span><span id="line-119">  public SystemPropertyProvider(final boolean flatKeys,</span>
+<span class="source-line-no">120</span><span id="line-120">                                final boolean onlyStrings,</span>
+<span class="source-line-no">121</span><span id="line-121">                                final boolean mutable) {</span>
+<span class="source-line-no">122</span><span id="line-122">    super(onlyStrings ? String.class : null);</span>
+<span class="source-line-no">123</span><span id="line-123">    this.flatKeys = flatKeys;</span>
+<span class="source-line-no">124</span><span id="line-124">    this.onlyStrings = onlyStrings;</span>
+<span class="source-line-no">125</span><span id="line-125">    this.mutable = mutable;</span>
+<span class="source-line-no">126</span><span id="line-126">  }</span>
+<span class="source-line-no">127</span><span id="line-127"></span>
+<span class="source-line-no">128</span><span id="line-128"></span>
+<span class="source-line-no">129</span><span id="line-129">  /*</span>
+<span class="source-line-no">130</span><span id="line-130">   * Instance methods.</span>
+<span class="source-line-no">131</span><span id="line-131">   */</span>
+<span class="source-line-no">132</span><span id="line-132"></span>
+<span class="source-line-no">133</span><span id="line-133"></span>
+<span class="source-line-no">134</span><span id="line-134">  /**</span>
+<span class="source-line-no">135</span><span id="line-135">   * Returns a {@link Supplier} suitable for the System property</span>
+<span class="source-line-no">136</span><span id="line-136">   * represented by the supplied {@link Path}.</span>
+<span class="source-line-no">137</span><span id="line-137">   *</span>
+<span class="source-line-no">138</span><span id="line-138">   * &lt;p&gt;This method never returns {@code null}.  Its overrides may if</span>
+<span class="source-line-no">139</span><span id="line-139">   * they wish.&lt;/p&gt;</span>
+<span class="source-line-no">140</span><span id="line-140">   *</span>
+<span class="source-line-no">141</span><span id="line-141">   * &lt;p&gt;The {@linkplain Path.Element#name() name} of the {@linkplain</span>
+<span class="source-line-no">142</span><span id="line-142">   * Path#lastElement() last element} of the supplied {@link Path} is</span>
+<span class="source-line-no">143</span><span id="line-143">   * taken to be the name of the System property value to retrieve.</span>
+<span class="source-line-no">144</span><span id="line-144">   * If the {@linkplain JavaTypes#erase(Type) type erasure} of the</span>
+<span class="source-line-no">145</span><span id="line-145">   * supplied {@link Path}'s {@link Path#qualified() qualified()}</span>
+<span class="source-line-no">146</span><span id="line-146">   * method {@linkplain Class#isAssignableFrom(Class) is assignable</span>
+<span class="source-line-no">147</span><span id="line-147">   * from} {@link String String.class}, then calls will be made by the</span>
+<span class="source-line-no">148</span><span id="line-148">   * returned {@link Value}'s {@link Value#get() get()} method to</span>
+<span class="source-line-no">149</span><span id="line-149">   * {@link System#getProperty(String)} before simple calls to {@link</span>
+<span class="source-line-no">150</span><span id="line-150">   * Properties#get(String) System.getProperties().get(String)}.&lt;/p&gt;</span>
+<span class="source-line-no">151</span><span id="line-151">   *</span>
+<span class="source-line-no">152</span><span id="line-152">   * &lt;p&gt;Any {@link Supplier} returned by this method will be</span>
+<span class="source-line-no">153</span><span id="line-153">   * {@linkplain</span>
+<span class="source-line-no">154</span><span id="line-154">   * org.microbean.invoke.OptionalSupplier.Determinism#NON_DETERMINISTIC</span>
+<span class="source-line-no">155</span><span id="line-155">   * non-deterministic}, since system properties may change at any</span>
+<span class="source-line-no">156</span><span id="line-156">   * point.  Additionally, if the supplied {@link Path}'s {@linkplain</span>
+<span class="source-line-no">157</span><span id="line-157">   * Path#qualified() type} is not assignable from that borne by a</span>
+<span class="source-line-no">158</span><span id="line-158">   * System property value, then the {@link Supplier} will return</span>
+<span class="source-line-no">159</span><span id="line-159">   * {@code null} from its {@link Value#get() get()} method in such a</span>
+<span class="source-line-no">160</span><span id="line-160">   * case, indicating that the value is present but cannot be</span>
+<span class="source-line-no">161</span><span id="line-161">   * represented.  Overrides are strongly encouraged to abide by these</span>
+<span class="source-line-no">162</span><span id="line-162">   * conditions.&lt;/p&gt;</span>
+<span class="source-line-no">163</span><span id="line-163">   *</span>
+<span class="source-line-no">164</span><span id="line-164">   * @param requestor the {@link Loader} seeking a {@link Value}; must</span>
+<span class="source-line-no">165</span><span id="line-165">   * not be {@code null}</span>
+<span class="source-line-no">166</span><span id="line-166">   *</span>
+<span class="source-line-no">167</span><span id="line-167">   * @param absolutePath an {@linkplain Path#absolute() absolute</span>
+<span class="source-line-no">168</span><span id="line-168">   * &lt;code&gt;Path&lt;/code&gt;} for which a {@link Value} is being sought;</span>
+<span class="source-line-no">169</span><span id="line-169">   * must not be {@code null}</span>
+<span class="source-line-no">170</span><span id="line-170">   *</span>
+<span class="source-line-no">171</span><span id="line-171">   * @return a {@link Supplier} suitable for the System property whose</span>
+<span class="source-line-no">172</span><span id="line-172">   * name is represented by the supplied {@link Path}'s {@linkplain</span>
+<span class="source-line-no">173</span><span id="line-173">   * Path#lastElement() last &lt;code&gt;Element&lt;/code&gt;}'s {@linkplain</span>
+<span class="source-line-no">174</span><span id="line-174">   * Path.Element#name() name}</span>
+<span class="source-line-no">175</span><span id="line-175">   *</span>
+<span class="source-line-no">176</span><span id="line-176">   * @exception NullPointerException if an argument for either</span>
+<span class="source-line-no">177</span><span id="line-177">   * parameter is {@code null}</span>
+<span class="source-line-no">178</span><span id="line-178">   *</span>
+<span class="source-line-no">179</span><span id="line-179">   * @nullability This method never returns {@code null} but its</span>
+<span class="source-line-no">180</span><span id="line-180">   * overrides may.</span>
+<span class="source-line-no">181</span><span id="line-181">   *</span>
+<span class="source-line-no">182</span><span id="line-182">   * @threadsafety This method is, and its overrides must be, safe for</span>
+<span class="source-line-no">183</span><span id="line-183">   * concurrent use by multiple threads.</span>
+<span class="source-line-no">184</span><span id="line-184">   *</span>
+<span class="source-line-no">185</span><span id="line-185">   * @idempotency This method is idempotent and deterministic.</span>
+<span class="source-line-no">186</span><span id="line-186">   * Overrides must be idempotent, but need not be deterministic.</span>
+<span class="source-line-no">187</span><span id="line-187">   * {@link Supplier}s returned by this method or its overrides are</span>
+<span class="source-line-no">188</span><span id="line-188">   * &lt;em&gt;not&lt;/em&gt; guaranteed to be idempotent or deterministic.</span>
+<span class="source-line-no">189</span><span id="line-189">   */</span>
+<span class="source-line-no">190</span><span id="line-190">  @Override</span>
+<span class="source-line-no">191</span><span id="line-191">  protected Supplier&lt;?&gt; find(final Loader&lt;?&gt; requestor, final Path&lt;? extends Type&gt; absolutePath) {</span>
+<span class="source-line-no">192</span><span id="line-192">    assert absolutePath.absolute();</span>
+<span class="source-line-no">193</span><span id="line-193">    assert absolutePath.startsWith(requestor.path());</span>
+<span class="source-line-no">194</span><span id="line-194">    assert !absolutePath.equals(requestor.path());</span>
+<span class="source-line-no">195</span><span id="line-195"></span>
+<span class="source-line-no">196</span><span id="line-196">    // This is tricky.  System properties suck.</span>
+<span class="source-line-no">197</span><span id="line-197">    //</span>
+<span class="source-line-no">198</span><span id="line-198">    // System properties are mutable.  They can come and go at any</span>
+<span class="source-line-no">199</span><span id="line-199">    // point.  They can also be of any type.  If you set them to null,</span>
+<span class="source-line-no">200</span><span id="line-200">    // the "required" ones get re-initialized to newly sourced values.</span>
+<span class="source-line-no">201</span><span id="line-201">    // And so on.</span>
+<span class="source-line-no">202</span><span id="line-202">    //</span>
+<span class="source-line-no">203</span><span id="line-203">    // Next, while the keys are "flat", they are often naively assumed</span>
+<span class="source-line-no">204</span><span id="line-204">    // to represent a hierarchy.  But the naming scheme suggests that</span>
+<span class="source-line-no">205</span><span id="line-205">    // even in the case of the "required" properties the designers</span>
+<span class="source-line-no">206</span><span id="line-206">    // were thinking in terms of hierarchies.</span>
+<span class="source-line-no">207</span><span id="line-207">    //</span>
+<span class="source-line-no">208</span><span id="line-208">    // Anyway, suppose an absolute Path of "/com/foo/bar" (making up</span>
+<span class="source-line-no">209</span><span id="line-209">    // the syntax; "/" is a Path.Element separator; each "word" is a</span>
+<span class="source-line-no">210</span><span id="line-210">    // Path.Element name() value) has a size of 4 (the leading</span>
+<span class="source-line-no">211</span><span id="line-211">    // element's name is always "") (hierarchical).  Should this</span>
+<span class="source-line-no">212</span><span id="line-212">    // Provider respond by trying</span>
+<span class="source-line-no">213</span><span id="line-213">    // System.getProperties().getProperty("com.foo.bar")?</span>
+<span class="source-line-no">214</span><span id="line-214">    //</span>
+<span class="source-line-no">215</span><span id="line-215">    // Or should this Provider only accept a Path of "/com.foo.bar"</span>
+<span class="source-line-no">216</span><span id="line-216">    // whose size is 2 (flat), so that the name of only the *last*</span>
+<span class="source-line-no">217</span><span id="line-217">    // element is the property key ("com.foo.bar")?</span>
+<span class="source-line-no">218</span><span id="line-218">    //</span>
+<span class="source-line-no">219</span><span id="line-219">    // (The end call to System.getProperty() is the same, of course.)</span>
 <span class="source-line-no">220</span><span id="line-220">    //</span>
-<span class="source-line-no">221</span><span id="line-221">    // (The end call to System.getProperty() is the same, of course.)</span>
-<span class="source-line-no">222</span><span id="line-222">    //</span>
-<span class="source-line-no">223</span><span id="line-223">    // If we do the hierarchy case, we might run into spurious</span>
-<span class="source-line-no">224</span><span id="line-224">    // conflicts between this Provider and</span>
-<span class="source-line-no">225</span><span id="line-225">    // ProxyingProvider. "java.home", for example, is not really a</span>
-<span class="source-line-no">226</span><span id="line-226">    // hierarchy; "java.home" as a flat string is actually the name of</span>
-<span class="source-line-no">227</span><span id="line-227">    // the property in question and just happens to have "." in it.</span>
-<span class="source-line-no">228</span><span id="line-228">    //</span>
-<span class="source-line-no">229</span><span id="line-229">    // On the other hand, if we do the flat case, there isn't an easy</span>
-<span class="source-line-no">230</span><span id="line-230">    // way to override scalar nodes in a tree, and it seems at least</span>
-<span class="source-line-no">231</span><span id="line-231">    // moderately clear that the designers wanted these keys to be</span>
-<span class="source-line-no">232</span><span id="line-232">    // perceived as hierarchical in some fashion.</span>
-<span class="source-line-no">233</span><span id="line-233"></span>
-<span class="source-line-no">234</span><span id="line-234">    final String key = key(absolutePath, this.flatKeys);</span>
-<span class="source-line-no">235</span><span id="line-235">    if (key == null || key.isEmpty()) {</span>
-<span class="source-line-no">236</span><span id="line-236">      // System properties never permit null or empty keys.  See</span>
-<span class="source-line-no">237</span><span id="line-237">      // https://github.com/openjdk/jdk/blob/jdk-17+35/src/java.base/share/classes/java/lang/System.java#L1043-L1050.</span>
-<span class="source-line-no">238</span><span id="line-238">      return null;</span>
-<span class="source-line-no">239</span><span id="line-239">    }</span>
-<span class="source-line-no">240</span><span id="line-240">    final Type type = absolutePath.qualified();</span>
-<span class="source-line-no">241</span><span id="line-241">    if (CovariantSemantics.INSTANCE.assignable(type, String.class)) {</span>
-<span class="source-line-no">242</span><span id="line-242">      if (this.mutable) {</span>
-<span class="source-line-no">243</span><span id="line-243">        return () -&gt; {</span>
-<span class="source-line-no">244</span><span id="line-244">          final String returnValue = System.getProperty(key);</span>
-<span class="source-line-no">245</span><span id="line-245">          if (returnValue == null) {</span>
-<span class="source-line-no">246</span><span id="line-246">            // System.getProperty() is documented to purposely conflate</span>
-<span class="source-line-no">247</span><span id="line-247">            // absence with null for some reason.</span>
-<span class="source-line-no">248</span><span id="line-248">            throw new NoSuchElementException(key);</span>
-<span class="source-line-no">249</span><span id="line-249">          }</span>
-<span class="source-line-no">250</span><span id="line-250">          return returnValue;</span>
-<span class="source-line-no">251</span><span id="line-251">        };</span>
-<span class="source-line-no">252</span><span id="line-252">      } else {</span>
-<span class="source-line-no">253</span><span id="line-253">        final String value = System.getProperty(key);</span>
-<span class="source-line-no">254</span><span id="line-254">        if (value == null) {</span>
-<span class="source-line-no">255</span><span id="line-255">          // System.getProperty() is documented to purposely conflate</span>
-<span class="source-line-no">256</span><span id="line-256">          // absence with null for some reason.</span>
-<span class="source-line-no">257</span><span id="line-257">          return null;</span>
-<span class="source-line-no">258</span><span id="line-258">        }</span>
-<span class="source-line-no">259</span><span id="line-259">        return FixedValueSupplier.of(value);</span>
-<span class="source-line-no">260</span><span id="line-260">      }</span>
-<span class="source-line-no">261</span><span id="line-261">    } else if (this.onlyStrings) {</span>
-<span class="source-line-no">262</span><span id="line-262">      return null;</span>
-<span class="source-line-no">263</span><span id="line-263">    } else if (this.mutable) {</span>
-<span class="source-line-no">264</span><span id="line-264">      // At this point we know that the requested type is not a</span>
-<span class="source-line-no">265</span><span id="line-265">      // supertype of String.  Therefore there's no point in calling</span>
-<span class="source-line-no">266</span><span id="line-266">      // System.getProperty(key) because you wouldn't be able to</span>
-<span class="source-line-no">267</span><span id="line-267">      // assign its (String) return value to the caller doing the</span>
-<span class="source-line-no">268</span><span id="line-268">      // requesting.  Therefore defaults are not in play because only</span>
-<span class="source-line-no">269</span><span id="line-269">      // System.getProperty() consults them.  Therefore we can treat</span>
-<span class="source-line-no">270</span><span id="line-270">      // the return value of System.getProperties() as just an</span>
-<span class="source-line-no">271</span><span id="line-271">      // ordinary Map.  We also know that is is a Properties instance,</span>
-<span class="source-line-no">272</span><span id="line-272">      // so we also know it is fully synchronized on itself.  Putting</span>
-<span class="source-line-no">273</span><span id="line-273">      // this all together we can tell definitively when a value has</span>
-<span class="source-line-no">274</span><span id="line-274">      // been explicitly and deliberately set to null versus when it</span>
-<span class="source-line-no">275</span><span id="line-275">      // is absent.</span>
-<span class="source-line-no">276</span><span id="line-276">      return () -&gt; {</span>
-<span class="source-line-no">277</span><span id="line-277">        final Object returnValue;</span>
-<span class="source-line-no">278</span><span id="line-278">        final Map&lt;?, ?&gt; map = System.getProperties();</span>
-<span class="source-line-no">279</span><span id="line-279">        synchronized (map) {</span>
-<span class="source-line-no">280</span><span id="line-280">          if ((returnValue = map.get(key)) == null &amp;&amp; !map.containsKey(key)) {</span>
-<span class="source-line-no">281</span><span id="line-281">            throw new NoSuchElementException(key);</span>
-<span class="source-line-no">282</span><span id="line-282">          }</span>
-<span class="source-line-no">283</span><span id="line-283">        }</span>
-<span class="source-line-no">284</span><span id="line-284">        if (returnValue == null || CovariantSemantics.INSTANCE.assignable(type, returnValue.getClass())) {</span>
-<span class="source-line-no">285</span><span id="line-285">          return returnValue;</span>
-<span class="source-line-no">286</span><span id="line-286">        }</span>
-<span class="source-line-no">287</span><span id="line-287">        return null;</span>
-<span class="source-line-no">288</span><span id="line-288">      };</span>
-<span class="source-line-no">289</span><span id="line-289">    } else {</span>
-<span class="source-line-no">290</span><span id="line-290">      final Object returnValue;</span>
-<span class="source-line-no">291</span><span id="line-291">      final Map&lt;?, ?&gt; map = System.getProperties();</span>
-<span class="source-line-no">292</span><span id="line-292">      synchronized (map) {</span>
-<span class="source-line-no">293</span><span id="line-293">        if ((returnValue = map.get(key)) == null &amp;&amp; !map.containsKey(key)) {</span>
-<span class="source-line-no">294</span><span id="line-294">          return null;</span>
-<span class="source-line-no">295</span><span id="line-295">        }</span>
-<span class="source-line-no">296</span><span id="line-296">      }</span>
-<span class="source-line-no">297</span><span id="line-297">      if (returnValue == null || CovariantSemantics.INSTANCE.assignable(type, returnValue.getClass())) {</span>
-<span class="source-line-no">298</span><span id="line-298">        return FixedValueSupplier.of(returnValue);</span>
-<span class="source-line-no">299</span><span id="line-299">      }</span>
-<span class="source-line-no">300</span><span id="line-300">      return null;</span>
-<span class="source-line-no">301</span><span id="line-301">    }</span>
-<span class="source-line-no">302</span><span id="line-302">  }</span>
-<span class="source-line-no">303</span><span id="line-303"></span>
-<span class="source-line-no">304</span><span id="line-304">  /**</span>
-<span class="source-line-no">305</span><span id="line-305">   * Overrides the {@link AbstractProvider#path(Loader, Path)} method</span>
-<span class="source-line-no">306</span><span id="line-306">   * to return a (relative) {@link Path} consisting solely of the</span>
-<span class="source-line-no">307</span><span id="line-307">   * {@linkplain Path#lastElement() last element} of the supplied</span>
-<span class="source-line-no">308</span><span id="line-308">   * {@code absolutePath}.</span>
-<span class="source-line-no">309</span><span id="line-309">   *</span>
-<span class="source-line-no">310</span><span id="line-310">   * @param requestor the {@link Loader} seeking a {@link Value}; must</span>
-<span class="source-line-no">311</span><span id="line-311">   * not be {@code null}</span>
-<span class="source-line-no">312</span><span id="line-312">   *</span>
-<span class="source-line-no">313</span><span id="line-313">   * @param absolutePath an {@linkplain Path#absolute() absolute</span>
-<span class="source-line-no">314</span><span id="line-314">   * &lt;code&gt;Path&lt;/code&gt;} for which a {@link Value} is being sought;</span>
-<span class="source-line-no">315</span><span id="line-315">   * must not be {@code null}</span>
-<span class="source-line-no">316</span><span id="line-316">   *</span>
-<span class="source-line-no">317</span><span id="line-317">   * @return a {@link Path} that will be {@linkplain</span>
-<span class="source-line-no">318</span><span id="line-318">   * Value#Value(Supplier, Path) used to build a &lt;code&gt;Value&lt;/code&gt;}</span>
-<span class="source-line-no">319</span><span id="line-319">   * to be returned by the {@link #get(Loader, Path)} method</span>
-<span class="source-line-no">320</span><span id="line-320">   *</span>
-<span class="source-line-no">321</span><span id="line-321">   * @nullability This method does not, but overrides may, return</span>
-<span class="source-line-no">322</span><span id="line-322">   * {@code null}.</span>
-<span class="source-line-no">323</span><span id="line-323">   *</span>
-<span class="source-line-no">324</span><span id="line-324">   * @idempotency This method is, and its overrides must be,</span>
-<span class="source-line-no">325</span><span id="line-325">   * idempotent and deterministic.</span>
-<span class="source-line-no">326</span><span id="line-326">   *</span>
-<span class="source-line-no">327</span><span id="line-327">   * @threadsafety This method is, and its overrides must be, safe for</span>
-<span class="source-line-no">328</span><span id="line-328">   * concurrent use by multiple threads.</span>
-<span class="source-line-no">329</span><span id="line-329">   *</span>
-<span class="source-line-no">330</span><span id="line-330">   * @see AbstractProvider#path(Loader, Path)</span>
-<span class="source-line-no">331</span><span id="line-331">   */</span>
-<span class="source-line-no">332</span><span id="line-332">  @Override</span>
-<span class="source-line-no">333</span><span id="line-333">  @SuppressWarnings("unchecked")</span>
-<span class="source-line-no">334</span><span id="line-334">  protected &lt;T extends Type&gt; Path&lt;T&gt; path(final Loader&lt;?&gt; requestor, final Path&lt;T&gt; absolutePath) {</span>
-<span class="source-line-no">335</span><span id="line-335">    return Path.of(absolutePath.lastElement());</span>
-<span class="source-line-no">336</span><span id="line-336">  }</span>
-<span class="source-line-no">337</span><span id="line-337"></span>
-<span class="source-line-no">338</span><span id="line-338"></span>
-<span class="source-line-no">339</span><span id="line-339">  /*</span>
-<span class="source-line-no">340</span><span id="line-340">   * Static methods.</span>
-<span class="source-line-no">341</span><span id="line-341">   */</span>
-<span class="source-line-no">342</span><span id="line-342"></span>
-<span class="source-line-no">343</span><span id="line-343"></span>
-<span class="source-line-no">344</span><span id="line-344">  /**</span>
-<span class="source-line-no">345</span><span id="line-345">   * Returns a {@link String} representation of the supplied {@link Path}.</span>
-<span class="source-line-no">346</span><span id="line-346">   *</span>
-<span class="source-line-no">347</span><span id="line-347">   * @param path the {@link Path} in question; must not be {@code</span>
-<span class="source-line-no">348</span><span id="line-348">   * null}</span>
-<span class="source-line-no">349</span><span id="line-349">   *</span>
-<span class="source-line-no">350</span><span id="line-350">   * @param flat whether the key is derived from the supplied {@link</span>
-<span class="source-line-no">351</span><span id="line-351">   * Path}'s {@linkplain Path#lastElement() last element}'s</span>
-<span class="source-line-no">352</span><span id="line-352">   * {@linkplain Element#name() name} only</span>
-<span class="source-line-no">353</span><span id="line-353">   *</span>
-<span class="source-line-no">354</span><span id="line-354">   * @return a {@link String} representation of the supplied {@link</span>
-<span class="source-line-no">355</span><span id="line-355">   * Path}</span>
+<span class="source-line-no">221</span><span id="line-221">    // If we do the hierarchy case, we might run into spurious</span>
+<span class="source-line-no">222</span><span id="line-222">    // conflicts between this Provider and</span>
+<span class="source-line-no">223</span><span id="line-223">    // ProxyingProvider. "java.home", for example, is not really a</span>
+<span class="source-line-no">224</span><span id="line-224">    // hierarchy; "java.home" as a flat string is actually the name of</span>
+<span class="source-line-no">225</span><span id="line-225">    // the property in question and just happens to have "." in it.</span>
+<span class="source-line-no">226</span><span id="line-226">    //</span>
+<span class="source-line-no">227</span><span id="line-227">    // On the other hand, if we do the flat case, there isn't an easy</span>
+<span class="source-line-no">228</span><span id="line-228">    // way to override scalar nodes in a tree, and it seems at least</span>
+<span class="source-line-no">229</span><span id="line-229">    // moderately clear that the designers wanted these keys to be</span>
+<span class="source-line-no">230</span><span id="line-230">    // perceived as hierarchical in some fashion.</span>
+<span class="source-line-no">231</span><span id="line-231"></span>
+<span class="source-line-no">232</span><span id="line-232">    final String key = key(absolutePath, this.flatKeys);</span>
+<span class="source-line-no">233</span><span id="line-233">    if (key == null || key.isEmpty()) {</span>
+<span class="source-line-no">234</span><span id="line-234">      // System properties never permit null or empty keys.  See</span>
+<span class="source-line-no">235</span><span id="line-235">      // https://github.com/openjdk/jdk/blob/jdk-17+35/src/java.base/share/classes/java/lang/System.java#L1043-L1050.</span>
+<span class="source-line-no">236</span><span id="line-236">      return null;</span>
+<span class="source-line-no">237</span><span id="line-237">    }</span>
+<span class="source-line-no">238</span><span id="line-238">    final Type type = absolutePath.qualified();</span>
+<span class="source-line-no">239</span><span id="line-239">    if (CovariantSemantics.INSTANCE.assignable(type, String.class)) {</span>
+<span class="source-line-no">240</span><span id="line-240">      if (this.mutable) {</span>
+<span class="source-line-no">241</span><span id="line-241">        return () -&gt; {</span>
+<span class="source-line-no">242</span><span id="line-242">          final String returnValue = System.getProperty(key);</span>
+<span class="source-line-no">243</span><span id="line-243">          if (returnValue == null) {</span>
+<span class="source-line-no">244</span><span id="line-244">            // System.getProperty() is documented to purposely conflate</span>
+<span class="source-line-no">245</span><span id="line-245">            // absence with null for some reason.</span>
+<span class="source-line-no">246</span><span id="line-246">            throw new NoSuchElementException(key);</span>
+<span class="source-line-no">247</span><span id="line-247">          }</span>
+<span class="source-line-no">248</span><span id="line-248">          return returnValue;</span>
+<span class="source-line-no">249</span><span id="line-249">        };</span>
+<span class="source-line-no">250</span><span id="line-250">      } else {</span>
+<span class="source-line-no">251</span><span id="line-251">        final String value = System.getProperty(key);</span>
+<span class="source-line-no">252</span><span id="line-252">        if (value == null) {</span>
+<span class="source-line-no">253</span><span id="line-253">          // System.getProperty() is documented to purposely conflate</span>
+<span class="source-line-no">254</span><span id="line-254">          // absence with null for some reason.</span>
+<span class="source-line-no">255</span><span id="line-255">          return null;</span>
+<span class="source-line-no">256</span><span id="line-256">        }</span>
+<span class="source-line-no">257</span><span id="line-257">        return FixedValueSupplier.of(value);</span>
+<span class="source-line-no">258</span><span id="line-258">      }</span>
+<span class="source-line-no">259</span><span id="line-259">    } else if (this.onlyStrings) {</span>
+<span class="source-line-no">260</span><span id="line-260">      return null;</span>
+<span class="source-line-no">261</span><span id="line-261">    } else if (this.mutable) {</span>
+<span class="source-line-no">262</span><span id="line-262">      // At this point we know that the requested type is not a</span>
+<span class="source-line-no">263</span><span id="line-263">      // supertype of String.  Therefore there's no point in calling</span>
+<span class="source-line-no">264</span><span id="line-264">      // System.getProperty(key) because you wouldn't be able to</span>
+<span class="source-line-no">265</span><span id="line-265">      // assign its (String) return value to the caller doing the</span>
+<span class="source-line-no">266</span><span id="line-266">      // requesting.  Therefore defaults are not in play because only</span>
+<span class="source-line-no">267</span><span id="line-267">      // System.getProperty() consults them.  Therefore we can treat</span>
+<span class="source-line-no">268</span><span id="line-268">      // the return value of System.getProperties() as just an</span>
+<span class="source-line-no">269</span><span id="line-269">      // ordinary Map.  We also know that is is a Properties instance,</span>
+<span class="source-line-no">270</span><span id="line-270">      // so we also know it is fully synchronized on itself.  Putting</span>
+<span class="source-line-no">271</span><span id="line-271">      // this all together we can tell definitively when a value has</span>
+<span class="source-line-no">272</span><span id="line-272">      // been explicitly and deliberately set to null versus when it</span>
+<span class="source-line-no">273</span><span id="line-273">      // is absent.</span>
+<span class="source-line-no">274</span><span id="line-274">      return () -&gt; {</span>
+<span class="source-line-no">275</span><span id="line-275">        final Object returnValue;</span>
+<span class="source-line-no">276</span><span id="line-276">        final Map&lt;?, ?&gt; map = System.getProperties();</span>
+<span class="source-line-no">277</span><span id="line-277">        synchronized (map) {</span>
+<span class="source-line-no">278</span><span id="line-278">          if ((returnValue = map.get(key)) == null &amp;&amp; !map.containsKey(key)) {</span>
+<span class="source-line-no">279</span><span id="line-279">            throw new NoSuchElementException(key);</span>
+<span class="source-line-no">280</span><span id="line-280">          }</span>
+<span class="source-line-no">281</span><span id="line-281">        }</span>
+<span class="source-line-no">282</span><span id="line-282">        if (returnValue == null || CovariantSemantics.INSTANCE.assignable(type, returnValue.getClass())) {</span>
+<span class="source-line-no">283</span><span id="line-283">          return returnValue;</span>
+<span class="source-line-no">284</span><span id="line-284">        }</span>
+<span class="source-line-no">285</span><span id="line-285">        return null;</span>
+<span class="source-line-no">286</span><span id="line-286">      };</span>
+<span class="source-line-no">287</span><span id="line-287">    } else {</span>
+<span class="source-line-no">288</span><span id="line-288">      final Object returnValue;</span>
+<span class="source-line-no">289</span><span id="line-289">      final Map&lt;?, ?&gt; map = System.getProperties();</span>
+<span class="source-line-no">290</span><span id="line-290">      synchronized (map) {</span>
+<span class="source-line-no">291</span><span id="line-291">        if ((returnValue = map.get(key)) == null &amp;&amp; !map.containsKey(key)) {</span>
+<span class="source-line-no">292</span><span id="line-292">          return null;</span>
+<span class="source-line-no">293</span><span id="line-293">        }</span>
+<span class="source-line-no">294</span><span id="line-294">      }</span>
+<span class="source-line-no">295</span><span id="line-295">      if (returnValue == null || CovariantSemantics.INSTANCE.assignable(type, returnValue.getClass())) {</span>
+<span class="source-line-no">296</span><span id="line-296">        return FixedValueSupplier.of(returnValue);</span>
+<span class="source-line-no">297</span><span id="line-297">      }</span>
+<span class="source-line-no">298</span><span id="line-298">      return null;</span>
+<span class="source-line-no">299</span><span id="line-299">    }</span>
+<span class="source-line-no">300</span><span id="line-300">  }</span>
+<span class="source-line-no">301</span><span id="line-301"></span>
+<span class="source-line-no">302</span><span id="line-302">  /**</span>
+<span class="source-line-no">303</span><span id="line-303">   * Overrides the {@link AbstractProvider#path(Loader, Path)} method</span>
+<span class="source-line-no">304</span><span id="line-304">   * to return a (relative) {@link Path} consisting solely of the</span>
+<span class="source-line-no">305</span><span id="line-305">   * {@linkplain Path#lastElement() last element} of the supplied</span>
+<span class="source-line-no">306</span><span id="line-306">   * {@code absolutePath}.</span>
+<span class="source-line-no">307</span><span id="line-307">   *</span>
+<span class="source-line-no">308</span><span id="line-308">   * @param requestor the {@link Loader} seeking a {@link Value}; must</span>
+<span class="source-line-no">309</span><span id="line-309">   * not be {@code null}</span>
+<span class="source-line-no">310</span><span id="line-310">   *</span>
+<span class="source-line-no">311</span><span id="line-311">   * @param absolutePath an {@linkplain Path#absolute() absolute</span>
+<span class="source-line-no">312</span><span id="line-312">   * &lt;code&gt;Path&lt;/code&gt;} for which a {@link Value} is being sought;</span>
+<span class="source-line-no">313</span><span id="line-313">   * must not be {@code null}</span>
+<span class="source-line-no">314</span><span id="line-314">   *</span>
+<span class="source-line-no">315</span><span id="line-315">   * @return a {@link Path} that will be {@linkplain</span>
+<span class="source-line-no">316</span><span id="line-316">   * Value#Value(Supplier, Path) used to build a &lt;code&gt;Value&lt;/code&gt;}</span>
+<span class="source-line-no">317</span><span id="line-317">   * to be returned by the {@link #get(Loader, Path)} method</span>
+<span class="source-line-no">318</span><span id="line-318">   *</span>
+<span class="source-line-no">319</span><span id="line-319">   * @nullability This method does not, but overrides may, return</span>
+<span class="source-line-no">320</span><span id="line-320">   * {@code null}.</span>
+<span class="source-line-no">321</span><span id="line-321">   *</span>
+<span class="source-line-no">322</span><span id="line-322">   * @idempotency This method is, and its overrides must be,</span>
+<span class="source-line-no">323</span><span id="line-323">   * idempotent and deterministic.</span>
+<span class="source-line-no">324</span><span id="line-324">   *</span>
+<span class="source-line-no">325</span><span id="line-325">   * @threadsafety This method is, and its overrides must be, safe for</span>
+<span class="source-line-no">326</span><span id="line-326">   * concurrent use by multiple threads.</span>
+<span class="source-line-no">327</span><span id="line-327">   *</span>
+<span class="source-line-no">328</span><span id="line-328">   * @see AbstractProvider#path(Loader, Path)</span>
+<span class="source-line-no">329</span><span id="line-329">   */</span>
+<span class="source-line-no">330</span><span id="line-330">  @Override</span>
+<span class="source-line-no">331</span><span id="line-331">  @SuppressWarnings("unchecked")</span>
+<span class="source-line-no">332</span><span id="line-332">  protected &lt;T extends Type&gt; Path&lt;T&gt; path(final Loader&lt;?&gt; requestor, final Path&lt;T&gt; absolutePath) {</span>
+<span class="source-line-no">333</span><span id="line-333">    return Path.of(absolutePath.lastElement());</span>
+<span class="source-line-no">334</span><span id="line-334">  }</span>
+<span class="source-line-no">335</span><span id="line-335"></span>
+<span class="source-line-no">336</span><span id="line-336"></span>
+<span class="source-line-no">337</span><span id="line-337">  /*</span>
+<span class="source-line-no">338</span><span id="line-338">   * Static methods.</span>
+<span class="source-line-no">339</span><span id="line-339">   */</span>
+<span class="source-line-no">340</span><span id="line-340"></span>
+<span class="source-line-no">341</span><span id="line-341"></span>
+<span class="source-line-no">342</span><span id="line-342">  /**</span>
+<span class="source-line-no">343</span><span id="line-343">   * Returns a {@link String} representation of the supplied {@link Path}.</span>
+<span class="source-line-no">344</span><span id="line-344">   *</span>
+<span class="source-line-no">345</span><span id="line-345">   * @param path the {@link Path} in question; must not be {@code</span>
+<span class="source-line-no">346</span><span id="line-346">   * null}</span>
+<span class="source-line-no">347</span><span id="line-347">   *</span>
+<span class="source-line-no">348</span><span id="line-348">   * @param flat whether the key is derived from the supplied {@link</span>
+<span class="source-line-no">349</span><span id="line-349">   * Path}'s {@linkplain Path#lastElement() last element}'s</span>
+<span class="source-line-no">350</span><span id="line-350">   * {@linkplain Element#name() name} only</span>
+<span class="source-line-no">351</span><span id="line-351">   *</span>
+<span class="source-line-no">352</span><span id="line-352">   * @return a {@link String} representation of the supplied {@link</span>
+<span class="source-line-no">353</span><span id="line-353">   * Path}</span>
+<span class="source-line-no">354</span><span id="line-354">   *</span>
+<span class="source-line-no">355</span><span id="line-355">   * @exception NullPointerException if {@code path} is {@code null}</span>
 <span class="source-line-no">356</span><span id="line-356">   *</span>
-<span class="source-line-no">357</span><span id="line-357">   * @exception NullPointerException if {@code path} is {@code null}</span>
+<span class="source-line-no">357</span><span id="line-357">   * @nullability This method never returns {@code null}.</span>
 <span class="source-line-no">358</span><span id="line-358">   *</span>
-<span class="source-line-no">359</span><span id="line-359">   * @nullability This method never returns {@code null}.</span>
+<span class="source-line-no">359</span><span id="line-359">   * @idempotency This method is idempotent and deterministic.</span>
 <span class="source-line-no">360</span><span id="line-360">   *</span>
-<span class="source-line-no">361</span><span id="line-361">   * @idempotency This method is idempotent and deterministic.</span>
-<span class="source-line-no">362</span><span id="line-362">   *</span>
-<span class="source-line-no">363</span><span id="line-363">   * @threadsafety This method is safe for concurrent use by multiple</span>
-<span class="source-line-no">364</span><span id="line-364">   * threads.</span>
-<span class="source-line-no">365</span><span id="line-365">   */</span>
-<span class="source-line-no">366</span><span id="line-366">  protected static final String key(final Path&lt;?&gt; path, final boolean flat) {</span>
-<span class="source-line-no">367</span><span id="line-367">    if (flat) {</span>
-<span class="source-line-no">368</span><span id="line-368">      return path.lastElement().name();</span>
-<span class="source-line-no">369</span><span id="line-369">    } else {</span>
-<span class="source-line-no">370</span><span id="line-370">      return path.stream()</span>
-<span class="source-line-no">371</span><span id="line-371">        .map(Element::name)</span>
-<span class="source-line-no">372</span><span id="line-372">        .filter(s1 -&gt; !s1.isEmpty())</span>
-<span class="source-line-no">373</span><span id="line-373">        .reduce((s1, s2) -&gt; String.join(".", s1, s2))</span>
-<span class="source-line-no">374</span><span id="line-374">        .orElse("");</span>
-<span class="source-line-no">375</span><span id="line-375">    }</span>
-<span class="source-line-no">376</span><span id="line-376">  }</span>
-<span class="source-line-no">377</span><span id="line-377"></span>
-<span class="source-line-no">378</span><span id="line-378">}</span>
+<span class="source-line-no">361</span><span id="line-361">   * @threadsafety This method is safe for concurrent use by multiple</span>
+<span class="source-line-no">362</span><span id="line-362">   * threads.</span>
+<span class="source-line-no">363</span><span id="line-363">   */</span>
+<span class="source-line-no">364</span><span id="line-364">  protected static final String key(final Path&lt;?&gt; path, final boolean flat) {</span>
+<span class="source-line-no">365</span><span id="line-365">    if (flat) {</span>
+<span class="source-line-no">366</span><span id="line-366">      return path.lastElement().name();</span>
+<span class="source-line-no">367</span><span id="line-367">    } else {</span>
+<span class="source-line-no">368</span><span id="line-368">      return path.stream()</span>
+<span class="source-line-no">369</span><span id="line-369">        .map(Element::name)</span>
+<span class="source-line-no">370</span><span id="line-370">        .filter(s1 -&gt; !s1.isEmpty())</span>
+<span class="source-line-no">371</span><span id="line-371">        .reduce((s1, s2) -&gt; String.join(".", s1, s2))</span>
+<span class="source-line-no">372</span><span id="line-372">        .orElse("");</span>
+<span class="source-line-no">373</span><span id="line-373">    }</span>
+<span class="source-line-no">374</span><span id="line-374">  }</span>
+<span class="source-line-no">375</span><span id="line-375"></span>
+<span class="source-line-no">376</span><span id="line-376">}</span>
 
 
 
