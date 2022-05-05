@@ -4,7 +4,7 @@
 
   <groupId>org.microbean</groupId>
   <artifactId>microbean-loader-parent</artifactId>
-  <version>0.0.5-SNAPSHOT</version>
+  <version>0.0.5</version>
   <packaging>pom</packaging>
 
   <parent>
@@ -23,7 +23,7 @@
     <connection>scm:git:git@github.com:microbean/microbean-loader.git</connection>
     <developerConnection>scm:git:git@github.com:microbean/microbean-loader.git</developerConnection>
     <url>https://github.com/microbean/microbean-loader/</url>
-    <tag>HEAD</tag>
+    <tag>v0.0.5</tag>
   </scm>
 
   <distributionManagement>
